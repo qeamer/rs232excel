@@ -2,13 +2,13 @@
   <img src="skaak_logo_vektor.png" height="80" alt="Skjåk Trelast AS"/>
 </p>
 
-<h3 align="center">
-  <a href="README.en.md">English Readme Here</a>
-</h3>
+<p align="center">
+  <a href="README.en.md"><b>English Readme Here</b></a>
+</p>
 
 <h1 align="center">rs232excel</h1>
 
-<p align="center" style="font-size: 1.2em">
+<p align="center">
   <b>Passiv serieport-tapp · Telemecanique TSX → OKI Microline → CSV og Excel</b>
 </p>
 
@@ -19,19 +19,13 @@
   <img src="https://img.shields.io/badge/license-MIT-1B4D3E"/>
 </p>
 
-<table width="100%">
-<tr>
-<td align="center" bgcolor="#1B4D3E">
-<font color="#FFFFFF">
-<b>🇳🇴 HOVEDVERSJON — FOR SKANDINAVISKE SAGBRUK</b>
-<br><br>
-Dette prosjektet er laget for sagbruk i <b>Norge, Sverige og Danmark</b>.
-<br>
-Norsk er standardspråk for programvare, dokumentasjon og Excel-eksport.
-</font>
-</td>
-</tr>
-</table>
+<p align="center">
+  <b>🇳🇴 HOVEDVERSJON — FOR SKANDINAVISKE SAGBRUK</b><br><br>
+  Dette prosjektet er laget for sagbruk i <b>Norge, Sverige og Danmark</b>.<br>
+  Norsk er standardspråk for programvare, dokumentasjon og Excel-eksport.
+</p>
+
+---
 
 <p style="font-size: 17px; line-height: 1.55">
 En Raspberry Pi lytter <b>passivt</b> på RS-232-linja mellom en Telemecanique TSX PLS

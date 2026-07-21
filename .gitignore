@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.csv
+*.xlsx
+utskrift.txt
+sesong.txt
+mangler.csv
+oppsummering*.csv
+.git_status.txt

@@ -1,4 +1,4 @@
-# Installation Guide
+﻿# Installation Guide
 
 Complete walkthrough — from empty SD card to a live passive tap running on the sawmill floor. Roughly 45 minutes, no programming experience required.
 
@@ -135,7 +135,7 @@ Nothing at all? Try `--baud 4800`, `2400`, or `19200`, and re-check the pin 2/7 
 **Test 2 — real capture.** This is the production command:
 
 ```bash
-python3 read_package.py --port /dev/ttyUSB0
+python3 read_package.py --port /dev/ttyUSB0 --usb-mirror /media/usb0
 ```
 
 <img src="img/terminal-capture.png" width="100%" alt="Live capture terminal"/>

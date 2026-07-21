@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
   <img src="skaak_logo_vektor.png" height="70" alt="Skjåk Trelast AS"/>
 </p>
 
@@ -31,7 +31,7 @@ The tap is **physically read-only**: only pin 2 (TX) and pin 7 (GND) are branche
 git clone https://github.com/qeamer/rs232excel.git
 cd rs232excel/python/en
 pip install -r requirements.txt
-python3 read_package.py --port /dev/ttyUSB0
+python3 read_package.py --port /dev/ttyUSB0 --usb-mirror /media/usb0
 python3 read_package.py --export-xlsx
 ```
 
@@ -73,7 +73,7 @@ A branded Excel workbook, generated on demand from the live CSV:
 | Flag | Purpose |
 |---|---|
 | `--port /dev/ttyUSB0` | Live capture (production) |
-| `--usb-path /media/usb0` | Mirror CSV to flash drive in real time *(Norwegian: `--usb-sti`)* |
+| `--usb-mirror /media/usb0` | Mirror CSV to flash drive in real time *(Norwegian: `--usb-sti`)* |
 | `--raw-capture` | Raw capture, nothing saved — first-run verification |
 | `--set-season raw` / `kiln-dried` | Match the physical season toggle on the machine |
 | `--export-xlsx` | Generate the Excel workbook |

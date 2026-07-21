@@ -2,6 +2,10 @@
   <img src="skaak_logo_vektor.png" height="80" alt="Skjåk Trelast AS"/>
 </p>
 
+<p align="center" style="font-size: 18px; margin-top: 8px">
+  <a href="README.en.md"><b>English Readme Here</b></a>
+</p>
+
 <h1 align="center">rs232excel</h1>
 
 <p align="center" style="font-size: 1.2em">
@@ -25,8 +29,7 @@
 
 <p style="font-size: 17px; color: #E8F0EE; margin: 0 12px 16px 12px;">
 Dette prosjektet er laget for sagbruk i <b>Norge, Sverige og Danmark</b>.<br>
-Norsk er standardspråk for programvare, dokumentasjon og Excel-eksport.<br>
-Engelsk oversettelse finnes kun for deling utenfor Skandinavia → <a href="README.en.md"><b>README.en.md</b></a>
+Norsk er standardspråk for programvare, dokumentasjon og Excel-eksport.
 </p>
 
 </td>
@@ -130,10 +133,6 @@ IP54 kapsling · valgfri SSD1306 OLED. Full delerliste i
 <tr><td><code>python/en/</code></td><td>Engelsk speilversjon</td><td>Oversettelse</td></tr>
 <tr><td><code>docs/en/</code></td><td>Installation guide (English)</td><td>Oversettelse</td></tr>
 </table>
-
-<p style="font-size: 15px; color: #555">
-Engelsk README: <a href="README.en.md"><b>README.en.md</b></a>
-</p>
 
 ---
 

@@ -2,9 +2,9 @@
   <img src="skaak_logo_vektor.png" height="80" alt="Skjåk Trelast AS"/>
 </p>
 
-<p align="center" style="font-size: 18px; text-align: center; margin: 10px 0 0 0;">
-  <a href="README.en.md"><b>English Readme Here</b></a>
-</p>
+<h3 align="center">
+  <a href="README.en.md">English Readme Here</a>
+</h3>
 
 <h1 align="center">rs232excel</h1>
 
@@ -21,17 +21,14 @@
 
 <table width="100%">
 <tr>
-<td align="center" bgcolor="#1B4D3E" style="text-align: center;">
-
-<p align="center" style="font-size: 22px; color: #FFFFFF; text-align: center; margin: 16px 12px;">
+<td align="center" bgcolor="#1B4D3E">
+<font color="#FFFFFF">
 <b>🇳🇴 HOVEDVERSJON — FOR SKANDINAVISKE SAGBRUK</b>
-</p>
-
-<p align="center" style="font-size: 17px; color: #E8F0EE; text-align: center; margin: 0 12px 16px 12px;">
-Dette prosjektet er laget for sagbruk i <b>Norge, Sverige og Danmark</b>.<br>
+<br><br>
+Dette prosjektet er laget for sagbruk i <b>Norge, Sverige og Danmark</b>.
+<br>
 Norsk er standardspråk for programvare, dokumentasjon og Excel-eksport.
-</p>
-
+</font>
 </td>
 </tr>
 </table>

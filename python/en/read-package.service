@@ -1,0 +1,15 @@
+[Unit]
+Description=rs232excel — Package label capture from OKI Microline printer tap
+After=multi-user.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/rs232excel/python/en
+# Adjust --port and --baud. Use --raw-capture first time to verify label format.
+ExecStart=/usr/bin/python3 /home/pi/rs232excel/python/en/read_package.py --port /dev/ttyUSB0 --baud 9600
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

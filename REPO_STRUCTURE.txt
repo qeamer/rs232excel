@@ -1,0 +1,45 @@
+rs232excel repository structure
+================================
+
+├── README.md                          Main GitHub page (English) with logo, badges, architecture
+├── README.no.md                       Norwegian landing page (same repo, linked from README.md)
+├── skaak_logo_vektor.png              Skjåk Trelast logo (white on transparent, for GitHub)
+│
+├── docs/
+│   ├── README.md                      Language picker → en / no
+│   ├── en/
+│   │   ├── INSTALLATION.md            8-section installation guide (English)
+│   │   ├── wiring.md                  DB25 tap reference (English)
+│   │   └── img/                       Diagrams + screenshots
+│   └── no/
+│       ├── INSTALLATION.md            Installasjonsguide (norsk)
+│       ├── wiring.md                  Koblingsreferanse (norsk)
+│       └── img/                       Diagrammer + skjermbilder (Sammendrag / Rådata i Excel)
+│
+└── python/
+    ├── README.md                      Language guide (English/Norwegian)
+    │
+    ├── en/                            ENGLISH VERSION (GitHub default)
+    │   ├── read_package.py            Main script (English CLI: --raw-capture, --export-xlsx, …)
+    │   ├── install.sh                 Installation script (English)
+    │   ├── read-package.service       systemd unit file
+    │   ├── requirements.txt           Python deps: pyserial openpyxl
+    │   └── example.txt                Synthetic test labels for --simulate
+    │
+    └── no/                            NORWEGIAN VERSION (Skjåk Trelast production)
+        ├── read_package.py            Main script (Norwegian CLI: --bare-fangst, --eksporter-xlsx, …)
+        ├── installer.sh               Installation script (Norwegian)
+        ├── pakkemaskin-skriver.service  systemd unit file
+        ├── requirements.txt           Python deps
+        ├── eksempel.txt               Testlapper for --simuler
+        └── vis_status.py              Optional OLED status display
+
+Installation (choose your language):
+  cd python/en   && bash install.sh    # English version for GitHub/international
+  cd python/no   && bash installer.sh  # Norwegian version for Skjåk Trelast
+
+Both versions are functionally identical — only language differs.
+
+Documentation:
+  docs/en/INSTALLATION.md              English walkthrough with wiring diagrams
+  docs/no/INSTALLATION.md              Norsk installasjonsguide med koblingsdiagram

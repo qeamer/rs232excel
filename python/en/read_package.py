@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-les_pakkelapp.py — Pakkemaskin Skriver (Skjåk Trelast)
+les_pakkelapp.py — rs232excel - Package label capture (Timber sawmill)
 
 Raspberry Pi lytter PASSIVT på pakkelapp-strømmen fra sorteringsanlegget
 (TSX → OKI Microline) og lagrer hver pakke sikkert.
@@ -9,8 +9,8 @@ Raspberry Pi lytter PASSIVT på pakkelapp-strømmen fra sorteringsanlegget
   • Skriver av                 → tapp TX-linja; data ligger på kabelen
   • Pakke aldri kvittert        → HULL-DETEKSJON i pakkenr-rekka
   • Nullstilling (9999 → 0)     → RUNDE: oppdages automatisk, scoper dedup+hull
-  • Lapp kom aldri              → MANUELL registrering (--registrer)
-  • Sesong                      → rå / tørr (fysisk vribryter på maskinen)
+  • Lapp kom aldri              → MANUELL registrering (--register)
+  • Sesong                      → raw / kiln-dried (fysisk vribryter på maskinen)
 
 Lappformat (dekodet fra ekte lapper):
   linje 1:  pakkenr            dimensjon (f.eks. 75X 150)
@@ -21,22 +21,12 @@ Lappformat (dekodet fra ekte lapper):
             (høyre kolonne med nuller = ubrukt, ignoreres)
 
 Filer:
-  utskrift.txt      alt råt, med tidsstempel — mister aldri noe
-  pakkelapper.csv   én rad per ekte pakke (ingen duplikater)
-  mangler.csv       hull i pakkenr-rekka (per runde)
-  oppsummering.csv  daglig oppsummering (--oppsummering)
-  pakkelapper.xlsx  Excel med ett ark per sesong (--eksporter-xlsx)
-  sesong.txt        gjeldende sesong: "rå"/"tørr" (--sett-sesong)
-
-USB-speiling (sanntid, --usb-sti):
-  SD-kortet er alltid fasiten — det er der fangsten faktisk skjer, og
-  ingen pakke går tapt selv om ingen minnepenn er tilkoblet. Er en
-  minnepenn montert på oppgitt sti, speiles hver pakke DIT også, i
-  samme øyeblikk. Er minnepennen borte når en pakke kommer inn, skrives
-  den kun til SD-kortet — og neste gang minnepennen er tilkoblet
-  (samme sti dukker opp igjen), synkroniseres automatisk alt som ble
-  fanget i mellomtiden. Ingen manuell eksport nødvendig; bare la en
-  minnepenn stå i, eller bytt den ut mot en annen når som helst.
+  capture.txt      alt rawt, med tidsstempel — mister aldri noe
+  packages.csv   én rad per ekte pakke (ingen duplikater)
+  missing.csv       hull i pakkenr-rekka (per runde)
+  oppsummering.csv  daglig oppsummering (--summary)
+  pakkelapper.xlsx  Excel med ett ark per sesong (--export-xlsx)
+  season.txt        gjeldende sesong: "raw"/"kiln-dried" (--set-season)
 
 Avhengigheter: pip install pyserial openpyxl
 """
@@ -100,15 +90,51 @@ KOLONNE_VISNING = {
 }
 
 
-def logg(m): print(f"[{datetime.datetime.now():%H:%M:%S}] {m}", flush=True)
+def log(m): print(f"[{datetime.datetime.now():%H:%M:%S}] {m}", flush=True)
 
 
-def rens(rabytes: bytes) -> str:
+# ESC-sekvenser (Epson FX / IBM-emulering, som OKI ML280 Elite bruker):
+# verdi = antall parameterbytes ETTER kommandotegnet.
+#   "NUL" = les til NUL-byte (tabstopp-lister)
+#   "GFX" = n1 n2 + (n1 + 256*n2) databytes (punktgrafikk)
+# Ukjente kommandoer: antar 0 parametre og loger, så ekte --raw-capture
+# avslører dem i stedet for at parametre lekker inn i lappteksten.
+ESC_PARAM = {
+    "@":0,"E":0,"F":0,"G":0,"H":0,"M":0,"P":0,"T":0,"<":0,
+    "0":0,"1":0,"2":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,
+    "x":1,"U":1,"W":1,"S":1,"J":1,"3":1,"A":1,"l":1,"Q":1,"N":1,
+    "R":1,"k":1,"m":1,"t":1,"I":1,"i":1,"a":1,"-":1,"p":1,"r":1,
+    "s":1,"j":1,"!":1,"+":1,"C":1,   # ESC C NUL n håndteres spesielt under
+    "D":"NUL","B":"NUL",
+    "K":"GFX","L":"GFX","Y":"GFX","Z":"GFX",
+}
+
+def clean_text(rabytes: bytes) -> str:
     ut, i = [], 0
-    while i < len(rabytes):
+    n = len(rabytes)
+    while i < n:
         b = rabytes[i]
         if b == ESC:
-            i += 2; continue
+            if i + 1 >= n:
+                break
+            cmd = chr(rabytes[i + 1])
+            spec = ESC_PARAM.get(cmd)
+            i += 2                                  # ESC + kommandotegn
+            if spec is None:
+                log(f"?  ukjent ESC-sekvens: ESC {cmd!r} — antar ingen parametre")
+            elif spec == "NUL":
+                while i < n and rabytes[i] != 0x00:
+                    i += 1
+                i += 1                              # selve NUL-byten
+            elif spec == "GFX":
+                if i + 2 <= n:
+                    antall = rabytes[i] + 256 * rabytes[i + 1]
+                    i += 2 + antall
+            elif cmd == "C" and i < n and rabytes[i] == 0x00:
+                i += 2                              # ESC C NUL n (sidelengde i tommer)
+            else:
+                i += spec
+            continue
         if b in (0x0A, 0x0D):
             ut.append("\n")
         elif 0x20 <= b <= 0xFF and b != FORMFEED:
@@ -118,7 +144,7 @@ def rens(rabytes: bytes) -> str:
     return "\n".join(linjer).strip("\n")
 
 
-def som_tall(s):
+def as_int(s):
     try: return int(re.sub(r"\D", "", str(s)))
     except (ValueError, TypeError): return None
 
@@ -131,27 +157,27 @@ def _forste_ikke_null(regex, tekst):
 
 
 # ── sesong ─────────────────────────────────────────────────────────
-def gjett_sesong(d): return "rå" if d.month in (12, 1, 2, 3, 4, 5) else "tørr"
+def gjett_sesong(d): return "raw" if d.month in (12, 1, 2, 3, 4, 5) else "kiln-dried"
 
 
-def les_sesong(sti: Path):
+def read_season(sti: Path):
     if sti.exists():
         v = sti.read_text(encoding="utf-8").strip().lower()
-        if v.startswith("rå") or v in ("raa", "ra"):    return "rå"
-        if v.startswith("tør") or v in ("torr", "tor"): return "tørr"
+        if v.startswith("raw") or v in ("raa", "ra"):    return "raw"
+        if v.startswith("tør") or v in ("torr", "tor"): return "kiln-dried"
     return gjett_sesong(datetime.date.today())
 
 
-def sett_sesong(verdi, sti: Path):
+def set_season(verdi, sti: Path):
     v = verdi.strip().lower()
-    norm = "rå" if v in ("rå", "raa", "ra") else "tørr" if v in ("tørr", "torr", "tor") else None
+    norm = "raw" if v in ("raw", "raa", "ra") else "kiln-dried" if v in ("kiln-dried", "torr", "tor") else None
     if not norm:
-        logg('Bruk: --sett-sesong rå  |  --sett-sesong tørr'); return
+        log('Bruk: --set-season raw  |  --set-season kiln-dried'); return
     sti.write_text(norm, encoding="utf-8")
-    logg(f"Sesong satt til: {norm}  (lagret i {sti.name})")
+    log(f"Sesong satt til: {norm}  (lagret i {sti.name})")
 
 
-def parse_lapp(tekst: str, sesong: str) -> dict:
+def parse_label(tekst: str, sesong: str) -> dict:
     rad = {k: "" for k in KOLONNER}
     rad["tid_fanget"] = datetime.datetime.now().isoformat(timespec="seconds")
     rad["raa"] = tekst
@@ -224,18 +250,18 @@ class Register:
                 for rad in csv.DictReader(f):
                     if rad.get("status") not in ("ok", "manuell"):
                         continue
-                    r = som_tall(rad.get("runde")) or 1
-                    n = som_tall(rad.get("pakkenr"))
+                    r = as_int(rad.get("runde")) or 1
+                    n = as_int(rad.get("pakkenr"))
                     if n is not None:
                         runder.setdefault(r, set()).add(n)
             if runder:
                 self.runde = max(runder)
                 self.sett = runder[self.runde]
                 self.maks = max(self.sett)
-            logg(f"Lastet runde {self.runde}: {len(self.sett)} pakkenr (høyeste {self.maks}).")
+            log(f"Lastet runde {self.runde}: {len(self.sett)} pakkenr (høyeste {self.maks}).")
 
     def vurder(self, pakkenr_tekst):
-        n = som_tall(pakkenr_tekst)
+        n = as_int(pakkenr_tekst)
         if n is None:
             return "ukjent", None, False
         if self.maks is not None and (self.maks - n) > self.terskel:
@@ -247,7 +273,7 @@ class Register:
     def ny_runde(self):
         self.runde += 1
         self.sett, self.maks = set(), None
-        logg(f"↻ Ny runde {self.runde} — pakkenr ser nullstilt ut (9999 → 0)")
+        log(f"↻ Ny runde {self.runde} — pakkenr ser nullstilt ut (9999 → 0)")
 
     def registrer(self, n):
         if self.maks is not None and n > self.maks + 1:
@@ -263,7 +289,7 @@ class Register:
             for m in range(fra, til + 1):
                 w.writerow([datetime.datetime.now().isoformat(timespec="seconds"), self.runde, m,
                             "mulig hull — sjekk om pakken ble kvittert"])
-        logg(f"⚠  Mulig hull (runde {self.runde}): pakkenr {fra}–{til} → {self.mangler_sti.name}")
+        log(f"⚠  Mulig hull (runde {self.runde}): pakkenr {fra}–{til} → {self.mangler_sti.name}")
 
 
 def append_csv(rad, csv_sti: Path):
@@ -274,75 +300,32 @@ def append_csv(rad, csv_sti: Path):
         w.writerow(rad)
 
 
-# ── USB-speiling (sanntid, med automatisk innhenting) ────────────────
-def _usb_tilgjengelig(usb_sti: Path | None) -> bool:
-    """Sjekker om minnepennen er montert akkurat nå (kan komme/gå når som helst)."""
-    return usb_sti is not None and usb_sti.parent.exists()
-
-
-def _nokkel(rad) -> tuple:
-    """(runde, pakkenr) brukes til å finne ut hvilke rader som allerede
-    finnes på minnepennen, slik at vi ikke dupliserer ved synkronisering."""
-    return (str(rad.get("runde") or ""), str(rad.get("pakkenr") or ""))
-
-
-def _les_nokler(csv_sti: Path) -> set:
-    if not csv_sti.exists():
-        return set()
-    with csv_sti.open(encoding="utf-8") as f:
-        return {_nokkel(rad) for rad in csv.DictReader(f)}
-
-
-def synkroniser_usb(csv_sti: Path, usb_sti: Path | None):
-    """Kalles hver gang minnepennen er tilkoblet. Sammenligner hva som
-    finnes på SD-kortet mot hva som finnes på minnepennen, og etterfyller
-    automatisk alt som ble fanget mens minnepennen var borte (f.eks. mens
-    den forrige turen til PC-en pågikk). Trygt å kalle ofte — den gjør
-    ingenting hvis minnepennen allerede er fullt oppdatert."""
-    if not _usb_tilgjengelig(usb_sti) or not csv_sti.exists():
-        return
-    try:
-        nokler_usb = _les_nokler(usb_sti)
-        manglet = 0
-        with csv_sti.open(encoding="utf-8") as f:
-            for rad in csv.DictReader(f):
-                if _nokkel(rad) not in nokler_usb:
-                    append_csv(rad, usb_sti)
-                    manglet += 1
-        if manglet:
-            logg(f"📀 Minnepenn oppdatert — hentet inn {manglet} pakke(r) som ble fanget mens den var frakoblet.")
-    except OSError as e:
-        logg(f"⚠  Klarte ikke synkronisere minnepenn ({e}).")
-
-
 def skriv_utskrift(tekst, utskrift: Path):
     with utskrift.open("a", encoding="utf-8") as f:
         f.write(f"\n===== {datetime.datetime.now().isoformat(timespec='seconds')} =====\n{tekst}\n")
 
 
-def behandle(tekst, utskrift, csv_sti, reg: Register, sesong, bare_fangst, usb_sti: Path | None = None):
+def behandle(tekst, utskrift, csv_sti, reg: Register, sesong, bare_fangst):
     if not tekst: return
     skriv_utskrift(tekst, utskrift)
     if bare_fangst:
-        logg("rå lapp fanget"); return
-    pakkenr = parse_lapp(tekst, sesong)["pakkenr"]
+        log("raw lapp fanget"); return
+    pakkenr = parse_label(tekst, sesong)["pakkenr"]
     status, n, reset = reg.vurder(pakkenr)
     if status == "duplikat":
-        logg(f"↺ duplikat pakkenr {pakkenr} — droppet (finnes i utskrift.txt)"); return
+        log(f"↺ duplikat pakkenr {pakkenr} — droppet (finnes i capture.txt)"); return
     if reset:
         reg.ny_runde()
-    rad = parse_lapp(tekst, sesong)
+    rad = parse_label(tekst, sesong)
     rad["runde"] = reg.runde
     rad["status"] = status
     if status == "ok":
         reg.registrer(n)
-    append_csv(rad, csv_sti)                 # SD-kortet — alltid, er fasiten
-    synkroniser_usb(csv_sti, usb_sti)         # speiler denne pakken + evt. "hull" fra forrige frakobling, i ett steg
+    append_csv(rad, csv_sti)
     if status == "ukjent":
-        logg("? fant ikke pakkenr — lagret med rådata for manuell sjekk")
+        log("? fant ikke pakkenr — lagret med rawdata for manuell sjekk")
     else:
-        usb_status = " 📀" if _usb_tilgjengelig(usb_sti) else ""
-        logg(f"✓ pakke {rad['pakkenr']} [r{reg.runde}/{sesong}]{usb_status} "
+        log(f"✓ pakke {rad['pakkenr']} [r{reg.runde}/{sesong}] "
              f"{rad['dimensjon'] or '?'} {rad['treslag'] or '?'} "
              f"sort {rad['sort'] or '?'}({rad['sort_navn'] or '?'}), "
              f"{rad['antall_plank'] or '?'} plank, {rad['kubikk_m3'] or '?'} m³")
@@ -352,9 +335,9 @@ def registrer_manuelt(pakkenr, csv_sti, mangler_sti, sesong, terskel):
     reg = Register(csv_sti, mangler_sti, terskel)
     status, n, reset = reg.vurder(pakkenr)
     if status == "duplikat":
-        logg(f"Pakkenr {pakkenr} finnes allerede i runde {reg.runde}. Avbryter."); return
+        log(f"Pakkenr {pakkenr} finnes allerede i runde {reg.runde}. Avbryter."); return
     if n is None:
-        logg("Ugyldig pakkenr."); return
+        log("Ugyldig pakkenr."); return
     if reset:
         reg.ny_runde()
     reg.registrer(n)
@@ -363,50 +346,11 @@ def registrer_manuelt(pakkenr, csv_sti, mangler_sti, sesong, terskel):
                dato=datetime.date.today().isoformat(), pakkenr=str(n),
                sesong=sesong, runde=reg.runde, status="manuell", raa="(manuelt registrert)")
     append_csv(rad, csv_sti)
-    logg(f"✓ Manuelt registrert pakke {n} [r{reg.runde}/{sesong}]")
-
-
-def _tid_aggreger(csv_sti):
-    """Leser CSV én gang og bøtter ok/manuell-pakker på år, måned (ÅÅÅÅ-MM),
-    ISO-uke (ÅÅÅÅ-UNN) og dag. Tar med pakker, plank, kubikk og løpemeter.
-    Skiller også på sesong (rå/tørr) per bøtte, for produksjonssammenligning.
-    Returnerer (per_ar, per_mnd, per_uke, per_dag) — hver er dict nøkkel->tall."""
-    def ny():
-        return {"pakker": 0, "plank": 0, "kubikk": 0.0, "lm": 0.0, "rå": 0, "tørr": 0}
-    per_ar, per_mnd, per_uke, per_dag = {}, {}, {}, {}
-    if not csv_sti.exists():
-        return per_ar, per_mnd, per_uke, per_dag
-    with csv_sti.open(encoding="utf-8") as f:
-        for rad in csv.DictReader(f):
-            if rad.get("status") not in ("ok", "manuell"):
-                continue
-            try:
-                d = datetime.date.fromisoformat((rad.get("dato") or "").strip())
-            except ValueError:
-                continue
-            plank = som_tall(rad.get("antall_plank")) or 0
-            try: kubikk = float(str(rad.get("kubikk_m3", "")).replace(",", "."))
-            except ValueError: kubikk = 0.0
-            try: lm = float(str(rad.get("sum_lengde_lm", "")).replace(",", "."))
-            except ValueError: lm = 0.0
-            sesong = (rad.get("sesong") or "").strip()
-            iso = d.isocalendar()
-            for bøtte, nøkkel in ((per_ar, str(d.year)),
-                                  (per_mnd, f"{d.year}-{d.month:02d}"),
-                                  (per_uke, f"{iso[0]}-U{iso[1]:02d}"),
-                                  (per_dag, d.isoformat())):
-                g = bøtte.setdefault(nøkkel, ny())
-                g["pakker"] += 1
-                g["plank"] += plank
-                g["kubikk"] += kubikk
-                g["lm"] += lm
-                if sesong in ("rå", "tørr"):
-                    g[sesong] += 1
-    return per_ar, per_mnd, per_uke, per_dag
+    log(f"✓ Manuelt registrert pakke {n} [r{reg.runde}/{sesong}]")
 
 
 def _grupper_rader(csv_sti, nokkel_felter):
-    """Leser pakkelapper.csv og grupperer ok/manuell-rader på de gitte feltene.
+    """Leser packages.csv og grupperer ok/manuell-rader på de gitte feltene.
     Returnerer dict: tuple(nøkkelverdier) -> {pakker, plank, kubikk}."""
     grupper = {}
     if not csv_sti.exists():
@@ -418,7 +362,7 @@ def _grupper_rader(csv_sti, nokkel_felter):
             nøkkel = tuple(rad.get(felt) or "ukjent" for felt in nokkel_felter)
             g = grupper.setdefault(nøkkel, {"pakker": 0, "plank": 0, "kubikk": 0.0})
             g["pakker"] += 1
-            g["plank"] += som_tall(rad.get("antall_plank")) or 0
+            g["plank"] += as_int(rad.get("antall_plank")) or 0
             try: g["kubikk"] += float(str(rad.get("kubikk_m3", "")).replace(",", "."))
             except ValueError: pass
     return grupper
@@ -426,7 +370,7 @@ def _grupper_rader(csv_sti, nokkel_felter):
 
 def oppsummering(csv_sti, ut_sti):
     if not csv_sti.exists():
-        logg(f"Finner ikke {csv_sti}."); return
+        log(f"Finner ikke {csv_sti}."); return
     grupper = _grupper_rader(csv_sti, ["sesong", "dato"])
     with ut_sti.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
@@ -434,7 +378,7 @@ def oppsummering(csv_sti, ut_sti):
         for (sesong, dato) in sorted(grupper):
             g = grupper[(sesong, dato)]
             w.writerow([sesong, dato, g["pakker"], g["plank"], round(g["kubikk"], 3)])
-    logg(f"Oppsummering skrevet til {ut_sti.name}")
+    log(f"Oppsummering skrevet til {ut_sti.name}")
     for (sesong, dato) in sorted(grupper):
         g = grupper[(sesong, dato)]
         print(f"   {sesong:5} {dato}:  {g['pakker']} pakker,  {g['plank']} plank,  {round(g['kubikk'],3)} m³")
@@ -443,17 +387,17 @@ def oppsummering(csv_sti, ut_sti):
 def oppsummering_dimensjon(csv_sti, ut_sti):
     """Summerer pakker/plank/kubikk gruppert på sesong + dimensjon (uavhengig av dato)."""
     if not csv_sti.exists():
-        logg(f"Finner ikke {csv_sti}."); return
+        log(f"Finner ikke {csv_sti}."); return
     grupper = _grupper_rader(csv_sti, ["sesong", "dimensjon"])
     if not grupper:
-        logg("Ingen pakker å summere ennå."); return
+        log("Ingen pakker å summere ennå."); return
     with ut_sti.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["sesong", "dimensjon", "antall_pakker", "sum_plank", "sum_kubikk_m3"])
         for (sesong, dim) in sorted(grupper):
             g = grupper[(sesong, dim)]
             w.writerow([sesong, dim, g["pakker"], g["plank"], round(g["kubikk"], 3)])
-    logg(f"Oversikt per dimensjon skrevet til {ut_sti.name}")
+    log(f"Oversikt per dimensjon skrevet til {ut_sti.name}")
     for (sesong, dim) in sorted(grupper):
         g = grupper[(sesong, dim)]
         print(f"   {sesong:5} {dim:>9}:  {g['pakker']} pakker,  {g['plank']} plank,  {round(g['kubikk'],3)} m³")
@@ -469,47 +413,46 @@ def list_porter():
     for p in porter: print("  ", p)
 
 
-def les_serie(args, utskrift, csv_sti, reg, sesong, usb_sti: Path | None = None):
+def les_serie(args, utskrift, csv_sti, reg, sesong):
     import serial
-    paritet = {"N": serial.PARITY_NONE, "E": serial.PARITY_EVEN, "O": serial.PARITY_ODD}[args.paritet]
-    logg(f"Starter. Lytter på {args.port} @ {args.baud} {args.databits}{args.paritet}{args.stoppbits}"
-         f"  sesong={sesong}{'  [BARE FANGST]' if args.bare_fangst else ''}"
-         f"{f'  usb={usb_sti}' if usb_sti else ''}  (Ctrl+C for å stoppe)")
+    paritet = {"N": serial.PARITY_NONE, "E": serial.PARITY_EVEN, "O": serial.PARITY_ODD}[args.parity]
+    log(f"Listening on {args.port} @ {args.baud} {args.databits}{args.parity}{args.stoppbits}"
+         f"  season={sesong}{'  [RAW CAPTURE]' if args.raw_capture else ''}  (Ctrl+C to stop)")
     while True:
         try:
             ser = serial.Serial(args.port, args.baud, bytesize=args.databits,
                                 parity=paritet, stopbits=args.stoppbits, timeout=args.timeout)
         except serial.SerialException as e:
-            logg(f"Får ikke åpnet {args.port} ({e}). Prøver igjen om 5 s …"); time.sleep(5); continue
-        logg("Tilkoblet.")
+            log(f"Får ikke åpnet {args.port} ({e}). Prøver igjen om 5 s …"); time.sleep(5); continue
+        log("Tilkoblet.")
         buf, sist = bytearray(), time.time()
         try:
             while True:
                 b = ser.read(1)
                 if b:
                     if b[0] == FORMFEED:
-                        behandle(rens(bytes(buf)), utskrift, csv_sti, reg, sesong, args.bare_fangst, usb_sti); buf.clear()
+                        behandle(clean_text(bytes(buf)), utskrift, csv_sti, reg, sesong, args.raw_capture); buf.clear()
                     else:
                         buf += b
                     sist = time.time()
                 elif buf and (time.time() - sist) > args.flush:
-                    behandle(rens(bytes(buf)), utskrift, csv_sti, reg, sesong, args.bare_fangst, usb_sti); buf.clear()
+                    behandle(clean_text(bytes(buf)), utskrift, csv_sti, reg, sesong, args.raw_capture); buf.clear()
         except serial.SerialException as e:
-            logg(f"Mistet forbindelsen ({e}). Kobler til igjen om 5 s …")
+            log(f"Lost connection ({e}). Reconnecting in 5 s …")
             try: ser.close()
             except Exception: pass
             time.sleep(5); continue
         except KeyboardInterrupt:
-            if buf: behandle(rens(bytes(buf)), utskrift, csv_sti, reg, sesong, args.bare_fangst, usb_sti)
-            ser.close(); logg("Stoppet."); return
+            if buf: behandle(clean_text(bytes(buf)), utskrift, csv_sti, reg, sesong, args.raw_capture)
+            ser.close(); log("Stopped."); return
 
 
-def kjor_simulering(args, utskrift, csv_sti, reg, sesong, usb_sti: Path | None = None):
-    data = Path(args.simuler).read_bytes()
-    logg(f"Simulerer fra {args.simuler} …  sesong={sesong}")
+def kjor_simulering(args, utskrift, csv_sti, reg, sesong):
+    data = Path(args.simulate).read_bytes()
+    log(f"Simulating from {args.simulate} …  season={sesong}")
     for chunk in data.split(bytes([FORMFEED])):
-        behandle(rens(chunk), utskrift, csv_sti, reg, sesong, args.bare_fangst, usb_sti)
-    logg("Ferdig.")
+        behandle(clean_text(chunk), utskrift, csv_sti, reg, sesong, args.raw_capture)
+    log("Done.")
 
 
 def eksporter_xlsx(csv_sti, xlsx_sti):
@@ -518,7 +461,7 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
     from openpyxl.utils import get_column_letter
 
     if not csv_sti.exists():
-        logg(f"Finner ikke {csv_sti}."); return
+        log(f"Finner ikke {csv_sti}."); return
 
     FONT_NAVN = "Calibri"
     TEMA_GRØNN = "1B4D3E"      # tittel/header-bakgrunn — varm, dempet, trelast-aktig
@@ -623,7 +566,7 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
                 d = r.get("dimensjon") or "ukjent"
                 g = dim_sum.setdefault(d, {"pakker": 0, "plank": 0, "kubikk": 0.0})
                 g["pakker"] += 1
-                g["plank"] += som_tall(r.get("antall_plank")) or 0
+                g["plank"] += as_int(r.get("antall_plank")) or 0
                 try: g["kubikk"] += float(str(r.get("kubikk_m3", "")).replace(",", "."))
                 except ValueError: pass
             c = ws.cell(rad_nr, 1, "Per dimensjon i denne fanen:")
@@ -659,88 +602,6 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
         siste_kol = get_column_letter(n)
         ws.auto_filter.ref = f"A{header_rad}:{siste_kol}{header_rad + len(rader)}"
 
-    def skriv_sammendrag(ws):
-        """Egen 'Sammendrag'-fane øverst i arbeidsboka: totaler per år, måned,
-        uke og dag — så ekspeditøren slipper å regne sammen selv."""
-        per_ar, per_mnd, per_uke, per_dag = _tid_aggreger(csv_sti)
-        ws.sheet_view.showGridLines = False
-        BREDDE = 6
-        for j, b in enumerate([16, 13, 13, 15, 15, 20], start=1):
-            ws.column_dimensions[get_column_letter(j)].width = b
-
-        # Tittelbånd
-        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=BREDDE)
-        c0 = ws.cell(1, 1, "Pakkelapper — sammendrag"); c0.font = TITTEL_FONT; c0.fill = TITTEL_FILL
-        c0.alignment = Alignment(horizontal="left", vertical="center", indent=1)
-        ws.row_dimensions[1].height = 26
-        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=BREDDE)
-        c0 = ws.cell(2, 1, f"Generert {datetime.datetime.now():%d.%m.%Y %H:%M}  ·  alt regnet ut automatisk")
-        c0.font = UNDERTITTEL_FONT; c0.fill = TITTEL_FILL
-        c0.alignment = Alignment(horizontal="left", vertical="center", indent=1)
-
-        rad = [4]  # muterbar teller så indre funksjon kan øke den
-
-        def blokk(tittel, data_dict, nyeste_forst=True, maks=None):
-            r = rad[0]
-            ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=BREDDE)
-            ct = ws.cell(r, 1, tittel); ct.font = Font(name=FONT_NAVN, size=11, bold=True, color="FFFFFF")
-            ct.fill = HEADER_FILL; ct.alignment = Alignment(horizontal="left", indent=1)
-            r += 1
-            overskrifter = ["Periode", "Pakker", "Plank", "Kubikk (m³)", "Løpemeter", "Sesong (rå/tørr)"]
-            for j, h in enumerate(overskrifter, start=1):
-                c = ws.cell(r, j, h); c.font = SUBTOTAL_FONT; c.fill = SUBTOTAL_FILL
-                c.alignment = Alignment(horizontal="center")
-            r += 1
-            nøkler = sorted(data_dict.keys(), reverse=nyeste_forst)
-            if maks:
-                nøkler = nøkler[:maks]
-            for nøkkel in nøkler:
-                g = data_dict[nøkkel]
-                verdier = [nøkkel, g["pakker"], g["plank"], round(g["kubikk"], 3),
-                           round(g["lm"], 1), f'{g["rå"]} / {g["tørr"]}']
-                for j, v in enumerate(verdier, start=1):
-                    c = ws.cell(r, j, v)
-                    c.font = DATA_FONT
-                    c.border = RAMME
-                    if j == 1:   c.alignment = Alignment(horizontal="center")
-                    if j == 4:   c.number_format = "0.000"
-                    if j == 5:   c.number_format = "#,##0.0"
-                    if j == 6:   c.alignment = Alignment(horizontal="center")
-                r += 1
-            rad[0] = r + 1  # luft før neste blokk
-
-        if not per_ar:
-            ws.cell(4, 1, "Ingen pakker registrert ennå.").font = DATA_FONT
-            return
-        blokk("PER ÅR", per_ar)
-        blokk("PER MÅNED", per_mnd)
-        blokk("PER UKE (siste 12)", per_uke, maks=12)
-        blokk("PER DAG (siste 21)", per_dag, maks=21)
-
-        # Nøkkeltall nederst
-        r = rad[0]
-        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=BREDDE)
-        ct = ws.cell(r, 1, "NØKKELTALL"); ct.font = Font(name=FONT_NAVN, size=11, bold=True, color="FFFFFF")
-        ct.fill = HEADER_FILL; ct.alignment = Alignment(horizontal="left", indent=1)
-        r += 1
-        i_ar = str(datetime.date.today().year)
-        dager_i_ar = [v for k, v in per_dag.items() if k.startswith(i_ar)]
-        snitt = round(sum(d["pakker"] for d in dager_i_ar) / len(dager_i_ar), 1) if dager_i_ar else 0
-        beste = max(dager_i_ar, key=lambda d: d["pakker"], default=None)
-        beste_dag = max((k for k in per_dag if k.startswith(i_ar)),
-                        key=lambda k: per_dag[k]["pakker"], default="—")
-        nøkkeltall = [
-            (f"Snitt pakker per produksjonsdag ({i_ar})", snitt),
-            ("Beste enkeltdag i år", f'{beste_dag}: {beste["pakker"]} pakker' if beste else "—"),
-            ("Antall produksjonsdager i år", len(dager_i_ar)),
-        ]
-        for tittel, verdi in nøkkeltall:
-            ws.cell(r, 1, tittel).font = DATA_FONT
-            ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=3)
-            c = ws.cell(r, 4, verdi); c.font = SUBTOTAL_FONT
-            r += 1
-        ws.freeze_panes = "A3"
-
     wb = Workbook()
     with csv_sti.open(encoding="utf-8") as f:
         alle_rader = list(csv.DictReader(f))
@@ -750,29 +611,23 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
         fane = SORT_FANE.get(rad.get("sort"), "Uavklart")
         fane_data[fane].append(rad)
     for rader in fane_data.values():
-        rader.sort(key=lambda r: (r.get("dimensjon") or "", r.get("dato") or "", som_tall(r.get("pakkenr")) or 0))
+        rader.sort(key=lambda r: (r.get("dimensjon") or "", r.get("dato") or "", as_int(r.get("pakkenr")) or 0))
 
     FELTER_KATEGORI = [f for f in KOLONNER if f not in ("sort", "sort_navn")]   # sort er gitt av fanen
     FELTER_UAVKLART = KOLONNER                                                  # her trengs sort/sortnavn
-
-    # Sammendrag alltid først — det ekspeditøren ser når fila åpnes
-    sammendrag_ws = wb.active
-    sammendrag_ws.title = "Sammendrag"
-    skriv_sammendrag(sammendrag_ws)
 
     forste = True
     for fane in FANE_REKKEFØLGE:
         rader = fane_data[fane]
         if not rader: continue
-        ws = wb.create_sheet()
+        ws = wb.active if forste else wb.create_sheet()
         ws.title = fane
         forste = False
         felter = FELTER_UAVKLART if fane == "Uavklart" else FELTER_KATEGORI
         skriv_fane(ws, f"Pakkelapper — {fane}", felter, rader)
     if forste:
-        tom_ws = wb.create_sheet()
-        tom_ws.title = "5Sort"
-        skriv_fane(tom_ws, "Pakkelapper — 5Sort", FELTER_KATEGORI, [])
+        wb.active.title = "5Sort"
+        skriv_fane(wb.active, "Pakkelapper — 5Sort", FELTER_KATEGORI, [])
 
     # Samlet oversikt: antall/plank/kubikk per dimensjon, på tvers av alle fanene
     dim_grupper = _grupper_rader(csv_sti, ["sesong", "dimensjon"])
@@ -787,68 +642,278 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
         skriv_fane(dim_ws, "Oversikt per dimensjon — alle sorter", dim_felter, dim_rader,
                    vis_dimensjonsoversikt=False)
 
+    # ── Rådata (flatt ark) — grunnlaget Sammendrag-formlene regner på ────────
+    from openpyxl.chart import BarChart, LineChart, PieChart, Reference
+
+    ok_rader = []
+    for r in alle_rader:
+        if r.get("status") not in ("ok", "manuell"):
+            continue
+        try:    d = datetime.date.fromisoformat(r.get("dato", ""))
+        except ValueError: continue
+        ok_rader.append({
+            "dato": d,
+            "kategori": SORT_FANE.get(r.get("sort"), "Uavklart"),
+            "sesong": r.get("sesong", ""),
+            "dimensjon": r.get("dimensjon", ""),
+            "plank": as_int(r.get("antall_plank")) or 0,
+            "lm": float(str(r.get("sum_lengde_lm") or 0).replace(",", ".") or 0),
+            "kubikk": float(str(r.get("kubikk_m3") or 0).replace(",", ".") or 0),
+        })
+    ok_rader.sort(key=lambda r: r["dato"])
+
+    rd = wb.create_sheet("Rådata")
+    rd.sheet_view.showGridLines = False
+    for j, (felt, tittel, br) in enumerate([
+            ("dato", "Dato", 12), ("kategori", "Kategori", 12),
+            ("sesong", "Sesong", 10), ("dimensjon", "Dimensjon", 12),
+            ("plank", "Plank", 10), ("lm", "Løpemeter (lm)", 15),
+            ("kubikk", "Kubikk (m³)", 13)], start=1):
+        c = rd.cell(1, j, tittel)
+        c.font = HEADER_FONT; c.fill = HEADER_FILL
+        c.alignment = Alignment(horizontal="center")
+        rd.column_dimensions[get_column_letter(j)].width = br
+    for i, r in enumerate(ok_rader, start=2):
+        rd.cell(i, 1, r["dato"]).number_format = "DD.MM.YYYY"
+        rd.cell(i, 2, r["kategori"])
+        rd.cell(i, 3, r["sesong"])
+        rd.cell(i, 4, r["dimensjon"])
+        rd.cell(i, 5, r["plank"]).number_format = "#,##0"
+        rd.cell(i, 6, round(r["lm"], 1)).number_format = "#,##0.0"
+        rd.cell(i, 7, round(r["kubikk"], 3)).number_format = "0.000"
+        for j in range(1, 8):
+            rd.cell(i, j).font = DATA_FONT
+    rd.freeze_panes = "A2"
+
+    # ── Sammendrag — totaler per sort/dag/måned/år, med grafer ──────────────
+    # Alle tall er formler (COUNTIFS/SUMIFS) mot Rådata-arket, så de
+    # oppdateres om noen redigerer/filtrerer bort rader der.
+    sm = wb.create_sheet("Sammendrag", 0)
+    sm.sheet_view.showGridLines = False
+
+    for j, br in enumerate([16, 10, 10, 15, 13, 12, 12, 12, 12, 12], start=1):
+        sm.column_dimensions[get_column_letter(j)].width = br
+
+    # Kompakt grønt banner (rad 1–3) med hvit knockout-logo integrert til venstre
+    # og rapporttittelen til høyre — samme visuelle sprawk som fane-titlene, og
+    # tar bare ~55 px høyde i stedet for en halv skjerm.
+    BANNER_H = [20, 20, 15]          # radhøyder i banneret
+    for i, h in enumerate(BANNER_H, start=1):
+        sm.row_dimensions[i].height = h
+        for kol_i in range(1, 11):
+            sm.cell(i, kol_i).fill = TITTEL_FILL
+
+    logo_sti = Path(__file__).parent / "skaak_logo_hvit.png"
+    if logo_sti.exists():
+        from openpyxl.drawing.image import Image as XLImage
+        from PIL import Image as PILImage
+        with PILImage.open(logo_sti) as _im:
+            fw, fh = _im.size
+        vis_h = 40                    # px — passer inni banneret
+        logo = XLImage(str(logo_sti))
+        logo.height, logo.width = vis_h, int(vis_h * fw / fh)
+        logo.anchor = "A1"
+        sm.add_image(logo, "A1")
+
+    sm.merge_cells("D1:J2")
+    c = sm.cell(1, 4, "Produksjonskontroll — Halvårsrapport")
+    c.font = Font(name=FONT_NAVN, size=13, bold=True, color="FFFFFF")
+    c.alignment = Alignment(horizontal="right", vertical="center", indent=1)
+    sm.merge_cells("D3:J3")
+    c = sm.cell(3, 4, f"Generert {datetime.datetime.now():%d.%m.%Y %H:%M}  ·  "
+                      f"{len(ok_rader)} pakker  ·  formler mot Rådata-arket")
+    c.font = Font(name=FONT_NAVN, size=8, italic=True, color="D9E5E1")
+    c.alignment = Alignment(horizontal="right", vertical="center", indent=1)
+
+    RD = "'Rådata'"
+    MND_NAVN = {1:"Jan",2:"Feb",3:"Mar",4:"Apr",5:"Mai",6:"Jun",
+                7:"Jul",8:"Aug",9:"Sep",10:"Okt",11:"Nov",12:"Des"}
+    kategorier = [k for k in FANE_REKKEFØLGE
+                  if any(r["kategori"] == k for r in ok_rader)]
+    år_liste = sorted({r["dato"].year for r in ok_rader})
+    mnd_liste = sorted({(r["dato"].year, r["dato"].month) for r in ok_rader})
+    dag_liste = sorted({r["dato"] for r in ok_rader})[-21:]
+
+    def sm_overskrift(rad, titler):
+        for j, t in enumerate(titler, start=1):
+            c = sm.cell(rad, j, t)
+            c.font = HEADER_FONT; c.fill = HEADER_FILL
+            c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        sm.row_dimensions[rad].height = 26
+
+    def sm_seksjon(rad, tekst):
+        c = sm.cell(rad, 1, tekst); c.font = SUBTOTAL_FONT
+
+    def sm_celle(rad, kol, verdi, fmt=None, fet=False):
+        c = sm.cell(rad, kol, verdi)
+        c.font = Font(name=FONT_NAVN, size=10, bold=fet,
+                      color="1B4D3E" if fet else "000000")
+        c.border = RAMME
+        if fmt: c.number_format = fmt
+        if fet: c.fill = SUBTOTAL_FILL
+        return c
+
+    def cnt(krit):  return f"COUNTIFS({krit})"
+    def sums(kol, krit): return f"SUMIFS({RD}!${kol}:${kol},{krit})"
+    def k_kat(kat):      return f"{RD}!$B:$B,\"{kat}\""
+    def k_år(y):         return (f"{RD}!$A:$A,\">=\"&DATE({y},1,1),"
+                                 f"{RD}!$A:$A,\"<\"&DATE({y+1},1,1)")
+    def k_mnd(y, m):
+        y2, m2 = (y + 1, 1) if m == 12 else (y, m + 1)
+        return (f"{RD}!$A:$A,\">=\"&DATE({y},{m},1),"
+                f"{RD}!$A:$A,\"<\"&DATE({y2},{m2},1)")
+    def k_dag(d):        return f"{RD}!$A:$A,DATE({d.year},{d.month},{d.day})"
+
+    STD = ["Pakker", "Plank", "Løpemeter (lm)", "Kubikk (m³)"]
+    STD_FMT = ["#,##0", "#,##0", "#,##0.0", "0.000"]
+
+    def std_formler(krit):
+        return [f"={cnt(krit)}", f"={sums('E', krit)}",
+                f"={sums('F', krit)}", f"={sums('G', krit)}"]
+
+    # 1) Totalt per sortkategori ------------------------------------------------
+    rad = 5
+    sm_seksjon(rad, "Totalt per sortkategori"); rad += 1
+    kat_hode = rad
+    sm_overskrift(rad, ["Sortkategori"] + STD); rad += 1
+    kat_forste = rad
+    for kat in kategorier:
+        sm_celle(rad, 1, kat)
+        for j, (f, fmt) in enumerate(zip(std_formler(k_kat(kat)), STD_FMT), start=2):
+            sm_celle(rad, j, f, fmt)
+        rad += 1
+    kat_siste = rad - 1
+    sm_celle(rad, 1, "Totalt", fet=True)
+    for j, fmt in enumerate(STD_FMT, start=2):
+        kb = get_column_letter(j)
+        sm_celle(rad, j, f"=SUM({kb}{kat_forste}:{kb}{kat_siste})", fmt, fet=True)
+    rad += 2
+
+    # 2) Per år -----------------------------------------------------------------
+    sm_seksjon(rad, "Per år"); rad += 1
+    sm_overskrift(rad, ["År"] + STD); rad += 1
+    for y in år_liste:
+        sm_celle(rad, 1, str(y))
+        for j, (f, fmt) in enumerate(zip(std_formler(k_år(y)), STD_FMT), start=2):
+            sm_celle(rad, j, f, fmt)
+        rad += 1
+    rad += 1
+
+    # 3) Per måned (+ kubikk per sortkategori, for stablet graf) ---------------
+    sm_seksjon(rad, "Per måned"); rad += 1
+    mnd_hode = rad
+    sm_overskrift(rad, ["Måned"] + STD + [f"{k} (m³)" for k in kategorier]); rad += 1
+    mnd_forste = rad
+    for (y, m) in mnd_liste:
+        sm_celle(rad, 1, f"{MND_NAVN[m]} {y}")
+        for j, (f, fmt) in enumerate(zip(std_formler(k_mnd(y, m)), STD_FMT), start=2):
+            sm_celle(rad, j, f, fmt)
+        for j, kat in enumerate(kategorier, start=6):
+            sm_celle(rad, j, f"={sums('G', k_mnd(y, m) + ',' + k_kat(kat))}", "0.000")
+        rad += 1
+    mnd_siste = rad - 1
+    rad += 1
+
+    # 4) Per dag (siste 21 produksjonsdager) -----------------------------------
+    sm_seksjon(rad, f"Per dag (siste {len(dag_liste)} produksjonsdager)"); rad += 1
+    dag_hode = rad
+    sm_overskrift(rad, ["Dato"] + STD); rad += 1
+    dag_forste = rad
+    for d in dag_liste:
+        sm_celle(rad, 1, d, "DD.MM.YYYY")
+        for j, (f, fmt) in enumerate(zip(std_formler(k_dag(d)), STD_FMT), start=2):
+            sm_celle(rad, j, f, fmt)
+        rad += 1
+    dag_siste = rad - 1
+
+    # Grafer -------------------------------------------------------------------
+    def stil(ch, tittel, h=8.2, b=15.5):
+        ch.title = tittel; ch.height = h; ch.width = b
+        ch.style = 10
+        return ch
+
+    kake = stil(PieChart(), "Kubikkfordeling per sort", h=7.6, b=11.5)
+    kake.add_data(Reference(sm, min_col=5, min_row=kat_forste, max_row=kat_siste))
+    kake.set_categories(Reference(sm, min_col=1, min_row=kat_forste, max_row=kat_siste))
+    sm.add_chart(kake, "L4")
+
+    stab = stil(BarChart(), "Kubikk per måned, fordelt på sort")
+    stab.type = "col"; stab.grouping = "stacked"; stab.overlap = 100
+    stab.add_data(Reference(sm, min_col=6, max_col=5 + len(kategorier),
+                            min_row=mnd_hode, max_row=mnd_siste), titles_from_data=True)
+    stab.set_categories(Reference(sm, min_col=1, min_row=mnd_forste, max_row=mnd_siste))
+    stab.y_axis.title = "m³"
+    sm.add_chart(stab, "L20")
+
+    meter = stil(BarChart(), "Løpemeter per måned")
+    meter.type = "col"
+    meter.add_data(Reference(sm, min_col=4, min_row=mnd_hode, max_row=mnd_siste),
+                   titles_from_data=True)
+    meter.set_categories(Reference(sm, min_col=1, min_row=mnd_forste, max_row=mnd_siste))
+    meter.y_axis.title = "lm"; meter.legend = None
+    sm.add_chart(meter, "L37")
+
+    linje_ch = stil(LineChart(), f"Kubikk per dag (siste {len(dag_liste)} dager)")
+    linje_ch.add_data(Reference(sm, min_col=5, min_row=dag_hode, max_row=dag_siste),
+                      titles_from_data=True)
+    linje_ch.set_categories(Reference(sm, min_col=1, min_row=dag_forste, max_row=dag_siste))
+    linje_ch.y_axis.title = "m³"; linje_ch.legend = None
+    sm.add_chart(linje_ch, "L53")
+
+    wb.active = 0
+
     tmp = xlsx_sti.with_suffix(".tmp.xlsx")
     wb.save(tmp); os.replace(tmp, xlsx_sti)
     antall = {fane: len(rader) for fane, rader in fane_data.items() if rader}
-    logg(f"Eksportert til {xlsx_sti}  (" + ", ".join(f"{f}: {n}" for f, n in antall.items()) + ")")
+    log(f"Eksportert til {xlsx_sti}  (" + ", ".join(f"{f}: {n}" for f, n in antall.items()) + ")")
 
 
 
 def main():
-    p = argparse.ArgumentParser(description="Pakkemaskin Skriver — RS-232 → CSV/Excel.")
+    p = argparse.ArgumentParser(description="rs232excel - Package label capture — RS-232 → CSV/Excel.")
     p.add_argument("--port", default="/dev/ttyUSB0")
     p.add_argument("--baud", type=int, default=9600)
     p.add_argument("--databits", type=int, default=8)
-    p.add_argument("--paritet", choices=["N", "E", "O"], default="N")
+    p.add_argument("--parity", choices=["N", "E", "O"], default="N")
     p.add_argument("--stoppbits", type=int, default=1)
     p.add_argument("--timeout", type=float, default=1.0)
     p.add_argument("--flush", type=float, default=3.0)
     p.add_argument("--reset-terskel", type=int, default=100,
                    help="hvor stort hopp bakover som regnes som nullstilling")
-    p.add_argument("--csv", default="pakkelapper.csv")
+    p.add_argument("--csv", default="packages.csv")
     p.add_argument("--xlsx", default="pakkelapper.xlsx")
-    p.add_argument("--utskrift", default="utskrift.txt")
-    p.add_argument("--mangler", default="mangler.csv")
-    p.add_argument("--oppsummering-fil", default="oppsummering.csv")
+    p.add_argument("--utskrift", default="capture.txt")
+    p.add_argument("--mangler", default="missing.csv")
+    p.add_argument("--summary-fil", default="oppsummering.csv")
     p.add_argument("--dimensjon-fil", default="oppsummering_dimensjon.csv")
-    p.add_argument("--sesong-fil", default="sesong.txt")
-    p.add_argument("--usb-sti", default="/media/usb0",
-                   help='mappe der en minnepenn forventes montert, for sanntids-speiling av '
-                        'pakkelapper.csv. SD-kortet er alltid fasiten uansett — sett til "" '
-                        'for å slå speiling helt av.')
-    p.add_argument("--bare-fangst", action="store_true")
-    p.add_argument("--simuler")
+    p.add_argument("--sesong-fil", default="season.txt")
+    p.add_argument("--raw-capture", action="store_true")
+    p.add_argument("--simulate")
     p.add_argument("--list-porter", action="store_true")
-    p.add_argument("--eksporter-xlsx", action="store_true")
-    p.add_argument("--oppsummering", action="store_true")
-    p.add_argument("--oppsummering-dimensjon", action="store_true",
+    p.add_argument("--export-xlsx", action="store_true")
+    p.add_argument("--summary", action="store_true")
+    p.add_argument("--summary-dimensjon", action="store_true",
                    help="antall/plank/kubikk gruppert per dimensjon (uavhengig av dato)")
-    p.add_argument("--registrer", help="registrer et pakkenr manuelt (når lappen aldri kom)")
-    p.add_argument("--sett-sesong", help='sett gjeldende sesong: "rå" eller "tørr"')
+    p.add_argument("--register", help="registrer et pakkenr manuelt (når lappen aldri kom)")
+    p.add_argument("--set-season", help='sett gjeldende sesong: "raw" eller "kiln-dried"')
     args = p.parse_args()
 
     utskrift, csv_sti = Path(args.utskrift), Path(args.csv)
     mangler_sti, xlsx_sti, sesong_fil = Path(args.mangler), Path(args.xlsx), Path(args.sesong_fil)
-    usb_sti = (Path(args.usb_sti) / args.csv) if args.usb_sti else None
 
     if args.list_porter:    list_porter(); return
-    if args.sett_sesong:    sett_sesong(args.sett_sesong, sesong_fil); return
-    if args.eksporter_xlsx: eksporter_xlsx(csv_sti, xlsx_sti); return
-    if args.oppsummering:   oppsummering(csv_sti, Path(args.oppsummering_fil)); return
-    if args.oppsummering_dimensjon: oppsummering_dimensjon(csv_sti, Path(args.dimensjon_fil)); return
+    if args.set_season:    set_season(args.set_season, sesong_fil); return
+    if args.export_xlsx: eksporter_xlsx(csv_sti, xlsx_sti); return
+    if args.summary:   oppsummering(csv_sti, Path(args.summary_fil)); return
+    if args.summary_dimensjon: oppsummering_dimensjon(csv_sti, Path(args.dimensjon_fil)); return
 
-    sesong = les_sesong(sesong_fil)
-    if args.registrer:
-        registrer_manuelt(args.registrer, csv_sti, mangler_sti, sesong, args.reset_terskel)
-        synkroniser_usb(csv_sti, usb_sti)
-        return
+    sesong = read_season(sesong_fil)
+    if args.register:
+        registrer_manuelt(args.register, csv_sti, mangler_sti, sesong, args.reset_terskel); return
 
     reg = Register(csv_sti, mangler_sti, args.reset_terskel)
-    if _usb_tilgjengelig(usb_sti):
-        logg(f"Minnepenn funnet ved oppstart ({usb_sti.parent}) — sjekker om noe mangler …")
-        synkroniser_usb(csv_sti, usb_sti)
-    if args.simuler: kjor_simulering(args, utskrift, csv_sti, reg, sesong, usb_sti)
-    else:            les_serie(args, utskrift, csv_sti, reg, sesong, usb_sti)
+    if args.simulate: kjor_simulering(args, utskrift, csv_sti, reg, sesong)
+    else:            les_serie(args, utskrift, csv_sti, reg, sesong)
 
 
 if __name__ == "__main__":

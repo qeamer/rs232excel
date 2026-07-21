@@ -5,9 +5,9 @@ After=multi-user.target
 [Service]
 Type=simple
 User=pi
-WorkingDirectory=/home/pi/pakkemaskin-skriver
+WorkingDirectory=/home/pi/rs232excel/python/no
 # Juster --port og --baud. Bruk --bare-fangst første gang for å se lappformatet.
-ExecStart=/usr/bin/python3 /home/pi/pakkemaskin-skriver/les_pakkelapp.py --port /dev/ttyUSB0 --baud 9600
+ExecStart=/usr/bin/python3 /home/pi/rs232excel/python/no/read_package.py --port /dev/ttyUSB0 --baud 9600 --usb-sti /media/usb0
 Restart=always
 RestartSec=5
 

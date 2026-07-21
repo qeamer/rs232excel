@@ -9,4 +9,4 @@ sudo systemctl enable --now pakkemaskin-skriver.service
 echo "3/3  Ferdig."
 echo "  Status:  systemctl status pakkemaskin-skriver"
 echo "  Logg:    journalctl -u pakkemaskin-skriver -f"
-echo "  Excel:   python3 les_pakkelapp.py --eksporter-xlsx"
+echo "  Excel:   python3 read_package.py --eksporter-xlsx"

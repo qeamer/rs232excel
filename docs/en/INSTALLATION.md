@@ -35,9 +35,9 @@ Download **Raspberry Pi Imager** from [raspberrypi.com/software](https://www.ras
 
 <img src="img/pi-imager-setup.png" width="100%" alt="Raspberry Pi Imager settings"/>
 
-Main screen choices: **Device** = Raspberry Pi Zero 2 W · **OS** = Raspberry Pi OS **Lite** (64-bit) · **Storage** = the Lexar card. Hit the gear icon (or Ctrl+Shift+X) for the customisation screen above, then **Write** (~5 min).
+Main screen choices: **Device** = Raspberry Pi Zero **WH** · **OS** = Raspberry Pi OS **Lite (32-bit)** · **Storage** = the Lexar card. Hit the gear icon (or Ctrl+Shift+X) for the customisation screen above, then **Write** (~5 min).
 
-> **Why Lite?** No desktop means faster boot, less SD wear, and everything is done over SSH anyway.
+> **Why Lite (32-bit)?** Pi Zero WH has a single-core ARMv6 CPU — 64-bit OS is not supported. No desktop means faster boot, less SD wear, and everything is done over SSH anyway.
 
 ---
 
@@ -65,20 +65,20 @@ Paste these blocks one at a time into the SSH session:
 # System update (~5 min)
 sudo apt update && sudo apt upgrade -y
 
-# Dependencies
-pip3 install --break-system-packages pyserial openpyxl
-pip3 install --break-system-packages luma.oled        # only if using the OLED
+# Clone the repo
+git clone https://github.com/qeamer/rs232excel.git
+cd rs232excel/python/en
 
-# Enable I2C for the OLED (skip if no display)
-sudo raspi-config      # Interface Options → I2C → Enable → reboot
+# Install dependencies and enable autostart
+bash install.sh
 ```
 
-Get the project files onto the Pi — easiest is a USB stick prepared on your PC (`les_pakkelapp.py`, `pakkemaskin-skriver.service`, `installer.sh`, `vis_status.py`), or clone directly:
+Optional OLED display:
 
 ```bash
-git clone https://github.com/qeamer/rs232excel.git pakkemaskin-skriver
-cd pakkemaskin-skriver
-bash installer.sh      # installs the systemd service for autostart
+pip3 install --break-system-packages luma.oled
+sudo raspi-config      # Interface Options → I2C → Enable → reboot
+python3 vis_status.py  # runs independently of capture
 ```
 
 ---
@@ -86,6 +86,8 @@ bash installer.sh      # installs the systemd service for autostart
 ## 5 · The physical tap
 
 **Stop the machine before touching any cable.** The original cable is never modified — the 40 cm extension goes **in series** at the printer end and can be removed in seconds.
+
+See also: [wiring.md](wiring.md)
 
 <img src="img/wiring-tap.png" width="100%" alt="DB25 tap wiring"/>
 
@@ -109,7 +111,7 @@ The OTG adapter **must** go in the middle **data** port on the Pi Zero — the c
 
 <img src="img/oled-gpio.png" width="80%" alt="OLED GPIO wiring"/>
 
-Four jumper wires, completely independent of the USB chain. Runs as its own program (`vis_status.py`) — if it ever crashes, capture is unaffected.
+Four jumper wires, completely independent of the USB chain. Runs as its own program — if it ever crashes, capture is unaffected.
 
 ---
 
@@ -118,44 +120,47 @@ Four jumper wires, completely independent of the USB chain. Runs as its own prog
 **Test 1 — raw capture, nothing saved.** Run a package through the plant and watch:
 
 ```bash
-python3 les_pakkelapp.py --bare-fangst --port /dev/ttyUSB0
+cd ~/rs232excel/python/en
+python3 read_package.py --raw-capture --port /dev/ttyUSB0
 ```
 
 Compare against the physical printed label. Garbled output (`6´´ ·5Ø ±50` instead of `645 75X 150`)? The PLC likely uses 7E1 framing:
 
 ```bash
-python3 les_pakkelapp.py --bare-fangst --paritet E --databits 7
+python3 read_package.py --raw-capture --parity E --databits 7
 ```
 
 Nothing at all? Try `--baud 4800`, `2400`, or `19200`, and re-check the pin 2/7 splice.
 
-**Test 2 — real capture with USB mirroring.** This is the production command:
+**Test 2 — real capture.** This is the production command:
 
 ```bash
-python3 les_pakkelapp.py --port /dev/ttyUSB0 --usb-sti /media/usb0
+python3 read_package.py --port /dev/ttyUSB0
 ```
 
 <img src="img/terminal-capture.png" width="100%" alt="Live capture terminal"/>
 
-Run 2–3 packages, check `pakkelapper.csv` against the paper labels, pull the flash drive mid-run (capture continues), re-insert it (missed rows sync automatically).
+Run 2–3 packages, check `packages.csv` against the paper labels, pull the flash drive mid-run (capture continues), re-insert it (missed rows sync automatically).
 
 **Go live.** The service installed in step 4 autostarts on every boot:
 
 ```bash
-sudo systemctl start pakkemaskin-skriver
-journalctl -u pakkemaskin-skriver -f     # live log
+sudo systemctl start read-package
+journalctl -u read-package -f     # live log
 ```
 
 ---
 
 ## 7 · The result
 
-`--eksporter-xlsx` produces a branded workbook: a **Sammendrag** sheet with totals per sort category, per day/month/year, plus live charts — followed by one sheet per sort category and a raw-data sheet. All summary numbers are formulas, so edits to the data recalculate everything.
+`--export-xlsx` produces a branded workbook: a **Summary** sheet with totals per sort category, per day/month/year, plus live charts — followed by one sheet per sort category and a **Raw data** sheet. All summary numbers are formulas, so edits to the data recalculate everything.
 
 <p align="center">
 <img src="img/excel-summary.png" width="49%" alt="Excel summary sheet"/>
 <img src="img/excel-charts.png" width="42%" alt="Excel charts"/>
 </p>
+
+> Screenshots show the Norwegian production export layout; the English version uses **Summary** / **Raw data** sheet names with the same structure.
 
 Pull the flash drive at any time — the Excel file and CSV are on it, ready to open on any PC.
 
@@ -167,13 +172,15 @@ Pull the flash drive at any time — the Excel file and CSV are on it, ready to 
 - [ ] 40 cm cable marked ACTIVE, 50 cm marked SPARE
 - [ ] Tap spliced: pins 2+7 WAGO-joined, splice secured with ties
 - [ ] USB chain: Pi **data port** → OTG → hub → adapter + flash drive
-- [ ] OLED on GPIO 1/3/5/6, I2C enabled in raspi-config
-- [ ] `--bare-fangst` shows readable label text
+- [ ] OLED on GPIO 1/3/5/6, I2C enabled in raspi-config (if used)
+- [ ] `--raw-capture` shows readable label text
 - [ ] Live run verified against paper labels
 - [ ] Flash drive pulled and re-inserted → rows synced automatically
 - [ ] systemd service enabled → survives power loss
-- [ ] Excel export opens with Sammendrag, charts, and logo
+- [ ] Excel export opens with Summary, charts, and logo
 
 ---
 
 *Questions or a wiring photo that doesn't match these drawings? Open an issue.*
+
+*Norwegian version: [docs/no/INSTALLATION.md](../no/INSTALLATION.md)*

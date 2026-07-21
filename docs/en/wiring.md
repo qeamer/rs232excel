@@ -1,6 +1,6 @@
 # Wiring
 
-Insert **40 cm DB25 hann→hunn** between the existing PLC cable and the OKI printer port.
+Insert **40 cm DB25 M→F extension** between the existing PLC cable and the OKI printer port.
 
 Mid-cable, cut **only** the conductors for:
 
@@ -12,7 +12,7 @@ Mid-cable, cut **only** the conductors for:
 **WAGO 221** — three wires in each clamp:
 
 ```
-PLS side ──┐
+PLC side ──┐
            ├── WAGO ── printer side
 Pi branch ─┘
 ```
@@ -26,4 +26,4 @@ Connect Pi branch to StarTech ICUSB232DB25:
 
 Secure the splice in the cable tray. Never leave WAGO hanging loose.
 
-Illustrations: see project `illustrasjoner/` folder locally, or open `kobling-side7.html` / `kobling-side8.html`.
+*Norwegian: [docs/no/wiring.md](../no/wiring.md)*

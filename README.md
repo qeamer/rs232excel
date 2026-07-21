@@ -20,9 +20,14 @@
 </p>
 
 <p align="center">
-  <b>🇳🇴 HOVEDVERSJON — FOR SKANDINAVISKE SAGBRUK</b><br><br>
+  <big><b>🇳🇴 HOVEDVERSJON — FOR SKANDINAVISKE SAGBRUK</b></big>
+</p>
+
+<p align="center">
+  <big>
   Dette prosjektet er laget for sagbruk i <b>Norge, Sverige og Danmark</b>.<br>
   Norsk er standardspråk for programvare, dokumentasjon og Excel-eksport.
+  </big>
 </p>
 
 ---

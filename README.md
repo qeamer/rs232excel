@@ -73,7 +73,7 @@ A branded Excel workbook, generated on demand from the live CSV:
 | Flag | Purpose |
 |---|---|
 | `--port /dev/ttyUSB0` | Live capture (production) |
-| `--usb-path /media/usb0` | Mirror CSV to flash drive in real time |
+| `--usb-path /media/usb0` | Mirror CSV to flash drive in real time *(Norwegian: `--usb-sti`)* |
 | `--raw-capture` | Raw capture, nothing saved — first-run verification |
 | `--set-season raw` / `kiln-dried` | Match the physical season toggle on the machine |
 | `--export-xlsx` | Generate the Excel workbook |

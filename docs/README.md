@@ -1,10 +1,16 @@
-# Documentation
+# Dokumentasjon / Documentation
 
-Choose your language:
+<table>
+<tr><td bgcolor="#1B4D3E" align="center">
+<p style="font-size: 18px; color: white; margin: 12px">
+<b>🇳🇴 Primær dokumentasjon — norsk, for skandinaviske sagbruk</b>
+</p>
+</td></tr>
+</table>
 
-| | Installation guide | Wiring reference |
+| | Installasjon | Kobling |
 |---|---|---|
-| **English** | [docs/en/INSTALLATION.md](en/INSTALLATION.md) | [docs/en/wiring.md](en/wiring.md) |
-| **Norsk** | [docs/no/INSTALLATION.md](no/INSTALLATION.md) | [docs/no/wiring.md](no/wiring.md) |
+| **🇳🇴 Norsk (anbefalt)** | **[docs/no/INSTALLATION.md](no/INSTALLATION.md)** | [docs/no/wiring.md](no/wiring.md) |
+| **🇬🇧 English (translation)** | [docs/en/INSTALLATION.md](en/INSTALLATION.md) | [docs/en/wiring.md](en/wiring.md) |
 
-Source code is also split by language under [`python/en/`](../python/en/) and [`python/no/`](../python/no/).
+Programvare: [`python/no/`](../python/no/) (produksjon) · [`python/en/`](../python/en/) (engelsk speil)

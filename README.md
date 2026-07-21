@@ -1,11 +1,11 @@
 ﻿<p align="center">
-  <img src="skaak_logo_vektor.png" height="70" alt="Skjåk Trelast AS"/>
+  <img src="skaak_logo_vektor.png" height="80" alt="Skjåk Trelast AS"/>
 </p>
 
 <h1 align="center">rs232excel</h1>
 
-<p align="center">
-  <b>Passive serial tap · Telemecanique TSX → OKI Microline → CSV & Excel</b>
+<p align="center" style="font-size: 1.2em">
+  <b>Passiv serieport-tapp · Telemecanique TSX → OKI Microline → CSV og Excel</b>
 </p>
 
 <p align="center">
@@ -15,111 +15,128 @@
   <img src="https://img.shields.io/badge/license-MIT-1B4D3E"/>
 </p>
 
-A Raspberry Pi listens silently on the RS-232 line between a 1980s Telemecanique TSX PLC and an OKI Microline 280 dot-matrix printer at a Norwegian sawmill. Every timber package label is parsed and stored automatically — dimension, species, grade, board count, volume. No manual entry. No data loss, even when the printer is off.
+<table width="100%">
+<tr>
+<td align="center" bgcolor="#1B4D3E">
 
-<img src="docs/en/img/signal-flow.png" width="100%" alt="System architecture"/>
+<p style="font-size: 22px; color: #FFFFFF; margin: 16px 12px;">
+<b>🇳🇴 HOVEDVERSJON — FOR SKANDINAVISKE SAGBRUK</b>
+</p>
 
-The tap is **physically read-only**: only pin 2 (TX) and pin 7 (GND) are branched via WAGO clamps mid-cable. The printer keeps printing exactly as before, and nothing can be transmitted back toward the PLC.
+<p style="font-size: 17px; color: #E8F0EE; margin: 0 12px 16px 12px;">
+Dette prosjektet er laget for sagbruk i <b>Norge, Sverige og Danmark</b>.<br>
+Norsk er standardspråk for programvare, dokumentasjon og Excel-eksport.<br>
+Engelsk oversettelse finnes kun for deling utenfor Skandinavia → <a href="README.en.md"><b>README.en.md</b></a>
+</p>
 
-**Languages:** [English](#quick-start) · [Norsk](README.no.md)
+</td>
+</tr>
+</table>
+
+<p style="font-size: 17px; line-height: 1.55">
+En Raspberry Pi lytter <b>passivt</b> på RS-232-linja mellom en Telemecanique TSX PLS
+(1980-tall) og en OKI Microline 280 nåleskriver. Hver pakkelapp parses og lagres automatisk —
+dimensjon, treslag, sort, antall plank, kubikk. Ingen manuell registrering. Ingen datatap,
+selv når skriveren er av.
+</p>
+
+<img src="docs/no/img/signal-flow.png" width="100%" alt="Systemarkitektur"/>
+
+<p style="font-size: 16px; line-height: 1.5">
+Tappen er <b>fysisk skrivebeskyttet</b>: kun pinne 2 (TX) og pinne 7 (GND) grener av via WAGO
+midt på kabelen. Skriveren fortsetter helt som før — ingenting sendes tilbake mot PLS-en.
+</p>
 
 ---
 
-## Quick start
+<h2 style="font-size: 1.5em">Hurtigstart (norsk produksjonsversjon)</h2>
 
 ```bash
 git clone https://github.com/qeamer/rs232excel.git
-cd rs232excel/python/en
+cd rs232excel/python/no
 pip install -r requirements.txt
-python3 read_package.py --port /dev/ttyUSB0 --usb-mirror /media/usb0
-python3 read_package.py --export-xlsx
+python3 read_package.py --port /dev/ttyUSB0 --usb-sti /media/usb0
+python3 read_package.py --eksporter-xlsx
 ```
 
-📖 **[Installation guide (English) →](docs/en/INSTALLATION.md)** · **[Installasjonsguide (norsk) →](docs/no/INSTALLATION.md)**
-
----
-
-## What you get
-
-<p align="center">
-<img src="docs/en/img/excel-summary.png" width="49%" alt="Excel summary"/>
-<img src="docs/en/img/excel-charts.png" width="42%" alt="Excel charts"/>
+<p style="font-size: 16px">
+📖 <b><a href="docs/no/INSTALLATION.md">Installasjonsguide med koblingsdiagram →</a></b><br>
+&nbsp;&nbsp;&nbsp; Engelsk guide: <a href="docs/en/INSTALLATION.md">docs/en/INSTALLATION.md</a>
 </p>
 
-A branded Excel workbook, generated on demand from the live CSV:
+---
 
-- **Summary** sheet — totals per sort category, per day / month / year, with pie, stacked-bar, and line charts. All values are live formulas over the raw data.
-- **One sheet per sort category** (5th Grade / Crooked / Floor / Rejected / No Category) — frozen headers, autofilter, per-dimension mini-summary
-- **Raw data** sheet — every captured package, one flat table
+<h2 style="font-size: 1.5em">Det du får</h2>
 
-*(Norwegian version uses **Sammendrag** / **Rådata** — see [`python/no/`](python/no/))*
+<p align="center">
+<img src="docs/no/img/excel-summary.png" width="49%" alt="Excel Sammendrag"/>
+<img src="docs/no/img/excel-charts.png" width="42%" alt="Excel grafer"/>
+</p>
 
-## How the capture works
+<p style="font-size: 16px; line-height: 1.55">
+Merkeprofilert Excel-arbeidsbok, generert på kommando fra live CSV:
+</p>
 
-<img src="docs/en/img/terminal-capture.png" width="100%" alt="Live capture"/>
+<ul style="font-size: 16px; line-height: 1.6">
+<li><b>Sammendrag</b> — totaler per sort, per dag / måned / år, med kake-, stablet søyle- og linjediagram</li>
+<li><b>Ett ark per sortkategori</b> (5Sort / Krok / Gulv / Hogges / Uavklart) — frosne overskrifter, autofilter</li>
+<li><b>Rådata</b> — hver fanget pakke, flat tabell</li>
+</ul>
 
-| Situation on the floor | What the software does |
-|---|---|
-| Operator presses confirm twice | **Dedup** — package stored once, raw copy kept in `capture.txt` |
-| A package never gets confirmed | **Gap detection** — missing numbers logged to `missing.csv` |
-| Counter rolls over 9999 → 0 | **Round tracking** — detected automatically, dedup/gaps scoped per round |
-| Printer is off / out of paper | Data is on the wire anyway — capture continues |
-| Flash drive pulled mid-run | SD card is the master; drive re-syncs missed rows on re-insert |
-| Label never printed at all | `--register N` adds it manually |
-| PLC sends odd ESC sequences | Full Epson/IBM escape table; unknown codes logged, never corrupt data |
+<h2 style="font-size: 1.5em">Slik fungerer fangsten</h2>
 
-## Commands (English)
+<img src="docs/no/img/terminal-capture.png" width="100%" alt="Sanntidsfangst"/>
 
-| Flag | Purpose |
-|---|---|
-| `--port /dev/ttyUSB0` | Live capture (production) |
-| `--usb-mirror /media/usb0` | Mirror CSV to flash drive in real time *(Norwegian: `--usb-sti`)* |
-| `--raw-capture` | Raw capture, nothing saved — first-run verification |
-| `--set-season raw` / `kiln-dried` | Match the physical season toggle on the machine |
-| `--export-xlsx` | Generate the Excel workbook |
-| `--summary` | Daily totals in the terminal |
-| `--register 1234` | Manual package entry |
-| `--simulate example.txt` | Offline test — no PLC needed |
+<table style="font-size: 16px">
+<tr><th>Situasjon på gulvet</th><th>Hva programmet gjør</th></tr>
+<tr><td>Operatør trykker kvittering to ganger</td><td><b>Dedup</b> — pakke lagres én gang, råkopi i <code>utskrift.txt</code></td></tr>
+<tr><td>Pakke aldri kvittert</td><td><b>Hull-deteksjon</b> — manglende numre i <code>mangler.csv</code></td></tr>
+<tr><td>Teller nullstiller 9999 → 0</td><td><b>Runde</b> — oppdages automatisk</td></tr>
+<tr><td>Skriver av / tom for papir</td><td>Data ligger på kabelen uansett</td></tr>
+<tr><td>Minnepenn trukket ut</td><td>SD-kort er fasit; minnepenn synkes ved ny tilkobling</td></tr>
+<tr><td>Lapp aldri skrevet ut</td><td><code>--registrer N</code> legger inn manuelt</td></tr>
+</table>
 
-Norwegian flags (`--bare-fangst`, `--eksporter-xlsx`, …): see [`python/no/read_package.py`](python/no/read_package.py).
+<h2 style="font-size: 1.5em">Kommandoer (norsk)</h2>
 
-## Hardware
+<table style="font-size: 16px">
+<tr><th>Flag</th><th>Formål</th></tr>
+<tr><td><code>--port /dev/ttyUSB0</code></td><td>Live fangst (produksjon)</td></tr>
+<tr><td><code>--usb-sti /media/usb0</code></td><td>Speil CSV til minnepenn i sanntid</td></tr>
+<tr><td><code>--bare-fangst</code></td><td>Bare vis rådata — verifiser første gang</td></tr>
+<tr><td><code>--sett-sesong rå</code> / <code>tørr</code></td><td>Match sesongbryter på maskinen</td></tr>
+<tr><td><code>--eksporter-xlsx</code></td><td>Generer Excel-arbeidsbok</td></tr>
+<tr><td><code>--oppsummering</code></td><td>Daglige totaler i terminalen</td></tr>
+<tr><td><code>--registrer 1234</code></td><td>Manuell pakke</td></tr>
+<tr><td><code>--simuler eksempel.txt</code></td><td>Offline test — uten PLS</td></tr>
+</table>
 
-<img src="docs/en/img/wiring-tap.png" width="100%" alt="Wiring"/>
+<h2 style="font-size: 1.5em">Hardware</h2>
 
-Raspberry Pi Zero WH · StarTech ICUSB232DB25 · WAGO 221-412 clamps · 40 cm DB25 extension in series · IP54 enclosure · optional SSD1306 OLED status display. Full parts list with order numbers in the [installation guide](docs/en/INSTALLATION.md).
+<img src="docs/no/img/wiring-tap.png" width="100%" alt="Kobling"/>
 
-## Label format
+<p style="font-size: 16px">
+Raspberry Pi Zero WH · StarTech ICUSB232DB25 · WAGO 221-412 · 40 cm DB25 skjøtekabel i serie ·
+IP54 kapsling · valgfri SSD1306 OLED. Full delerliste i
+<a href="docs/no/INSTALLATION.md">installasjonsguiden</a>.
+</p>
 
-```
-   645                      75X 150     ← package no · dimension
-   2026/ 6/22                5          ← date · sort digit
-                            FURU        ← species (FURU=pine, GRAN=spruce)
-              25            0           ← board count
-             108,7          0,0         ← total length (running metres)
-             1,223          0,000       ← volume (m³)
-              43            0,0         ← avg length (dm)
-```
+<h2 style="font-size: 1.5em">Mapper i repoet</h2>
 
-The parser anchors on the decimal patterns (3-decimal = m³, 1-decimal = metres) rather than column positions — robust against spacing drift across label types. Verified against real photographed labels; volume cross-checks as width × height × total length on all of them.
+<table style="font-size: 16px">
+<tr><th>Mappe</th><th>Innhold</th><th>Prioritet</th></tr>
+<tr><td><code>python/no/</code></td><td>Produksjonskode — Skjåk Trelast</td><td><b>⭐ Start her</b></td></tr>
+<tr><td><code>docs/no/</code></td><td>Installasjon og kobling (norsk)</td><td><b>⭐ Start her</b></td></tr>
+<tr><td><code>python/en/</code></td><td>Engelsk speilversjon</td><td>Oversettelse</td></tr>
+<tr><td><code>docs/en/</code></td><td>Installation guide (English)</td><td>Oversettelse</td></tr>
+</table>
 
-## Project structure
-
-```
-docs/
-  en/          installation guide + wiring (English)
-  no/          installasjonsguide + kobling (norsk)
-python/
-  en/          read_package.py, install.sh, read-package.service
-  no/          read_package.py, installer.sh, pakkemaskin-skriver.service
-```
-
-## License
-
-MIT
+<p style="font-size: 15px; color: #555">
+Engelsk README: <a href="README.en.md"><b>README.en.md</b></a>
+</p>
 
 ---
 
-<p align="center">
-  <sub><a href="https://www.skjaaktrelast.no">Skjåk Trelast AS</a> · Telemecanique TSX · OKI Microline · RS-232 9600 8N1</sub>
+<p align="center" style="font-size: 14px">
+<a href="https://www.skjaaktrelast.no">Skjåk Trelast AS</a> · Telemecanique TSX · OKI Microline · RS-232 9600 8N1
 </p>

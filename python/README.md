@@ -1,51 +1,40 @@
-# Source code — Norwegian and English versions
+# Programvare — norsk og engelsk
 
-This directory contains the capture software in two languages:
+<table>
+<tr><td bgcolor="#1B4D3E" align="center">
+<p style="font-size: 18px; color: white; margin: 12px">
+<b>🇳🇴 Hovedversjon: <code>python/no/</code> — for skandinaviske sagbruk</b><br>
+<span style="font-size: 15px">Norsk CLI, CSV-kolonner, Excel-ark og terminaloutput</span>
+</p>
+</td></tr>
+</table>
 
-## `/en/` — English (GitHub default)
+## `/no/` — Norsk produksjonsversjon ⭐
 
-- `read_package.py` — Main capture script (English)
-- `install.sh` — Installation script
-- `read-package.service` — systemd unit file
-- `requirements.txt` — Python dependencies
-
-All code, comments, command-line arguments, CSV columns, Excel headers, and terminal output are in English.
-
-```bash
-python3 read_package.py --port /dev/ttyUSB0 --raw-capture
-python3 read_package.py --set-season raw
-python3 read_package.py --export-xlsx
-```
-
-## `/no/` — Norwegian (Skjåk Trelast original)
-
-- `read_package.py` — Main capture script (Norwegian)
-- `installer.sh` — Installation script
-- `pakkemaskin-skriver.service` — systemd unit file
-- `requirements.txt` — Python dependencies
-
-All code, comments, command-line arguments, CSV columns, Excel headers, and terminal output are in Norwegian.
+- `read_package.py` — fangst, parsing, CSV, Excel
+- `installer.sh` — systemd-tjeneste
+- `pakkemaskin-skriver.service` — autostart
+- `vis_status.py` — valgfri OLED-skjerm
+- `eksempel.txt` — testlapper for `--simuler`
 
 ```bash
-python3 read_package.py --port /dev/ttyUSB0 --bare-fangst
-python3 read_package.py --sett-sesong rå
+cd rs232excel/python/no
+bash installer.sh
+python3 read_package.py --port /dev/ttyUSB0 --usb-sti /media/usb0
 python3 read_package.py --eksporter-xlsx
 ```
 
----
+## `/en/` — Engelsk speilversjon (oversettelse)
 
-## Installation
-
-Clone the repo and choose the language:
+- `read_package.py` — same logic, English strings
+- `install.sh` — installation script
+- `read-package.service` — systemd unit
 
 ```bash
-# For English (GitHub default)
 cd rs232excel/python/en
 bash install.sh
-
-# For Norwegian (Skjåk Trelast)
-cd rs232excel/python/no
-bash installer.sh
+python3 read_package.py --port /dev/ttyUSB0 --usb-mirror /media/usb0
+python3 read_package.py --export-xlsx
 ```
 
-Both versions are identical in functionality — only the human-readable strings differ.
+Begge versjoner er funksjonelt like — kun språk skiller dem.

@@ -1,8 +1,9 @@
 rs232excel repository structure
 ================================
 
-├── README.md                          Main GitHub page (English) with logo, badges, architecture
-├── README.no.md                       Norwegian landing page (same repo, linked from README.md)
+├── README.md                          GitHub main page (Norwegian, primary — Scandinavian sawmills)
+├── README.en.md                       English translation (secondary)
+├── README.no.md                       Redirect → README.md
 ├── skaak_logo_vektor.png              Skjåk Trelast logo (white on transparent, for GitHub)
 │
 ├── docs/

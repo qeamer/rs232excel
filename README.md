@@ -49,7 +49,7 @@ python3 read_package.py --export-xlsx
 A branded Excel workbook, generated on demand from the live CSV:
 
 - **Summary** sheet — totals per sort category, per day / month / year, with pie, stacked-bar, and line charts. All values are live formulas over the raw data.
-- **One sheet per sort category** (5Sort / Krok / Gulv / Hogges / Uavklart) — frozen headers, autofilter, per-dimension mini-summary
+- **One sheet per sort category** (5th Grade / Crooked / Floor / Rejected / No Category) — frozen headers, autofilter, per-dimension mini-summary
 - **Raw data** sheet — every captured package, one flat table
 
 *(Norwegian version uses **Sammendrag** / **Rådata** — see [`python/no/`](python/no/))*

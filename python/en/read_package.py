@@ -49,44 +49,34 @@ FLOAT3_RE = re.compile(r"(?<![\d,])(\d{1,4},\d{3})(?![\d])")  # nøyaktig 3 desi
 INT_RE    = re.compile(r"(?<![\d,])(\d{1,5})(?![\d,])")       # heltall (ikke del av desimaltall)
 
 SORT_NAVN = {
-    "1": "krok",
-    "3": "høgg",              # sjelden — kan forekomme, men se merknad om siffer 6 under
-    "4": "gulv",              # vanlig, alltid i produksjon. Sjelden: operatør kan også
-                              # bruke 4 (eller 2) for B.L — flagg de tilfellene manuelt.
-    "5": "5s",
-    "6": "krok",              # krok og høgg deler siffer 6 (samme spakposisjon hos sortøren).
-                              # Krok er standard/flertall. Høgg (mindretall) skilles KUN ved
-                              # håndskrift direkte på materialpakken — usynlig for RS-232-
-                              # tappingen. Ikke et datakvalitetsproblem, bekreftet av Kent.
+    "1": "crooked",
+    "3": "rejected",            # rare from PLC alone — true rejected often marked by hand
+    "4": "floor",
+    "5": "5th grade",
+    "6": "crooked",             # crooked and rejected share digit 6 at the sorter
 }
 
-# Faneinndeling i Excel: hver bekreftet sort-kode får sin egen fane (i stedet for
-# blandede dimensjoner under hverandre i én tabell). B.L (Bygningslast) og B.BL
-# (Bein bygningslast) mangler ennå bekreftet siffer — se README/spør Kent.
-# Pakker med ukjent/uavklart sort-siffer (2, 6, og evt. feil i 4-antagelsen) havner
-# i "Uavklart" til da.
+# Excel tabs: one sheet per confirmed grade code.
 SORT_FANE = {
-    "5": "5Sort",
-    "1": "Krok",
-    "6": "Krok",   # krok/høgg deler dette sifferet — krok er standard, se merknad i SORT_NAVN
-    "3": "Hogges", # sjelden i praksis fra automatikken alene — ekte høgg skilles ved håndskrift
-    "4": "Gulv",
-    # "2" routes til "Uavklart" — sjeldent brukt, muligens B.L ved operatørvalg.
-    # B.L kan i sjeldne tilfeller også vises som "4" — flagg de manuelt (samme
-    # prinsipp som håndskrift skiller krok/høgg på siffer 6).
+    "5": "5th Grade",
+    "1": "Crooked",
+    "6": "Crooked",
+    "3": "Rejected",
+    "4": "Floor",
 }
-FANE_REKKEFØLGE = ["5Sort", "Krok", "Gulv", "Hogges", "B.L", "B.BL", "Uavklart"]
+FANE_REKKEFØLGE = ["5th Grade", "Crooked", "Floor", "Rejected", "B.L", "B.BL", "No Category"]
+FANE_UAVKLART = "No Category"
 
-# Pene norske kolonnenavn for Excel (enheter i tittel, ikke gjentatt i hver celle)
+# Column headers for Excel (units in title, not repeated in every cell)
 KOLONNE_VISNING = {
-    "tid_fanget": "Fanget", "dato": "Dato", "pakkenr": "Pakkenr",
-    "dimensjon": "Dimensjon", "treslag": "Treslag", "sort": "Sort",
-    "sort_navn": "Sortnavn", "antall_plank": "Antall plank",
-    "sum_lengde_lm": "Sum lengde (lm)", "kubikk_m3": "Kubikk (m³)",
-    "snittlengde_m": "Snittlengde (m)", "sesong": "Sesong", "runde": "Runde",
-    "status": "Status", "raa": "Rådata",
-    "antall_pakker": "Antall pakker", "sum_plank": "Sum plank",
-    "sum_kubikk_m3": "Sum kubikk (m³)",
+    "tid_fanget": "Captured", "dato": "Date", "pakkenr": "Package no",
+    "dimensjon": "Dimension", "treslag": "Species", "sort": "Grade code",
+    "sort_navn": "Grade", "antall_plank": "Board count",
+    "sum_lengde_lm": "Total length (lm)", "kubikk_m3": "Volume (m³)",
+    "snittlengde_m": "Avg length (m)", "sesong": "Season", "runde": "Round",
+    "status": "Status", "raa": "Raw line",
+    "antall_pakker": "Packages", "sum_plank": "Boards",
+    "sum_kubikk_m3": "Volume (m³)",
 }
 
 
@@ -549,7 +539,7 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
         c.alignment = Alignment(horizontal="left", vertical="center", indent=1)
         ws.row_dimensions[1].height = 26
         ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=bredde_kol)
-        c = ws.cell(2, 1, f"Generert {datetime.datetime.now():%d.%m.%Y %H:%M}  ·  {len(rader)} rader")
+        c = ws.cell(2, 1, f"Generated {datetime.datetime.now():%d.%m.%Y %H:%M}  ·  {len(rader)} rows")
         c.font = UNDERTITTEL_FONT; c.fill = TITTEL_FILL
         c.alignment = Alignment(horizontal="left", vertical="center", indent=1)
         for j in range(1, bredde_kol + 1):
@@ -563,16 +553,16 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
         if vis_dimensjonsoversikt and rader:
             dim_sum = {}
             for r in rader:
-                d = r.get("dimensjon") or "ukjent"
+                d = r.get("dimensjon") or "unknown"
                 g = dim_sum.setdefault(d, {"pakker": 0, "plank": 0, "kubikk": 0.0})
                 g["pakker"] += 1
                 g["plank"] += as_int(r.get("antall_plank")) or 0
                 try: g["kubikk"] += float(str(r.get("kubikk_m3", "")).replace(",", "."))
                 except ValueError: pass
-            c = ws.cell(rad_nr, 1, "Per dimensjon i denne fanen:")
+            c = ws.cell(rad_nr, 1, "Per dimension in this sheet:")
             c.font = SUBTOTAL_FONT
             rad_nr += 1
-            overskrift = ["Dimensjon", "Pakker", "Plank", "Kubikk (m³)"]
+            overskrift = ["Dimension", "Packages", "Boards", "Volume (m³)"]
             for j, h in enumerate(overskrift, start=1):
                 c = ws.cell(rad_nr, j, h); c.font = SUBTOTAL_FONT; c.fill = SUBTOTAL_FILL
                 c.alignment = Alignment(horizontal="center")
@@ -608,7 +598,7 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
 
     fane_data = {navn: [] for navn in FANE_REKKEFØLGE}
     for rad in alle_rader:
-        fane = SORT_FANE.get(rad.get("sort"), "Uavklart")
+        fane = SORT_FANE.get(rad.get("sort"), FANE_UAVKLART)
         fane_data[fane].append(rad)
     for rader in fane_data.values():
         rader.sort(key=lambda r: (r.get("dimensjon") or "", r.get("dato") or "", as_int(r.get("pakkenr")) or 0))
@@ -623,11 +613,11 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
         ws = wb.active if forste else wb.create_sheet()
         ws.title = fane
         forste = False
-        felter = FELTER_UAVKLART if fane == "Uavklart" else FELTER_KATEGORI
-        skriv_fane(ws, f"Pakkelapper — {fane}", felter, rader)
+        felter = FELTER_UAVKLART if fane == FANE_UAVKLART else FELTER_KATEGORI
+        skriv_fane(ws, f"Package labels — {fane}", felter, rader)
     if forste:
-        wb.active.title = "5Sort"
-        skriv_fane(wb.active, "Pakkelapper — 5Sort", FELTER_KATEGORI, [])
+        wb.active.title = "5th Grade"
+        skriv_fane(wb.active, "Package labels — 5th Grade", FELTER_KATEGORI, [])
 
     # Samlet oversikt: antall/plank/kubikk per dimensjon, på tvers av alle fanene
     dim_grupper = _grupper_rader(csv_sti, ["sesong", "dimensjon"])
@@ -638,8 +628,8 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
              "sum_plank": g["plank"], "sum_kubikk_m3": round(g["kubikk"], 3)}
             for (s, d), g in sorted(dim_grupper.items())
         ]
-        dim_ws = wb.create_sheet("Per dimensjon (alle)")
-        skriv_fane(dim_ws, "Oversikt per dimensjon — alle sorter", dim_felter, dim_rader,
+        dim_ws = wb.create_sheet("By dimension (all)")
+        skriv_fane(dim_ws, "Overview by dimension — all grades", dim_felter, dim_rader,
                    vis_dimensjonsoversikt=False)
 
     # ── Rådata (flatt ark) — grunnlaget Sammendrag-formlene regner på ────────
@@ -653,7 +643,7 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
         except ValueError: continue
         ok_rader.append({
             "dato": d,
-            "kategori": SORT_FANE.get(r.get("sort"), "Uavklart"),
+            "kategori": SORT_FANE.get(r.get("sort"), FANE_UAVKLART),
             "sesong": r.get("sesong", ""),
             "dimensjon": r.get("dimensjon", ""),
             "plank": as_int(r.get("antall_plank")) or 0,
@@ -662,13 +652,13 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
         })
     ok_rader.sort(key=lambda r: r["dato"])
 
-    rd = wb.create_sheet("Rådata")
+    rd = wb.create_sheet("Raw data")
     rd.sheet_view.showGridLines = False
     for j, (felt, tittel, br) in enumerate([
-            ("dato", "Dato", 12), ("kategori", "Kategori", 12),
-            ("sesong", "Sesong", 10), ("dimensjon", "Dimensjon", 12),
-            ("plank", "Plank", 10), ("lm", "Løpemeter (lm)", 15),
-            ("kubikk", "Kubikk (m³)", 13)], start=1):
+            ("dato", "Date", 12), ("kategori", "Category", 12),
+            ("sesong", "Season", 10), ("dimensjon", "Dimension", 12),
+            ("plank", "Boards", 10), ("lm", "Running metres (lm)", 15),
+            ("kubikk", "Volume (m³)", 13)], start=1):
         c = rd.cell(1, j, tittel)
         c.font = HEADER_FONT; c.fill = HEADER_FILL
         c.alignment = Alignment(horizontal="center")
@@ -688,7 +678,7 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
     # ── Sammendrag — totaler per sort/dag/måned/år, med grafer ──────────────
     # Alle tall er formler (COUNTIFS/SUMIFS) mot Rådata-arket, så de
     # oppdateres om noen redigerer/filtrerer bort rader der.
-    sm = wb.create_sheet("Sammendrag", 0)
+    sm = wb.create_sheet("Summary", 0)
     sm.sheet_view.showGridLines = False
 
     for j, br in enumerate([16, 10, 10, 15, 13, 12, 12, 12, 12, 12], start=1):
@@ -716,18 +706,18 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
         sm.add_image(logo, "A1")
 
     sm.merge_cells("D1:J2")
-    c = sm.cell(1, 4, "Produksjonskontroll — Halvårsrapport")
+    c = sm.cell(1, 4, "Production control — Half-year report")
     c.font = Font(name=FONT_NAVN, size=13, bold=True, color="FFFFFF")
     c.alignment = Alignment(horizontal="right", vertical="center", indent=1)
     sm.merge_cells("D3:J3")
-    c = sm.cell(3, 4, f"Generert {datetime.datetime.now():%d.%m.%Y %H:%M}  ·  "
-                      f"{len(ok_rader)} pakker  ·  formler mot Rådata-arket")
+    c = sm.cell(3, 4, f"Generated {datetime.datetime.now():%d.%m.%Y %H:%M}  ·  "
+                      f"{len(ok_rader)} packages  ·  formulas over Raw data sheet")
     c.font = Font(name=FONT_NAVN, size=8, italic=True, color="D9E5E1")
     c.alignment = Alignment(horizontal="right", vertical="center", indent=1)
 
-    RD = "'Rådata'"
-    MND_NAVN = {1:"Jan",2:"Feb",3:"Mar",4:"Apr",5:"Mai",6:"Jun",
-                7:"Jul",8:"Aug",9:"Sep",10:"Okt",11:"Nov",12:"Des"}
+    RD = "'Raw data'"
+    MND_NAVN = {1:"Jan",2:"Feb",3:"Mar",4:"Apr",5:"May",6:"Jun",
+                7:"Jul",8:"Aug",9:"Sep",10:"Oct",11:"Nov",12:"Dec"}
     kategorier = [k for k in FANE_REKKEFØLGE
                   if any(r["kategori"] == k for r in ok_rader)]
     år_liste = sorted({r["dato"].year for r in ok_rader})
@@ -764,7 +754,7 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
                 f"{RD}!$A:$A,\"<\"&DATE({y2},{m2},1)")
     def k_dag(d):        return f"{RD}!$A:$A,DATE({d.year},{d.month},{d.day})"
 
-    STD = ["Pakker", "Plank", "Løpemeter (lm)", "Kubikk (m³)"]
+    STD = ["Packages", "Boards", "Running metres (lm)", "Volume (m³)"]
     STD_FMT = ["#,##0", "#,##0", "#,##0.0", "0.000"]
 
     def std_formler(krit):
@@ -773,9 +763,9 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
 
     # 1) Totalt per sortkategori ------------------------------------------------
     rad = 5
-    sm_seksjon(rad, "Totalt per sortkategori"); rad += 1
+    sm_seksjon(rad, "Total per sort category"); rad += 1
     kat_hode = rad
-    sm_overskrift(rad, ["Sortkategori"] + STD); rad += 1
+    sm_overskrift(rad, ["Category"] + STD); rad += 1
     kat_forste = rad
     for kat in kategorier:
         sm_celle(rad, 1, kat)
@@ -783,15 +773,15 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
             sm_celle(rad, j, f, fmt)
         rad += 1
     kat_siste = rad - 1
-    sm_celle(rad, 1, "Totalt", fet=True)
+    sm_celle(rad, 1, "Total", fet=True)
     for j, fmt in enumerate(STD_FMT, start=2):
         kb = get_column_letter(j)
         sm_celle(rad, j, f"=SUM({kb}{kat_forste}:{kb}{kat_siste})", fmt, fet=True)
     rad += 2
 
     # 2) Per år -----------------------------------------------------------------
-    sm_seksjon(rad, "Per år"); rad += 1
-    sm_overskrift(rad, ["År"] + STD); rad += 1
+    sm_seksjon(rad, "Per year"); rad += 1
+    sm_overskrift(rad, ["Year"] + STD); rad += 1
     for y in år_liste:
         sm_celle(rad, 1, str(y))
         for j, (f, fmt) in enumerate(zip(std_formler(k_år(y)), STD_FMT), start=2):
@@ -800,9 +790,9 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
     rad += 1
 
     # 3) Per måned (+ kubikk per sortkategori, for stablet graf) ---------------
-    sm_seksjon(rad, "Per måned"); rad += 1
+    sm_seksjon(rad, "Per month"); rad += 1
     mnd_hode = rad
-    sm_overskrift(rad, ["Måned"] + STD + [f"{k} (m³)" for k in kategorier]); rad += 1
+    sm_overskrift(rad, ["Month"] + STD + [f"{k} (m³)" for k in kategorier]); rad += 1
     mnd_forste = rad
     for (y, m) in mnd_liste:
         sm_celle(rad, 1, f"{MND_NAVN[m]} {y}")
@@ -815,9 +805,9 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
     rad += 1
 
     # 4) Per dag (siste 21 produksjonsdager) -----------------------------------
-    sm_seksjon(rad, f"Per dag (siste {len(dag_liste)} produksjonsdager)"); rad += 1
+    sm_seksjon(rad, f"Per day (last {len(dag_liste)} production days)"); rad += 1
     dag_hode = rad
-    sm_overskrift(rad, ["Dato"] + STD); rad += 1
+    sm_overskrift(rad, ["Date"] + STD); rad += 1
     dag_forste = rad
     for d in dag_liste:
         sm_celle(rad, 1, d, "DD.MM.YYYY")
@@ -832,12 +822,12 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
         ch.style = 10
         return ch
 
-    kake = stil(PieChart(), "Kubikkfordeling per sort", h=7.6, b=11.5)
+    kake = stil(PieChart(), "Volume by sort category", h=7.6, b=11.5)
     kake.add_data(Reference(sm, min_col=5, min_row=kat_forste, max_row=kat_siste))
     kake.set_categories(Reference(sm, min_col=1, min_row=kat_forste, max_row=kat_siste))
     sm.add_chart(kake, "L4")
 
-    stab = stil(BarChart(), "Kubikk per måned, fordelt på sort")
+    stab = stil(BarChart(), "Volume per month, by sort")
     stab.type = "col"; stab.grouping = "stacked"; stab.overlap = 100
     stab.add_data(Reference(sm, min_col=6, max_col=5 + len(kategorier),
                             min_row=mnd_hode, max_row=mnd_siste), titles_from_data=True)
@@ -845,7 +835,7 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
     stab.y_axis.title = "m³"
     sm.add_chart(stab, "L20")
 
-    meter = stil(BarChart(), "Løpemeter per måned")
+    meter = stil(BarChart(), "Running metres per month")
     meter.type = "col"
     meter.add_data(Reference(sm, min_col=4, min_row=mnd_hode, max_row=mnd_siste),
                    titles_from_data=True)
@@ -853,7 +843,7 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
     meter.y_axis.title = "lm"; meter.legend = None
     sm.add_chart(meter, "L37")
 
-    linje_ch = stil(LineChart(), f"Kubikk per dag (siste {len(dag_liste)} dager)")
+    linje_ch = stil(LineChart(), f"Volume per day (last {len(dag_liste)} days)")
     linje_ch.add_data(Reference(sm, min_col=5, min_row=dag_hode, max_row=dag_siste),
                       titles_from_data=True)
     linje_ch.set_categories(Reference(sm, min_col=1, min_row=dag_forste, max_row=dag_siste))
@@ -865,7 +855,7 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
     tmp = xlsx_sti.with_suffix(".tmp.xlsx")
     wb.save(tmp); os.replace(tmp, xlsx_sti)
     antall = {fane: len(rader) for fane, rader in fane_data.items() if rader}
-    log(f"Eksportert til {xlsx_sti}  (" + ", ".join(f"{f}: {n}" for f, n in antall.items()) + ")")
+    log(f"Exported to {xlsx_sti}  (" + ", ".join(f"{f}: {n}" for f, n in antall.items()) + ")")
 
 
 

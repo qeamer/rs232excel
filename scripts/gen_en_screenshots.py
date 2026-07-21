@@ -68,17 +68,17 @@ def draw_excel_summary():
     cols = [130, 80, 80, 120, 100]
     headers = ["Category", "Packages", "Boards", "Metres (lm)", "Volume (m³)"]
     rows1 = [
-        ["5Sort", "1,350", "47,960", "266,380.1", "2,708.8"],
-        ["Crook", "206", "8,800", "55,158.0", "480.0"],
-        ["Flooring", "73", "2,500", "13,282.0", "147.5"],
-        ["Hogged", "19", "520", "3,249.0", "26.2"],
-        ["Unsorted", "0", "0", "0.0", "0.0"],
+        ["5th Grade", "1,350", "47,960", "266,380.1", "2,708.8"],
+        ["Crooked", "206", "8,800", "55,158.0", "480.0"],
+        ["Floor", "73", "2,500", "13,282.0", "147.5"],
+        ["Rejected", "19", "520", "3,249.0", "26.2"],
+        ["No Category", "0", "0", "0.0", "0.0"],
         ["Total", "1,648", "59,780", "338,069.1", "3,362.5"],
     ]
     y = draw_table_section(d, 24, y, "Total per sort category", headers, rows1, cols)
     rows2 = [["2026", "1,648", "59,780", "338,069.1", "3,362.5"]]
     y = draw_table_section(d, 24, y, "Per year", headers[:1] + headers[1:], rows2, cols)
-    month_headers = ["Month"] + headers[1:] + ["5Sort (m³)"]
+    month_headers = ["Month"] + headers[1:] + ["5th Grade (m³)"]
     month_cols = [100, 80, 80, 120, 100, 90]
     month_rows = [
         ["Jan 2026", "142", "5,200", "28,400.0", "285.0", "220.0"],

@@ -2,7 +2,7 @@
   <img src="skaak_logo_vektor.png" height="80" alt="Skjåk Trelast AS"/>
 </p>
 
-<p align="center" style="font-size: 18px; margin-top: 8px">
+<p align="center" style="font-size: 18px; text-align: center; margin: 10px 0 0 0;">
   <a href="README.en.md"><b>English Readme Here</b></a>
 </p>
 
@@ -21,13 +21,13 @@
 
 <table width="100%">
 <tr>
-<td align="center" bgcolor="#1B4D3E">
+<td align="center" bgcolor="#1B4D3E" style="text-align: center;">
 
-<p style="font-size: 22px; color: #FFFFFF; margin: 16px 12px;">
+<p align="center" style="font-size: 22px; color: #FFFFFF; text-align: center; margin: 16px 12px;">
 <b>🇳🇴 HOVEDVERSJON — FOR SKANDINAVISKE SAGBRUK</b>
 </p>
 
-<p style="font-size: 17px; color: #E8F0EE; margin: 0 12px 16px 12px;">
+<p align="center" style="font-size: 17px; color: #E8F0EE; text-align: center; margin: 0 12px 16px 12px;">
 Dette prosjektet er laget for sagbruk i <b>Norge, Sverige og Danmark</b>.<br>
 Norsk er standardspråk for programvare, dokumentasjon og Excel-eksport.
 </p>

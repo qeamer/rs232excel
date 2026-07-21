@@ -30,31 +30,8 @@ def font(size, bold=False):
 
 
 def draw_terminal():
-    w, h = 1200, 420
-    img = Image.new("RGB", (w, h), "#0d1117")
-    d = ImageDraw.Draw(img)
-    # title bar
-    d.rectangle([0, 0, w, 34], fill="#161b22")
-    d.text((14, 9), "pi@pakkemaskin: ~/rs232excel/python/en", fill="#c9d1d9", font=font(13))
-    y = 52
-    lines = [
-        ("$ python3 read_package.py --port /dev/ttyUSB0 --usb-path /media/usb0", "#58a6ff", False),
-        ("[07:41:02] Starting. Listening on /dev/ttyUSB0 @ 9600 8N1  season=kiln-dried", "#8b949e", False),
-        ("[07:41:02] Loaded round 1: 1648 package numbers (highest 1751).", "#8b949e", False),
-        ("[07:41:02] Connected.", "#3fb950", False),
-        ("[07:44:18] ✓ package 1752 [r1/kiln-dried] 75x150 PINE sort 5(5s), 84 boards, 4.025 m³", "#3fb950", False),
-        ("[07:49:03] ✓ package 1753 [r1/kiln-dried] 50x100 SPRUCE sort 1(crook), 31 boards, 0.615 m³", "#3fb950", False),
-        ("[07:49:07] ↺ duplicate package 1753 — dropped (raw copy in capture.txt)", "#d29922", False),
-        ("[07:55:40] ⚠ Possible gap (round 1): package 1754-1754 → missing.csv", "#f85149", False),
-        ("[07:56:12] ✓ package 1755 [r1/kiln-dried] 75x150 PINE sort 6(crook), 70 boards, 3.145 m³", "#3fb950", False),
-        ("[07:56:12] 📀 Mirrored to /media/usb0/packages.csv", "#58a6ff", False),
-    ]
-    f = font(15)
-    for text, color, bold in lines:
-        d.text((24, y), text, fill=color, font=f)
-        y += 30
-    img.save(OUT / "terminal-capture.png", optimize=True)
-    print("terminal-capture.png")
+    """Skip — docs/en/img/terminal-capture.png is a hand-crafted asset, not generated."""
+    print("terminal-capture.png (skipped — use hand-crafted asset)")
 
 
 def draw_table_section(d, x, y, title, headers, rows, col_widths):

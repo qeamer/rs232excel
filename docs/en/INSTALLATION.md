@@ -160,7 +160,6 @@ journalctl -u read-package -f     # live log
 <img src="img/excel-charts.png" width="42%" alt="Excel charts"/>
 </p>
 
-> Screenshots show the Norwegian production export layout; the English version uses **Summary** / **Raw data** sheet names with the same structure.
 
 Pull the flash drive at any time — the Excel file and CSV are on it, ready to open on any PC.
 

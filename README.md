@@ -194,7 +194,7 @@ Full delerliste i <a href="docs/no/INSTALLATION.md">installasjonsguiden</a>.
 
 <p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passiv tapp</b> — se <a href="#velg-skjøtekabel-db25-eller-db9">Velg skjøtekabel</a> (bilde over).</p>
 
-<p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB-kjede</b> — Pi OTG: micro-USB → USB-A <b>hunn</b>. Lytteadapter: USB-A <b>hann</b> → DB9 → DB25 (WAGO på serie-enden). Hub med tastatur + penn. PWR IN ≥2,5 A.</p>
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB-kjede</b> — OTG: micro-USB <b>hann</b> → USB-A <b>hunn</b> (hub plugges inn). Lytteadapter: USB-A <b>hann</b> → DB9 <b>hunn</b> → DB25 → WAGO. Hub + tastatur + penn. PWR IN ≥2,5 A.</p>
 <img src="docs/no/img/usb-kjede-komplett.png" width="100%" alt="USB-kjede med WAGO og ICUSB232DB25"/>
 
 <p style="font-size: 15px; margin-bottom: 0.4em"><b>3 · OLED (valgfritt)</b> — 0,96" SSD1306 I2C, fire ledninger. Roterer dag/år, siste pakke, sort.</p>

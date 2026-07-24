@@ -145,9 +145,12 @@ Kjør 2–3 pakker, sjekk `pakkelapper.csv` mot papirlappene, trekk ut minnepenn
 **Produksjon.** Tjenesten fra steg 4 starter automatisk ved boot:
 
 ```bash
-sudo systemctl start pakkemaskin-skriver
-journalctl -u pakkemaskin-skriver -f     # live logg
+pakkemaskin start
+pakkemaskin logg     # live logg
 ```
+
+> Etter install ligger kommandoen `pakkemaskin` i PATH — du trenger ikke `cd` inn i mapper.
+> Ved kræsj eller etter kabelbytte: `pakkemaskin restart`
 
 ---
 

@@ -1,6 +1,22 @@
 # Wiring
 
-<img src="img/passive-rs232-tap.png" width="100%" alt="Passive RS-232 tap — DB9 middle / DB25 ends"/>
+<img src="img/tap-recommended-breakout.png" width="100%" alt="Recommended tap with DB25 breakout — no cutting"/>
+
+<img src="img/tap-step-by-step.png" width="100%" alt="Step-by-step: method A breakout / method B WAGO"/>
+
+## Recommendation: buy a breakout — don’t cut
+
+| | Method A (recommended) | Method B (works) |
+|--|------------------------|------------------|
+| Part | **DB25 male↔female breakout** with screw terminals | Short sacrificial extension + **WAGO 221** |
+| Work | Insert board inline | Slit jacket, cut only TX+GND |
+| Reversible | Yes — unplug the board | Messier |
+| Find TX/GND | Labeled **pin 2** and **pin 7** on the board | Continuity test (colors lie) |
+| Search | `DB25 male female breakout screw terminal` | — |
+
+Buy two breakouts if you can (one live, one spare). Cheap AliExpress/Amazon units are fine in a cabinet; DIN-rail (e.g. Winford) if you want tougher hardware.
+
+**Not** GPIO. **Not** parallel/Centronics (STROBE/D0…). **Not** a 40-pin LCD HAT. Signal goes to `/dev/ttyUSB0` via USB–RS232.
 
 ## What you have
 
@@ -10,34 +26,29 @@
 | Extension (middle) | Often a **DB9** cable with **DB25 adapters** on each end |
 | Pi OTG extension | micro-USB **male** into Pi DATA → USB-A **female** out |
 | USB hub | its USB-A **male** cable into the OTG female |
-| StarTech / DB9 cable | USB-A **male** into hub → other end DB9 **male** + attached **DB9→DB25 adapter** → DB25 **male** to WAGO |
+| StarTech / DB9 cable | USB-A **male** into hub → DB9 **male** + **DB9→DB25 adapter** → DB25 **male** |
 
-The signals to tap are still **DB25 pin 2 (TX)** and **pin 7 (GND)** at the PLC/printer.  
-In the DB9 middle section that maps to:
-
-| Signal | DB25 (PLC/OKI / adapter) | DB9 (conductor in middle) |
-|--------|--------------------------|---------------------------|
+| Signal | DB25 (PLC/OKI / breakout) | DB9 (if middle section) |
+|--------|---------------------------|-------------------------|
 | TX (data PLC→printer) | **2** | **3** |
 | GND | **7** | **5** |
 
-## Wire colors — do not trust them
+## Method A — breakout (recommended)
 
-Cheap extensions use **different colors**. There is no reliable “red = TX” rule.
+1. Insert a **DB25 M↔F breakout** between PLC cable and OKI (or mid short sacrificial extension). Original cable untouched.
+2. All pins pass through 1:1.
+3. From **screw 2 (TX)** → wire to listen adapter **RX**.
+4. From **screw 7 (GND)** → wire to listen adapter **GND**.
+5. Secure in cable tray. Label ACTIVE.
 
-**Find the conductors with a continuity tester:**
+## Method B — WAGO (if you won’t order)
 
-1. Insert the extension (or hold the DB25 adapter).
-2. Probe **metal pin 2** on the DB25 end (TX).
-3. Probe the thin conductors mid-cable (jacket opened) — the one that beeps is **TX**.
-4. Repeat with **pin 7** → that is **GND**.
-5. Mark both with tape before cutting.
+**Wire colors — do not trust them.** Continuity from DB25 pins **2** and **7**.
 
-## Tap (two conductors only)
-
-**Slit the jacket** on the DB9 middle — **do not cut the whole cable through**.  
-Cut **only** the two conductors you verified (TX + GND). Leave all others intact.
-
-**WAGO 221** — three ends in each clamp:
+1. Insert a short **sacrificial extension**. Never cut the original PLC→OKI cable.
+2. Slit the jacket mid-extension — **do not cut the whole cable through**.
+3. Cut **only** TX + GND. Three ends in each WAGO 221: PLC | OKI | Pi branch.
+4. Pi branch: TX → RX, GND → GND.
 
 ```
 PLC side ──┐
@@ -45,35 +56,32 @@ PLC side ──┐
 Pi branch ─┘
 ```
 
-## On to USB–RS232 (separate branch — not into PLC/OKI)
+## USB–RS232 (separate branch)
 
-The extension’s **DB25** ends go only into the PLC and printer.  
-The listen adapter is a separate branch:
+<img src="img/usb-chain-complete.png" width="100%" alt="USB chain with correct genders"/>
 
 ```text
 Pi DATA ── micro-USB MALE ── OTG extension ── USB-A FEMALE
                                                     ↑
                               hub USB-A MALE ───────┘
                                     │
-                    ┌───────────────┴── hub ports ────────────────┐
-                    │                                             │
-               keyboard / USB stick          StarTech DB9 cable:
-                                             USB-A MALE into hub
-                                                   │
-                                             DB9 MALE
-                                                   │
-                                      DB9→DB25 adapter (separate)
-                                                   │
-                                             DB25 MALE → WAGO
+                         ├── keyboard
+                         ├── flash → /media/usb0
+                         └── StarTech / DB9 cable:
+                               USB-A MALE into hub
+                               → DB9 MALE
+                               → DB9→DB25 adapter
+                               → DB25 MALE → breakout/WAGO listen
+                               → /dev/ttyUSB0
 ```
 
-| From WAGO | To listen adapter (serial end) |
-|-----------|-------------------------------|
-| TX (DB25 pin 2 / DB9 pin 3) | **RX** |
-| GND (DB25 pin 7 / DB9 pin 5) | **GND** |
+| From tap (breakout/WAGO) | To StarTech (serial end) |
+|--------------------------|--------------------------|
+| TX (DB25 pin 2) | **RX** |
+| GND (DB25 pin 7) | **GND** |
 
-TX → RX — never TX to TX. → `/dev/ttyUSB0`.
+TX → RX — never TX to TX.
 
-Secure the splice in the cable tray. Never leave a WAGO hanging loose.
+Older overview (WAGO-focused): [passive-rs232-tap.png](img/passive-rs232-tap.png)
 
 *Norwegian: [docs/no/wiring.md](../no/wiring.md)*

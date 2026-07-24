@@ -43,14 +43,17 @@ Skriveren fortsetter å skrive fysiske pakkelapper **helt som før**. Tappen lyt
 | 4 | Lexar 32GB Industrial microSDHC | RS 2676402 | Systemdisk — fasiten |
 | 5 | 2× Kingston 64GB USB-minnepenn | RS 0622158 | Sanntidsspeiling av CSV + Excel |
 | 6 | RS PRO IP54 kapsling 60×190×110 | RS 1959122 | Støvbeskyttelse |
-| 7 | WAGO 221-412 klemmer, 10-pk | RS 8837544 | Verktøyfri avgrening |
-| 8 | DB25 hann→hunn skjøtekabel 40 cm | AliExpress | **AKTIV** tapp-kabel |
-| 9 | DB25 hann→hunn skjøtekabel 50 cm | AliExpress | Reserve — merk med tape |
-| 10 | Micro-USB OTG adapter | AliExpress | Pi Zero → hub |
-| 11 | SSD1306 0,96" OLED, I2C, 4-pin | AliExpress | Statusskjerm (valgfritt) |
-| 12 | Dupont hopperledninger F-F | AliExpress | 4 av 40 brukes (OLED) |
+| 7 | **DB25 hann↔hunn breakout** m/skrueterminaler | AliExpress / Amazon / Elfa | **Anbefalt tapp** — ingen klipping |
+| 8 | WAGO 221-412 klemmer, 10-pk | RS 8837544 | Alternativ B / midlertidig grein |
+| 9 | DB25 hann→hunn skjøtekabel 40 cm | AliExpress | Offer-skjøt hvis metode B |
+| 10 | DB25 hann→hunn skjøtekabel 50 cm | AliExpress | Reserve — merk med tape |
+| 11 | Micro-USB OTG (hann→USB-A hunn) | AliExpress | Pi Zero DATA → hub |
+| 12 | SSD1306 0,96" OLED, I2C, 4-pin | AliExpress | Statusskjerm (valgfritt) |
+| 13 | Dupont hopperledninger F-F | AliExpress | 4 av 40 brukes (OLED) |
 
-I tillegg: **5V / minst 2,5 A** micro-USB strømforsyning (helst 3 A), tynn ledning til WAGO-grenen.
+I tillegg: **5V / minst 2,5 A** micro-USB strømforsyning (helst 3 A), to ledninger fra breakout pin 2/7 til StarTech RX/GND.
+
+Søk breakout: `DB25 male female breakout screw terminal`. Se [wiring.md](wiring.md).
 
 > **Strøm er kritisk på Pi Zero.** For lite ampere → «mystiske» feil: tastatur som ikke svarer,
 > USB-enheter som forsvinner, hengende konsoll. Bruk godkjent vegglader (**5,0–5,1 V, ≥ 2,5 A**),
@@ -121,23 +124,20 @@ python3 vis_status.py  # kjører uavhengig av fangst
 
 ## 5 · Fysisk tapping
 
-**Stopp maskinen før du rører kabler.** Originalkabelen endres aldri — 40 cm skjøtekabelen settes **i serie** ved skriveren og kan fjernes på sekunder.
+**Stopp maskinen før du rører kabler.** Originalkabelen endres aldri.
 
-Se også: [wiring.md](wiring.md)
+Se også: [wiring.md](wiring.md) — anbefalt: **DB25 breakout** (ingen klipping).
 
-<img src="img/passiv-rs232-tapp.png" width="100%" alt="Passiv RS-232-tapp pin 2 og 7"/>
+<img src="img/tapp-anbefalt-breakout.png" width="100%" alt="Anbefalt tapp med DB25 breakout"/>
+<img src="img/tapp-steg-for-steg.png" width="100%" alt="Steg-for-steg metode A/B"/>
 
 > Ignorer AI-illustrasjoner som viser GPIO, parallellport (D0–D7) eller 40-pinners LCD — signalet går til **USB–RS232 → `/dev/ttyUSB0`**.
 
-Steg for steg:
+**Metode A (anbefalt):** Sett inn **DB25 hann↔hunn breakout** med skrueterminaler. Fra skrue **2 → RX**, skrue **7 → GND** på StarTech-lytteenden. Alt annet går 1:1 gjennom.
 
-1. **Sett inn 40 cm skjøtekabel** mellom skriverens DB25 og eksisterende kabel fra sorteringsanlegget. Ta bilde av originaltilkoblingen først.
-2. **Åpne kappen** midt på skjøten (ofte DB9-kabel med DB25-adaptere — klipp **ikke** hele kabelen over). Finn TX/GND med **pipetest** fra DB25-pinne **2** og **7** (i DB9-midten = pin **3** og **5**). Farger er ikke standard — merk lederne før klipping.
-3. **Klipp kun disse to lederne** — alle andre urørt, så skriveren fortsatt får hele signalet.
-4. **WAGO: tre ender per klemme** — PLS-side + skriver-side (signalet går ubrutt) + ny tynn ledning til USB-serieadapter.
-5. **Fest skjøten** med strips i kabelrenna — la aldri WAGO henge løst. Merk aktiv kabel med tape.
+**Metode B:** Kort offer-skjøt → åpne kappe → pipetest pin 2/7 → klipp kun TX+GND → WAGO tre veier → fest i renne.
 
-> ⚠ **Retning teller:** pinne 2 fra skriversiden er **TX** (signalkilden). Den kobles til adapterens **RX**. TX→TX fanger ingenting.
+> ⚠ **Retning teller:** TX fra PLS → adapterens **RX**. TX→TX fanger ingenting.
 
 ### USB-kjede
 
@@ -160,7 +160,7 @@ Pi DATA ── micro-USB HANN ── OTG-skjøtekabel ── USB-A HUNN
                                USB-A HANN inn i hub
                                → DB9 HANN
                                → DB9→DB25-adapter (egen del)
-                               → DB25 HANN → WAGO → /dev/ttyUSB0
+                               → DB25 HANN → breakout/WAGO → /dev/ttyUSB0
 ```
 
 - SD-kortet er alltid fasiten (fangst fortsetter uten minnepenn).
@@ -234,7 +234,7 @@ Trekk ut minnepennen når som helst — årets `pakkelapperYYYY.csv` og `pakkela
 
 - [ ] Alle deler mottatt (SD-kort sendes separat!)
 - [ ] 40 cm kabel merket AKTIV, 50 cm merket RESERVE
-- [ ] Tap skjøtet: pin 2+7 WAGO, festet med strips
+- [ ] Tapp: breakout (anbefalt) eller WAGO på pin 2+7, festet i renne
 - [ ] USB-kjede: Pi **data-port** → OTG → hub → adapter + minnepenn
 - [ ] OLED på GPIO 1/3/5/6, I2C aktivert (hvis brukt)
 - [ ] `--bare-fangst` viser lesbar lappetekst

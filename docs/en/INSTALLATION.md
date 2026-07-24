@@ -18,14 +18,17 @@ The printer keeps printing physical labels **exactly as before**. The tap only l
 | 4 | Lexar 32GB Industrial microSDHC | RS 2676402 | System drive — the master copy |
 | 5 | 2× Kingston 64GB USB flash | RS 0622158 | Live CSV mirror, pull anytime |
 | 6 | RS PRO IP54 enclosure 60×190×110 | RS 1959122 | Sawdust protection |
-| 7 | WAGO 221-412 clamps, 10-pack | RS 8837544 | Tool-free wire tap |
-| 8 | DB25 M-F extension 40 cm | AliExpress | **ACTIVE** tap cable |
-| 9 | DB25 M-F extension 50 cm | AliExpress | Spare — mark with tape |
-| 10 | Micro-USB OTG adapter | AliExpress | Pi Zero → hub |
-| 11 | SSD1306 0.96" OLED, I2C, 4-pin | AliExpress | Status screen (optional) |
-| 12 | Dupont jumper wires F-F | AliExpress | 4 of 40 used (OLED) |
+| 7 | **DB25 male↔female breakout** w/ screw terminals | AliExpress / Amazon / Elfa | **Recommended tap** — no cutting |
+| 8 | WAGO 221-412 clamps, 10-pack | RS 8837544 | Method B / temporary branch |
+| 9 | DB25 M-F extension 40 cm | AliExpress | Sacrificial splice if method B |
+| 10 | DB25 M-F extension 50 cm | AliExpress | Spare — mark with tape |
+| 11 | Micro-USB OTG (male→USB-A female) | AliExpress | Pi Zero DATA → hub |
+| 12 | SSD1306 0.96" OLED, I2C, 4-pin | AliExpress | Status screen (optional) |
+| 13 | Dupont jumper wires F-F | AliExpress | 4 of 40 used (OLED) |
 
-Also needed: 5V/2A+ micro-USB power supply, thin hookup wire for the WAGO branch.
+Also needed: 5V / ≥2.5 A micro-USB wall supply, two wires from breakout pins 2/7 to StarTech RX/GND.
+
+Search breakout: `DB25 male female breakout screw terminal`. See [wiring.md](wiring.md).
 
 ---
 
@@ -85,21 +88,20 @@ python3 vis_status.py  # runs independently of capture
 
 ## 5 · The physical tap
 
-**Stop the machine before touching any cable.** The original cable is never modified — the 40 cm extension goes **in series** at the printer end and can be removed in seconds.
+**Stop the machine before touching any cable.** The original cable is never modified.
 
-See also: [wiring.md](wiring.md)
+See also: [wiring.md](wiring.md) — recommended: **DB25 breakout** (no cutting).
 
-<img src="img/passive-rs232-tap.png" width="100%" alt="Passive RS-232 tap — two wires only"/>
+<img src="img/tap-recommended-breakout.png" width="100%" alt="Recommended tap with DB25 breakout"/>
+<img src="img/tap-step-by-step.png" width="100%" alt="Step-by-step method A/B"/>
 
-Step by step:
+> Ignore drawings that show GPIO, parallel port (D0–D7), or a 40-pin LCD — signal goes to **USB–RS232 → `/dev/ttyUSB0`**.
 
-1. **Insert the 40 cm extension** between the printer's DB25 port and the existing cable from the sorting plant. Take a photo of the original connection first.
-2. **Mid-cable, slit the jacket** (often a DB9 cable with DB25 adapters — do **not** cut the whole cable through). Find TX/GND with a **continuity tester** from DB25 pins **2** and **7** (in the DB9 middle = pins **3** and **5**). Colors are not standard — mark wires before cutting.
-3. **Cut only those two conductors** — leave all others intact so the printer still gets the full signal.
-4. **WAGO-join three ends per clamp**: PLC side + printer side + one new thin wire to the USB-serial adapter.
-5. **Secure the splice** with cable ties in the cable tray. Mark the active cable with tape.
+**Method A (recommended):** Insert a **DB25 male↔female breakout** with screw terminals. From screw **2 → RX**, screw **7 → GND** on the StarTech listen end. Everything else passes 1:1.
 
-> ⚠ **Direction matters:** pin 2 is **TX** (signal source). It connects to the adapter's **RX**. TX→TX captures nothing. Signal goes to `/dev/ttyUSB0` — **not** GPIO.
+**Method B:** Short sacrificial extension → slit jacket → continuity on pins 2/7 → cut only TX+GND → WAGO three-way → secure in tray.
+
+> ⚠ **Direction matters:** PLC TX → adapter **RX**. TX→TX captures nothing.
 
 ### USB chain
 

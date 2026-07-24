@@ -1,6 +1,22 @@
 # Kobling
 
-<img src="img/passiv-rs232-tapp.png" width="100%" alt="Passiv RS-232-tapp DB9 midt / DB25 ender"/>
+<img src="img/tapp-anbefalt-breakout.png" width="100%" alt="Anbefalt tapp med DB25 breakout — uten å klippe"/>
+
+<img src="img/tapp-steg-for-steg.png" width="100%" alt="Steg-for-steg: metode A breakout / metode B WAGO"/>
+
+## Anbefaling: kjøp breakout — ikke klipp
+
+| | Metode A (anbefalt) | Metode B (fungerer) |
+|--|---------------------|---------------------|
+| Del | **DB25 hann↔hunn breakout** med skrueterminaler | Kort offer-skjøt + **WAGO 221** |
+| Inngrep | Sett boardet inn i skjøten | Åpne kappe, klipp kun TX+GND |
+| Reversibelt | Ja — trekk ut boardet | Mindre pent |
+| Finn TX/GND | Merkt **pin 2** og **pin 7** på boardet | Pipetest (farger lyver) |
+| Søk | `DB25 male female breakout screw terminal` | — |
+
+Kjøp gjerne to breakouts (én i drift, én reservedel). Billige AliExpress/Amazon-varianter holder i skap; DIN-rail (f.eks. Winford) hvis du vil ha mer industrielt.
+
+**Ikke** GPIO. **Ikke** parallellport (STROBE/D0…). **Ikke** 40-pinners LCD-HAT. Signal går til `/dev/ttyUSB0` via USB–RS232.
 
 ## Hva du har
 
@@ -10,34 +26,29 @@
 | Skjøtekabel (midt) | Ofte **DB9**-kabel med **DB25-adapter** i hver ende |
 | Pi OTG-skjøtekabel | micro-USB **hann** inn i Pi DATA → USB-A **hunn** ute |
 | USB-hub | egen USB-A **hann**-kabel inn i OTG-hunnen |
-| StarTech / DB9-kabel | USB-A **hann** inn i hubben → andre enden DB9 **hann** + påsatt **DB9→DB25-adapter** → DB25 **hann** til WAGO |
+| StarTech / DB9-kabel | USB-A **hann** inn i hubben → DB9 **hann** + **DB9→DB25-adapter** → DB25 **hann** |
 
-Signalet som skal tappes er fortsatt **DB25 pin 2 (TX)** og **pin 7 (GND)** på PLS/OKI-siden.  
-I DB9-midten tilsvarer det:
-
-| Signal | DB25 (PLS/OKI / adapter) | DB9 (leder midt i skjøten) |
-|--------|--------------------------|----------------------------|
+| Signal | DB25 (PLS/OKI / breakout) | DB9 (hvis midtseksjon) |
+|--------|---------------------------|------------------------|
 | TX (data PLS→skriver) | **2** | **3** |
 | GND | **7** | **5** |
 
-## Farger — ikke stol på dem
+## Metode A — breakout (anbefalt)
 
-Billige skjøter bruker **ulike farger**. Det finnes ingen pålitelig «rød = TX»-regel.
+1. Sett **DB25 M↔F breakout** inn mellom PLS-kabel og OKI (eller midt i kort offer-skjøt). Originalkabel urørt.
+2. Alle pinner går 1:1 gjennom boardet.
+3. Fra **skrue 2 (TX)** → ledning til lytteadapterens **RX**.
+4. Fra **skrue 7 (GND)** → ledning til lytteadapterens **GND**.
+5. Fest i kabelrenne. Merk «AKTIV».
 
-**Finn lederne slik (multimeter / pipetest):**
+## Metode B — WAGO (hvis du ikke bestiller)
 
-1. Sett skjøten inn (eller hold DB25-adapteren i hånden).
-2. Sett den ene Proben på **metallpinne 2** i DB25-enden (TX).
-3. Pip deg gjennom de tynne lederne midt i kabelen (kappen åpnet) — den som piper er **TX**.
-4. Gjenta med **pinne 7** → det er **GND**.
-5. Merk de to lederne med tape før du klipper.
+**Farger — ikke stol på dem.** Pipetest fra DB25-pinne **2** og **7**.
 
-## Tapp (kun to ledere)
-
-**Åpne kappen** midt på DB9-delen — **klipp ikke hele kabelen over**.  
-Klipp **kun** de to lederne du har verifisert (TX + GND). Alle andre urørt.
-
-**WAGO 221** — tre ender i hver klemme:
+1. Sett inn kort **offer-skjøt**. Original PLS→OKI røres aldri.
+2. Åpne kappen midt på skjøten — **klipp ikke hele kabelen over**.
+3. Klipp **kun** TX + GND. Tre ender i hver WAGO 221: PLS | OKI | Pi-gren.
+4. Pi-gren: TX → RX, GND → GND.
 
 ```
 PLS-side ──┐
@@ -45,35 +56,32 @@ PLS-side ──┐
 Pi-gren ───┘
 ```
 
-## Videre til USB–RS232 (egen grein — ikke inn i PLS/OKI)
+## USB–RS232 (egen grein)
 
-Skjøtens **DB25** går bare til PLS og skriver.  
-Lytteadapteren er egen grein:
+<img src="img/usb-kjede-komplett.png" width="100%" alt="USB-kjede med riktige kjønn"/>
 
 ```text
 Pi DATA ── micro-USB HANN ── OTG-skjøtekabel ── USB-A HUNN
                                                     ↑
                               hubens USB-A HANN ────┘
                                     │
-                    ┌───────────────┴── hub-porter ───────────────┐
-                    │                                             │
-               tastatur / USB-pinne          StarTech DB9-kabel:
-                                             USB-A HANN inn i hub
-                                                   │
-                                             DB9 HANN
-                                                   │
-                                      DB9→DB25-adapter (egen del)
-                                                   │
-                                             DB25 HANN → WAGO
+                         ├── tastatur
+                         ├── USB-pinne → /media/usb0
+                         └── StarTech / DB9-kabel:
+                               USB-A HANN inn i hub
+                               → DB9 HANN
+                               → DB9→DB25-adapter
+                               → DB25 HANN → breakout/WAGO-lytting
+                               → /dev/ttyUSB0
 ```
 
-| Fra WAGO | Til lytteadapter (serie-ende) |
-|----------|-------------------------------|
-| TX (DB25 pin 2 / DB9 pin 3) | **RX** |
-| GND (DB25 pin 7 / DB9 pin 5) | **GND** |
+| Fra tapp (breakout/WAGO) | Til StarTech (serie-ende) |
+|--------------------------|---------------------------|
+| TX (DB25 pin 2) | **RX** |
+| GND (DB25 pin 7) | **GND** |
 
-TX → RX — aldri TX til TX. → `/dev/ttyUSB0`.
+TX → RX — aldri TX til TX.
 
-Fest skjøten i kabelrenna. La aldri WAGO henge løst.
+Eldre oversiktstegning (WAGO-fokus): [passiv-rs232-tapp.png](img/passiv-rs232-tapp.png)
 
 *English: [docs/en/wiring.md](../en/wiring.md)*

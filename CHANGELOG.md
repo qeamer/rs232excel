@@ -61,6 +61,8 @@ Tester: `cd python/no && python3 -m unittest test_register.py`
 - Pi DATA → OTG-skjøtekabel (USB-A **hunn**) ← hub (USB-A **hann**)
 - StarTech/DB9-kabel: USB-A **hann** inn i hub → DB9 **hann** → egen **DB9→DB25-adapter** → DB25 **hann** → WAGO
 - USB-diagram tegnet som skjema (ikke AI-illustrasjon) etter faktiske kabler
+- **Anbefalt tapp:** DB25 M↔F breakout (ingen klipping); WAGO er plan B
+- Steg-bilder + Claude-PDF: `docs/no/rs232excel-2026-07-24-for-claude.pdf`
 - **PWR IN:** 5V / ≥2,5 A (helst 3 A) vegglader — ikke svak telefonlader
 - Auto-mount til `/media/usb0` (`fiks-usb.sh` + udev)
 - Hotplug: penn ut/inn synkes ved neste sjekk / pakke

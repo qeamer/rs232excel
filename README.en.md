@@ -1,5 +1,11 @@
 <p align="center">
-  <img src="skaak_logo_vektor.png" height="70" alt="Skjåk Trelast AS"/>
+  <a href="https://www.skjak-trelast.no">
+    <img src="skaak_logo_vektor.png" height="80" alt="Skjåk Trelast AS"/>
+  </a>
+</p>
+
+<p align="center">
+  <a href="README.md" style="font-size: 1.45em; font-weight: 700">← Norsk Readme (hovedversjon)</a>
 </p>
 
 <h1 align="center">rs232excel</h1>
@@ -106,9 +112,18 @@ Norwegian production flags (`--bare-fangst`, `--eksporter-xlsx`, …): see [`pyt
 
 ## Hardware
 
-<img src="docs/en/img/wiring-tap.png" width="100%" alt="Wiring"/>
+Raspberry Pi Zero WH · StarTech ICUSB232DB25 · WAGO 221 · 40 cm DB25 extension ·
+USB hub + keyboard + flash drive · optional SSD1306 OLED.
+Full parts list in the [installation guide](docs/en/INSTALLATION.md).
 
-Raspberry Pi Zero WH · StarTech ICUSB232DB25 · WAGO 221-412 clamps · 40 cm DB25 extension in series · IP54 enclosure · optional SSD1306 OLED status display. Full parts list with order numbers in the [installation guide](docs/en/INSTALLATION.md).
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passive tap</b> — slit the jacket; cut <b>only</b> pin 2 (TX) and pin 7 (GND) conductors. Not the whole cable. WAGO, TX→RX. Not GPIO.</p>
+<img src="docs/en/img/passive-rs232-tap.png" width="100%" alt="Passive RS-232 tap"/>
+
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB chain</b> — PWR IN = power (≥2.5 A). Data port → OTG → hub → keyboard, stick, adapter.</p>
+<img src="docs/en/img/usb-chain-complete.png" width="100%" alt="USB chain"/>
+
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>3 · OLED (optional)</b> — 0.96" SSD1306 I2C, four wires. Rotates day/year, last package, sort mix.</p>
+<img src="docs/en/img/oled-i2c-correct.png" width="72%" alt="OLED I2C"/>
 
 ## Label format
 
@@ -138,5 +153,5 @@ MIT
 ---
 
 <p align="center">
-  <sub><a href="https://www.skjaaktrelast.no">Skjåk Trelast AS</a> · Telemecanique TSX · OKI Microline · RS-232 9600 8N1</sub>
+  <sub><a href="https://www.skjak-trelast.no">Skjåk Trelast AS</a> · Telemecanique TSX · OKI Microline · RS-232 9600 8N1</sub>
 </p>

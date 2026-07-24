@@ -1,9 +1,11 @@
 ﻿<p align="center">
-  <img src="skaak_logo_vektor.png" height="80" alt="Skjåk Trelast AS"/>
+  <a href="https://www.skjak-trelast.no">
+    <img src="skaak_logo_vektor.png" height="80" alt="Skjåk Trelast AS"/>
+  </a>
 </p>
 
 <p align="center">
-  <a href="README.en.md"><b>English Readme Here</b></a>
+  <a href="README.en.md" style="font-size: 1.45em; font-weight: 700">English Readme Here →</a>
 </p>
 
 <h1 align="center">rs232excel</h1>
@@ -180,5 +182,5 @@ Full delerliste i <a href="docs/no/INSTALLATION.md">installasjonsguiden</a>.
 ---
 
 <p align="center" style="font-size: 14px">
-<a href="https://www.skjaaktrelast.no">Skjåk Trelast AS</a> · Telemecanique TSX · OKI Microline · RS-232 9600 8N1
+<a href="https://www.skjak-trelast.no">Skjåk Trelast AS</a> · Telemecanique TSX · OKI Microline · RS-232 9600 8N1
 </p>

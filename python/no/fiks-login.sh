@@ -36,11 +36,11 @@ echo 'kernel.printk = 3 4 1 3' | sudo tee /etc/sysctl.d/20-pakkemaskin-quiet.con
 for kandidat in /boot/firmware/cmdline.txt /boot/cmdline.txt; do
   if [[ -f "$kandidat" ]]; then
     sudo cp -n "$kandidat" "${kandidat}.bak.pakkemaskin" 2>/dev/null || true
-    nå="$(tr -s ' ' < "$kandidat" | sed 's/[[:space:]]*$//')"
-    grep -qw quiet <<<"$nå" || nå="$nå quiet"
-    grep -q 'loglevel=' <<<"$nå" || nå="$nå loglevel=3"
-    grep -qw logo.nologo <<<"$nå" || nå="$nå logo.nologo"
-    echo "$nå" | sudo tee "$kandidat" >/dev/null
+    cmdline="$(tr -s ' ' < "$kandidat" | sed 's/[[:space:]]*$//')"
+    grep -qw quiet <<<"$cmdline" || cmdline="$cmdline quiet"
+    grep -q 'loglevel=' <<<"$cmdline" || cmdline="$cmdline loglevel=3"
+    grep -qw logo.nologo <<<"$cmdline" || cmdline="$cmdline logo.nologo"
+    echo "$cmdline" | sudo tee "$kandidat" >/dev/null
     echo "  $kandidat oppdatert"
     break
   fi

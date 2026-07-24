@@ -34,11 +34,11 @@ done
 if [[ -n "$CMDLINE" ]]; then
   sudo cp -n "$CMDLINE" "${CMDLINE}.bak.pakkemaskin" 2>/dev/null \
     || sudo cp "$CMDLINE" "${CMDLINE}.bak.pakkemaskin"
-  nå="$(tr -s ' ' < "$CMDLINE" | sed 's/[[:space:]]*$//')"
-  grep -qw quiet <<<"$nå" || nå="$nå quiet"
-  grep -q 'loglevel=' <<<"$nå" || nå="$nå loglevel=3"
-  grep -qw logo.nologo <<<"$nå" || nå="$nå logo.nologo"
-  echo "$nå" | sudo tee "$CMDLINE" >/dev/null
+  cmdline="$(tr -s ' ' < "$CMDLINE" | sed 's/[[:space:]]*$//')"
+  grep -qw quiet <<<"$cmdline" || cmdline="$cmdline quiet"
+  grep -q 'loglevel=' <<<"$cmdline" || cmdline="$cmdline loglevel=3"
+  grep -qw logo.nologo <<<"$cmdline" || cmdline="$cmdline logo.nologo"
+  echo "$cmdline" | sudo tee "$CMDLINE" >/dev/null
   echo "  Oppdatert $CMDLINE"
 else
   echo "  Fant ikke cmdline.txt — hopper over"

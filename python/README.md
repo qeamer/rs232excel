@@ -17,10 +17,10 @@
 - `vis_status.py` — valgfri OLED-skjerm
 - `eksempel.txt` — testlapper for `--simuler`
 
-Én-kommando på Pi (anbefalt):
+Én-kommando på Pi (HDMI/tastatur eller SSH):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/qeamer/rs232excel/main/scripts/last-ned-pakkemaskin.sh | bash
+curl -fsSL https://raw.githubusercontent.com/qeamer/rs232excel/main/python/no/install.sh | bash
 ```
 
 Manuelt:

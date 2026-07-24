@@ -6,8 +6,9 @@ rs232excel repository structure
 ├── README.no.md                       Redirect → README.md
 ├── skaak_logo_vektor.png              Skjåk Trelast logo (white on transparent, for GitHub)
 │
+├── install.sh                         Norwegian one-liner entry (curl | bash)
 ├── scripts/
-│   ├── last-ned-pakkemaskin.sh        One-liner bootstrap (Norwegian / Skjåk)
+│   ├── last-ned-pakkemaskin.sh        Alias → python/no/install.sh
 │   ├── bootstrap-package-machine.sh   One-liner bootstrap (English)
 │   └── gen_en_screenshots.py          Doc screenshot helper
 │

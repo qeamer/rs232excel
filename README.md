@@ -51,10 +51,10 @@ midt på kabelen. Skriveren fortsetter helt som før — ingenting sendes tilbak
 <h2 style="font-size: 1.5em">Hurtigstart (norsk produksjonsversjon)</h2>
 
 ```bash
-# På Pi (etter SSH): én kommando laster ned og installerer
-curl -fsSL https://raw.githubusercontent.com/qeamer/rs232excel/main/scripts/last-ned-pakkemaskin.sh | bash
+# På Pi (HDMI/tastatur eller SSH) — norsk produksjonsversjon
+curl -fsSL https://raw.githubusercontent.com/qeamer/rs232excel/main/python/no/install.sh | bash
 
-# Eller manuelt
+# Eller manuelt med git
 git clone https://github.com/qeamer/rs232excel.git
 cd rs232excel/python/no
 bash installer.sh

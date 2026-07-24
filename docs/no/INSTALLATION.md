@@ -59,29 +59,26 @@ Windows uten ssh? [PuTTY](https://putty.org) eller WSL.
 
 ## 4 · Installer programvaren
 
-Når Pi OS er på plass og du er innlogget over SSH, last ned og installer med **én kommando**:
+Når Pi OS er på plass (HDMI/tastatur **eller** SSH), lim inn **én** kommando:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/qeamer/rs232excel/main/scripts/last-ned-pakkemaskin.sh | bash
+curl -fsSL https://raw.githubusercontent.com/qeamer/rs232excel/main/python/no/install.sh | bash
 ```
 
-Skriptet oppdaterer systemet, kloner repoet til `~/rs232excel`, installerer avhengigheter, legger brukeren i `dialout`, lager `/media/usb0`, aktiverer systemd-tjenesten (uten å starte den ennå), og kjører en rask simuleringstest.
+> Filnavn: norsk install heter `python/no/install.sh` (og `installer.sh` lokalt).
+> Ikke bruk `python/en/install.sh` — det er engelsk speilversjon.
+> Bruk alltid `raw.githubusercontent.com` (ikke `github.com/.../raw/...` i nettleseren uten `-L`).
 
-Manuelt, steg for steg:
+Skriptet installerer git/pip ved behov, kloner til `~/rs232excel`, setter `dialout` + `/media/usb0`, aktiverer systemd-tjenesten (uten å starte den), og kjører en simuleringstest.
+
+**Uten curl** (ren git — fungerer alltid med HDMI/tastatur):
 
 ```bash
-# Systemoppdatering (~5 min)
-sudo apt update && sudo apt upgrade -y
+sudo apt update
 sudo apt install -y git python3-pip
-
-# Klon repoet
 git clone https://github.com/qeamer/rs232excel.git
 cd rs232excel/python/no
-
-# Avhengigheter og autostart
 bash installer.sh
-
-# Røyktest uten PLS
 python3 read_package.py --simuler eksempel.txt
 ```
 

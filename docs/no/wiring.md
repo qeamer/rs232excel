@@ -8,8 +8,8 @@
 |-----|---------|
 | PLS og OKI | **DB25** |
 | Skjøtekabel (midt) | Ofte **DB9**-kabel med **DB25-adapter** i hver ende |
-| Pi-lytting | **USB–RS232**: USB-A **hann** → DB9 → DB25 (f.eks. ICUSB232DB25) |
-| Pi OTG | micro-USB (inn i Pi) → USB-A **hunn** (hub/enheter plugges inn) |
+| Pi OTG | micro-USB **hann** (inn i Pi) → USB-A **hunn** (hubens hann plugges inn) |
+| Pi-lytting | USB–RS232: USB-A **hann** (inn i hub) → DB9 **hunn** → DB25-adapter → WAGO |
 
 Signalet som skal tappes er fortsatt **DB25 pin 2 (TX)** og **pin 7 (GND)** på PLS/OKI-siden.  
 I DB9-midten tilsvarer det:
@@ -50,8 +50,11 @@ Skjøtens **DB25** går bare til PLS og skriver.
 Lytteadapteren er egen grein:
 
 ```text
-WAGO (TX+GND)
-    → DB25 (lytte) ← DB9 ← USB-A HANN  →  hub  →  OTG (USB-A HUNN)  →  Pi
+Pi ── micro-USB HANN ── OTG ── USB-A HUNN
+                                    ↑
+                              hub (USB-A HUNN-porter)
+                                    ↑
+              USB-A HANN ── USB-RS232 ── DB9 HUNN ── DB25-adapter ── WAGO
 ```
 
 | Fra WAGO | Til lytteadapter (serie-ende) |
@@ -59,8 +62,7 @@ WAGO (TX+GND)
 | TX (DB25 pin 2 / DB9 pin 3) | **RX** |
 | GND (DB25 pin 7 / DB9 pin 5) | **GND** |
 
-TX → RX — aldri TX til TX. USB-A **hann** i huben → `/dev/ttyUSB0`.  
-OTG fra Pi er micro-USB → USB-A **hunn** (ikke hann–hann-kabel).
+TX → RX — aldri TX til TX. → `/dev/ttyUSB0`.
 
 Fest skjøten i kabelrenna. La aldri WAGO henge løst.
 

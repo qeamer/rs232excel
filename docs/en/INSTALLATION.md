@@ -109,7 +109,7 @@ See also: [wiring.md](wiring.md) — recommended: **DB25 breakout** (no cutting)
 
 The OTG extension **must** go in the middle **data** port on the Pi Zero — the corner port is power-only (**PWR IN**, ≥2.5 A wall supply).
 
-**How the cables are:** Pi DATA → micro-USB male → OTG extension ending in USB-A **female** ← hub USB-A **male**. StarTech/DB9 cable: USB-A **male** into hub → DB9 **male** → separate DB9→DB25 adapter → DB25 **male** to WAGO.
+**How the cables are:** Pi DATA → micro-USB male → OTG extension ending in USB-A **female** ← hub USB-A **male**. StarTech/DB9 cable: USB-A **male** into hub → DB9 **male** → separate DB9→DB25 adapter → DB25 **male** → breakout/WAGO listen.
 
 ### OLED status display (optional)
 
@@ -173,7 +173,7 @@ Pull the flash drive at any time — the Excel file and CSV are on it, ready to 
 
 - [ ] All parts received (SD card shipped separately!)
 - [ ] 40 cm cable marked ACTIVE, 50 cm marked SPARE
-- [ ] Tap spliced: pins 2+7 WAGO-joined, splice secured with ties
+- [ ] Tap: breakout (recommended) or WAGO on pins 2+7, secured in tray
 - [ ] USB chain: Pi **data port** → OTG → hub → adapter + flash drive
 - [ ] OLED on GPIO 1/3/5/6, I2C enabled in raspi-config (if used)
 - [ ] `--raw-capture` shows readable label text

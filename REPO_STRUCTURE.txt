@@ -25,14 +25,16 @@ rs232excel repository structure
     │   ├── read_package.py            Main script (English CLI: --raw-capture, --export-xlsx, …)
     │   ├── install.sh                 Installation script (English)
     │   ├── read-package.service       systemd unit file
-    │   ├── requirements.txt           Python deps: pyserial openpyxl
+    │   ├── requirements.txt           Python deps: pyserial openpyxl pillow
+    │   ├── skaak_logo_hvit.png        White knockout logo for Excel Summary banner
     │   └── example.txt                Synthetic test labels for --simulate
     │
     └── no/                            NORWEGIAN VERSION (Skjåk Trelast production)
         ├── read_package.py            Main script (Norwegian CLI: --bare-fangst, --eksporter-xlsx, …)
         ├── installer.sh               Installation script (Norwegian)
         ├── pakkemaskin-skriver.service  systemd unit file
-        ├── requirements.txt           Python deps
+        ├── requirements.txt           Python deps: pyserial openpyxl pillow
+        ├── skaak_logo_hvit.png        White knockout logo for Excel Sammendrag banner
         ├── eksempel.txt               Testlapper for --simuler
         └── vis_status.py              Optional OLED status display
 

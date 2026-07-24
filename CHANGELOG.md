@@ -108,6 +108,18 @@ PR: https://github.com/qeamer/rs232excel/pull/3 (`cursor/pakkemaskin-cli-ef03`)
 
 ---
 
+### Illustrasjoner (korrigert etter Gemini)
+
+Nye norske diagrammer i `docs/no/img/` (erstatter misvisende AI-bilder):
+
+| Fil | Innhold |
+|-----|---------|
+| `passiv-rs232-tapp.png` | Kun pin 2/7, WAGO, TX→RX, **ikke** GPIO |
+| `usb-kjede-komplett.png` | PWR IN ≥2,5 A, OTG-hub, tastatur+penn+adapter |
+| `oled-i2c-korrekt.png` | 0,96" SSD1306 I2C — **ikke** 40-pinners LCD-HAT |
+
+---
+
 ## Fremtid (ikke i denne releasen)
 
 - Wi‑Fi-opplasting av Excel til intern Trelast-app / ekspedisjon (f.eks. Høvelapp) når Pi får nett

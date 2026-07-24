@@ -125,7 +125,9 @@ python3 vis_status.py  # kjører uavhengig av fangst
 
 Se også: [wiring.md](wiring.md)
 
-<img src="img/wiring-tap.png" width="100%" alt="DB25 tapping"/>
+<img src="img/passiv-rs232-tapp.png" width="100%" alt="Passiv RS-232-tapp pin 2 og 7"/>
+
+> Ignorer AI-illustrasjoner som viser GPIO, parallellport (D0–D7) eller 40-pinners LCD — signalet går til **USB–RS232 → `/dev/ttyUSB0`**.
 
 Steg for steg:
 
@@ -139,18 +141,18 @@ Steg for steg:
 
 ### USB-kjede
 
-<img src="img/usb-chain.png" width="100%" alt="USB-kjede"/>
+<img src="img/usb-kjede-komplett.png" width="100%" alt="USB-kjede med tastatur, penn og adapter"/>
 
 OTG-adapteren **må** i **data**-porten midt på Pi Zero — hjørneporten er kun strøm (**PWR IN**).
 
 **Anbefalt produksjonsoppsett (tastatur + minnepenn + serieadapter samtidig):**
 
 ```text
-PWR IN (hjørne) ─── 5V / ≥2,5 A vegglader
+PWR IN (hjørne) ─── 5V / ≥2,5 A vegglader (helst 3 A)
 
 USB midt ─── OTG ─── USB-hub (gjerne med egen strøm)
-                         ├── tastatur
-                         ├── minnepenn      → speiles til /media/usb0
+                         ├── USB-tastatur
+                         ├── minnepenn      → /media/usb0 (CSV+Excel)
                          └── RS-232-adapter → /dev/ttyUSB0
 ```
 
@@ -163,9 +165,9 @@ USB midt ─── OTG ─── USB-hub (gjerne med egen strøm)
 
 ### OLED statusskjerm (valgfritt)
 
-<img src="img/oled-gpio.png" width="80%" alt="OLED GPIO"/>
+<img src="img/oled-i2c-korrekt.png" width="80%" alt="OLED I2C fire ledninger"/>
 
-Fire hopperledninger, helt uavhengig av USB-kjeden. Eget program — krasjer den, påvirkes ikke fangsten.
+Fire hopperledninger (I2C), helt uavhengig av USB-kjeden. Eget program (`vis_status.py`) — krasjer den, påvirkes ikke fangsten. **Ikke** 40-pinners LCD-HAT.
 
 ---
 

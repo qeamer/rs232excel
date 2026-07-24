@@ -1,5 +1,7 @@
 # Kobling
 
+<img src="img/passiv-rs232-tapp.png" width="100%" alt="Passiv RS-232-tapp"/>
+
 Sett inn **40 cm DB25 hann→hunn skjøtekabel** mellom eksisterende PLS-kabel og OKI-skriverens port.
 
 Midt på kabelen klippes **kun** lederne for:

@@ -5,12 +5,13 @@ Komplett gjennomgang — fra tom SD-kort til fangst i produksjon på høvleriet.
 ## Allerede installert? Bruk bare dette
 
 ```bash
-pakkemaskin start        # start fangst
-pakkemaskin restart      # ved kræsj eller kabelbytte
-pakkemaskin status       # sjekk at alt går
-pakkemaskin logg         # live logg — stopp med Ctrl+C
-pakkemaskin test         # første test (lagrer ikke) — stopp med Ctrl+C
-pakkemaskin excel        # lag Excel
+start          # start fangst
+stopp          # stopp fangst
+restart        # ved kræsj eller kabelbytte
+status         # sjekk at alt går
+logg           # live logg — stopp med Ctrl+C
+sjekk          # første test (lagrer ikke) — stopp med Ctrl+C
+excel          # lag Excel
 ```
 
 Resten av denne siden er **første gangs installasjon** (SD-kort → kabler → verifisering).
@@ -88,7 +89,7 @@ cd rs232excel/python/no
 bash installer.sh
 ```
 
-Etter dette fungerer `pakkemaskin start`, `pakkemaskin status`, osv. fra hvor som helst.
+Etter dette fungerer `start`, `stopp`, `logg`, `sjekk`, osv. fra hvor som helst.
 
 Valgfri OLED-skjerm:
 
@@ -162,12 +163,12 @@ Kjør 2–3 pakker, sjekk `pakkelapper.csv` mot papirlappene, trekk ut minnepenn
 **Produksjon.** Tjenesten fra steg 4 starter automatisk ved boot:
 
 ```bash
-pakkemaskin start
-pakkemaskin logg     # live logg
+start
+logg     # live logg
 ```
 
-> Etter install ligger kommandoen `pakkemaskin` i PATH — du trenger ikke `cd` inn i mapper.
-> Ved kræsj eller etter kabelbytte: `pakkemaskin restart`
+> Etter install skriver du bare `start`, `stopp`, `restart`, `status`, `logg`, `sjekk`, `excel`.
+> Ved kræsj eller etter kabelbytte: `restart`
 
 ---
 

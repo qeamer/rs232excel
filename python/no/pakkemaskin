@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# pakkemaskin — enkel styring fra hvor som helst (ingen cd nødvendig)
+# pakkemaskin — styring av pakkelapp-fangst
 #
-#   pakkemaskin start | stop | restart | status | logg
-#   pakkemaskin test | porter | excel | simuler | hjelp
+# Korte kommandoer (anbefalt):   start  stopp  restart  status  logg  sjekk  excel
+# Full form:                     pakkemaskin start | stopp | …
 #
 set -euo pipefail
 
@@ -22,6 +22,16 @@ if [[ -z "${PAKKEMASKIN_DIR:-}" ]]; then
   fi
 fi
 
+# Når scriptet heter «start», «logg», osv. (korte kommandoer i PATH)
+_meg="$(basename "${BASH_SOURCE[0]}")"
+if [[ "$_meg" != "pakkemaskin" && "$#" -eq 0 ]]; then
+  set -- "$_meg"
+fi
+# «sjekk» er kortnavn for bare-fangst (unngår konflikt med systemets «test»)
+if [[ "${1:-}" == "sjekk" ]]; then
+  set -- test
+fi
+
 kjør() {
   if [[ ! -f "$PAKKEMASKIN_DIR/read_package.py" ]]; then
     echo "Finner ikke read_package.py i $PAKKEMASKIN_DIR" >&2
@@ -34,23 +44,20 @@ kjør() {
 
 hjelp() {
   cat <<EOF
-Pakkemaskin Skriver — kommandoer (fungerer fra hvor som helst)
+Pakkemaskin Skriver — korte kommandoer (skriv bare ordet):
 
-  Drift
-    pakkemaskin start      Start fangst-tjenesten
-    pakkemaskin stop       Stopp tjenesten
-    pakkemaskin restart    Restart (bruk ved kræsj / etter kabelbytte)
-    pakkemaskin status     Kort status
-    pakkemaskin logg       Live logg (Ctrl+C for å avslutte)
+  start       Start fangst
+  stopp       Stopp fangst
+  restart     Restart (ved kræsj / kabelbytte)
+  status      Status + USB-adapter
+  logg        Live logg  (stopp med Ctrl+C)
+  sjekk       Bare-fangst — viser lapper, lagrer ikke  (Ctrl+C)
+  excel       Lag Excel-fil
+  porter      List USB-serieporter
 
-  Sjekk / verktøy
-    pakkemaskin porter     Vis USB-serieporter (/dev/ttyUSB…)
-    pakkemaskin test       Bare-fangst — viser lapper, lagrer ikke
-    pakkemaskin excel      Lag pakkelapper.xlsx
-    pakkemaskin simuler    Røyktest uten PLS
+Samme ting med prefiks:  pakkemaskin start | stopp | logg | …
 
-  Mappe: $PAKKEMASKIN_DIR
-  Tjeneste: $TJENESTE
+Mappe: $PAKKEMASKIN_DIR
 EOF
 }
 
@@ -60,9 +67,10 @@ case "$cmd" in
     sudo systemctl start "$TJENESTE"
     systemctl --no-pager --full status "$TJENESTE" | head -n 12
     echo
-    echo "Live logg:  pakkemaskin logg"
+    echo "Live logg:  logg"
+    echo "Stopp:      stopp"
     ;;
-  stop)
+  stop|stopp)
     sudo systemctl stop "$TJENESTE"
     echo "Stoppet."
     ;;
@@ -71,7 +79,7 @@ case "$cmd" in
     sleep 1
     systemctl --no-pager --full status "$TJENESTE" | head -n 12
     echo
-    echo "Live logg:  pakkemaskin logg"
+    echo "Live logg:  logg"
     ;;
   status)
     systemctl --no-pager --full status "$TJENESTE" | head -n 16
@@ -100,10 +108,9 @@ case "$cmd" in
     echo "  Stopp med:  Ctrl + C"
     echo "========================================"
     echo
-    echo "Tips: stopp tjenesten først om den kjører:  pakkemaskin stop"
+    echo "Tips: stopp tjenesten først om den kjører:  stopp"
     echo
     trap 'echo; echo "Test avsluttet."; exit 0' INT
-    # ikke exec — så trap rekker å vise «avsluttet»
     if [[ ! -f "$PAKKEMASKIN_DIR/read_package.py" ]]; then
       echo "Finner ikke read_package.py i $PAKKEMASKIN_DIR" >&2
       exit 1

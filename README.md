@@ -34,26 +34,30 @@
 
 ## Daglig bruk på Pi — husk bare dette
 
-Etter install styrer du alt med **`pakkemaskin`**. Ingen mapper. Ingen lange kommandoer.
+Etter install skriver du **ett ord**. Ingen `pakkemaskin`, ingen mapper.
 
 ```bash
-pakkemaskin start        # start fangst
-pakkemaskin restart      # ved kræsj eller kabelbytte
-pakkemaskin status       # går den? ser den USB-adapter?
-pakkemaskin logg         # live logg — stopp med Ctrl+C
-pakkemaskin test         # første gang — viser lapper, lagrer ikke (Ctrl+C)
-pakkemaskin excel        # lag Excel-fil
-pakkemaskin porter       # list USB-serieporter
+start          # start fangst
+stopp          # stopp fangst
+restart        # ved kræsj eller kabelbytte
+status         # går den? ser den USB-adapter?
+logg           # live logg — stopp med Ctrl+C
+sjekk          # første gang — viser lapper, lagrer ikke (Ctrl+C)
+excel          # lag Excel-fil
+porter         # list USB-serieporter
 ```
 
 | Situasjon | Kommando |
 |-----------|----------|
-| Oppstart / start fangst | `pakkemaskin start` |
-| Noe kræsjet / byttet kabel | `pakkemaskin restart` |
-| Sjekke at alt er OK | `pakkemaskin status` |
-| Se hva som skjer live | `pakkemaskin logg` |
-| Første test uten å lagre | `pakkemaskin test` |
-| Hente Excel til PC | `pakkemaskin excel` |
+| Oppstart / start fangst | `start` |
+| Stoppe fangst | `stopp` |
+| Noe kræsjet / byttet kabel | `restart` |
+| Sjekke at alt er OK | `status` |
+| Se hva som skjer live | `logg` (stopp: **Ctrl+C**) |
+| Første test uten å lagre | `sjekk` (stopp: **Ctrl+C**) |
+| Hente Excel til PC | `excel` |
+
+> `pakkemaskin start` osv. fungerer fortsatt om du vil.
 
 📖 Full guide: **[docs/no/INSTALLATION.md](docs/no/INSTALLATION.md)** · English: [docs/en/INSTALLATION.md](docs/en/INSTALLATION.md)
 
@@ -64,10 +68,10 @@ pakkemaskin porter       # list USB-serieporter
 ```bash
 git clone https://github.com/qeamer/rs232excel.git
 cd rs232excel/python/no
-bash installer.sh          # installerer også kommandoen «pakkemaskin»
+bash installer.sh          # installerer start, stopp, logg, …
 ```
 
-Deretter: `pakkemaskin test` → `pakkemaskin start`.
+Deretter: `sjekk` → `start`.
 
 ---
 

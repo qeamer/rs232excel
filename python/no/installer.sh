@@ -23,7 +23,6 @@ sudo mkdir -p /media/usb0
 sudo chown "$BRUKER:$BRUKER" /media/usb0 2>/dev/null || true
 
 echo "2/4  systemd-tjeneste …"
-# Oppdater stier til faktisk katalog/bruker
 sudo tee /etc/systemd/system/pakkemaskin-skriver.service >/dev/null <<EOF
 [Unit]
 Description=Pakkemaskin Skriver - pakkelapp-fangst
@@ -43,20 +42,24 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl enable pakkemaskin-skriver.service
 
-echo "3/4  Enkel kommando: pakkemaskin …"
+echo "3/4  Korte kommandoer (start, stopp, logg, …) …"
 echo "PAKKEMASKIN_DIR=${KATALOG}" | sudo tee /etc/pakkemaskin.conf >/dev/null
 sudo cp "$KATALOG/pakkemaskin" /usr/local/bin/pakkemaskin
 sudo chmod +x /usr/local/bin/pakkemaskin
+# Korte alias — samme script, ulikt navn (unngår «test» som finnes i systemet)
+for navn in start stopp restart status logg sjekk excel porter; do
+  sudo ln -sf /usr/local/bin/pakkemaskin "/usr/local/bin/$navn"
+done
 
 echo "4/4  Ferdig."
 echo
-echo "  Fra hvor som helst:"
-echo "    pakkemaskin status"
-echo "    pakkemaskin start"
-echo "    pakkemaskin restart     # ved kræsj"
-echo "    pakkemaskin logg"
-echo "    pakkemaskin test        # første gang / feilsøking"
-echo "    pakkemaskin excel"
+echo "  Skriv bare:"
+echo "    start       start fangst"
+echo "    stopp       stopp fangst"
+echo "    restart     ved kræsj"
+echo "    status      sjekk at alt går"
+echo "    logg        live logg (Ctrl+C)"
+echo "    sjekk       første test uten lagring"
+echo "    excel       lag Excel"
 echo
-echo "  Start tjenesten når USB-adapter er koblet:"
-echo "    pakkemaskin start"
+echo "  Når USB-adapter er koblet:  start"

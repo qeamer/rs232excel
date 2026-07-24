@@ -41,7 +41,7 @@ Skriveren fortsetter å skrive fysiske pakkelapper **helt som før**. Tappen lyt
 | 2 | StarTech ICUSB232DB25 | RS 1238049 | USB → RS-232 DB25 adapter |
 | 3 | RS PRO 4-port USB-hub | RS 2206492 | Serieadapter + minnepenn samtidig |
 | 4 | Lexar 32GB Industrial microSDHC | RS 2676402 | Systemdisk — fasiten |
-| 5 | 2× Kingston 64GB USB-minnepenn | RS 0622158 | Sanntidsspeiling av CSV |
+| 5 | 2× Kingston 64GB USB-minnepenn | RS 0622158 | Sanntidsspeiling av CSV + Excel |
 | 6 | RS PRO IP54 kapsling 60×190×110 | RS 1959122 | Støvbeskyttelse |
 | 7 | WAGO 221-412 klemmer, 10-pk | RS 8837544 | Verktøyfri avgrening |
 | 8 | DB25 hann→hunn skjøtekabel 40 cm | AliExpress | **AKTIV** tapp-kabel |
@@ -155,7 +155,8 @@ USB midt ─── OTG ─── USB-hub (gjerne med egen strøm)
 ```
 
 - SD-kortet er alltid fasiten (fangst fortsetter uten minnepenn).
-- Minnepennen speiler CSV i sanntid (`--usb-sti /media/usb0`).
+- Minnepennen speiler **CSV + Excel** automatisk (`pakkelapper.csv` og `pakkelapper.xlsx` på `/media/usb0`). Ingen manuell eksport i daglig drift — trekk ut pennen og åpne på PC.
+- Menyvalg **8 Excel** / kommando `excel` er valgfri «oppdater nå»; Wi‑Fi-henting kan komme senere.
 - Passiv hub uten ekstra strøm fungerer ofte med 2,5–3 A vegglader; ved ustabilitet: **hub med egen PSU**.
 - Tastatur med innebygd hub: OK — sett minnepenn/serieadapter i den, eller bruk separat hub.
 
@@ -215,7 +216,7 @@ logg     # live logg
 <img src="img/excel-charts.png" width="42%" alt="Excel grafer"/>
 </p>
 
-Trekk ut minnepennen når som helst — Excel og CSV ligger klare på PC.
+Trekk ut minnepennen når som helst — `pakkelapper.csv` og `pakkelapper.xlsx` ligger klare på pennen (Excel oppdateres automatisk i bakgrunnen under fangst).
 
 ---
 

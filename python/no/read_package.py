@@ -25,23 +25,24 @@ Filer:
   pakkelapper.csv   én rad per ekte pakke (ingen duplikater)
   mangler.csv       hull i pakkenr-rekka (per runde)
   oppsummering.csv  daglig oppsummering (--oppsummering)
-  pakkelapper.xlsx  Excel med ett ark per sesong (--eksporter-xlsx)
+  pakkelapper.xlsx  Excel med ett ark per sesong (automatisk + --eksporter-xlsx)
   sesong.txt        gjeldende sesong: "rå"/"tørr" (--sett-sesong)
 
 USB-speiling (sanntid, --usb-sti):
   SD-kortet er alltid fasiten — det er der fangsten faktisk skjer, og
   ingen pakke går tapt selv om ingen minnepenn er tilkoblet. Er en
-  minnepenn montert på oppgitt sti, speiles hver pakke DIT også, i
-  samme øyeblikk. Er minnepennen borte når en pakke kommer inn, skrives
-  den kun til SD-kortet — og neste gang minnepennen er tilkoblet
-  (samme sti dukker opp igjen), synkroniseres automatisk alt som ble
-  fanget i mellomtiden. Ingen manuell eksport nødvendig; bare la en
-  minnepenn stå i, eller bytt den ut mot en annen når som helst.
+  minnepenn montert på oppgitt sti, speiles CSV i samme øyeblikk, og
+  Excel (pakkelapper.xlsx) oppdateres automatisk i bakgrunnen (kort
+  debounce, så serieporten ikke blokkeres). Trekk ut pennen og åpne
+  filene på PC — ingen manuell «excel»-kommando nødvendig. Er
+  minnepennen borte når en pakke kommer inn, skrives den kun til
+  SD-kortet — og neste gang pennen er tilkoblet synkroniseres
+  automatisk alt som manglet (CSV + ny Excel).
 
 Avhengigheter: pip install pyserial openpyxl
 """
 
-import argparse, csv, datetime, glob, os, re, time
+import argparse, csv, datetime, glob, os, re, shutil, threading, time
 from pathlib import Path
 
 FORMFEED = 0x0C
@@ -311,8 +312,87 @@ def synkroniser_usb(csv_sti: Path, usb_sti: Path | None):
                     manglet += 1
         if manglet:
             logg(f"📀 Minnepenn oppdatert — hentet inn {manglet} pakke(r) som ble fanget mens den var frakoblet.")
+            marker_xlsx_oppdatering()
     except OSError as e:
         logg(f"⚠  Klarte ikke synkronisere minnepenn ({e}).")
+
+
+# ── Automatisk Excel (bakgrunn, debounce) ────────────────────────────
+# Pi Zero skal ikke blokkere serieporten mens openpyxl bygger arbeidsbok.
+_XLSX_DEBOUNCE_S = 12
+_xlsx_auto = {
+    "lock": threading.Lock(),
+    "dirty": False,
+    "busy": False,
+    "started": False,
+    "csv_sti": None,
+    "xlsx_sti": None,
+    "usb_sti": None,
+}
+
+
+def speil_xlsx_til_usb(xlsx_sti: Path, usb_sti: Path | None):
+    """Kopierer ferdig Excel til minnepennen (atomisk replace)."""
+    if not _usb_tilgjengelig(usb_sti) or not xlsx_sti.exists():
+        return
+    dest = usb_sti.parent / xlsx_sti.name
+    tmp = dest.with_suffix(".tmp.xlsx")
+    try:
+        shutil.copy2(xlsx_sti, tmp)
+        os.replace(tmp, dest)
+        logg(f"📀 Excel speilet til {dest}")
+    except OSError as e:
+        logg(f"⚠  Klarte ikke speile Excel til minnepenn ({e}).")
+        try:
+            if tmp.exists():
+                tmp.unlink()
+        except OSError:
+            pass
+
+
+def _xlsx_arbeider():
+    while True:
+        time.sleep(_XLSX_DEBOUNCE_S)
+        with _xlsx_auto["lock"]:
+            if not _xlsx_auto["dirty"] or _xlsx_auto["busy"]:
+                continue
+            _xlsx_auto["dirty"] = False
+            _xlsx_auto["busy"] = True
+            csv_sti = _xlsx_auto["csv_sti"]
+            xlsx_sti = _xlsx_auto["xlsx_sti"]
+            usb_sti = _xlsx_auto["usb_sti"]
+        try:
+            if csv_sti and xlsx_sti and csv_sti.exists():
+                eksporter_xlsx(csv_sti, xlsx_sti)
+                speil_xlsx_til_usb(xlsx_sti, usb_sti)
+        except Exception as e:
+            logg(f"⚠  Automatisk Excel feilet ({e}). Prøver igjen ved neste endring.")
+            with _xlsx_auto["lock"]:
+                _xlsx_auto["dirty"] = True
+        finally:
+            with _xlsx_auto["lock"]:
+                _xlsx_auto["busy"] = False
+
+
+def start_xlsx_auto(csv_sti: Path, xlsx_sti: Path, usb_sti: Path | None):
+    """Starter bakgrunnstråd som bygger/speiler Excel etter CSV-endringer."""
+    with _xlsx_auto["lock"]:
+        _xlsx_auto["csv_sti"] = csv_sti
+        _xlsx_auto["xlsx_sti"] = xlsx_sti
+        _xlsx_auto["usb_sti"] = usb_sti
+        if _xlsx_auto["started"]:
+            return
+        _xlsx_auto["started"] = True
+        t = threading.Thread(target=_xlsx_arbeider, name="xlsx-auto", daemon=True)
+        t.start()
+
+
+def marker_xlsx_oppdatering():
+    """Merk at CSV er endret — Excel bygges om etter debounce."""
+    with _xlsx_auto["lock"]:
+        if not _xlsx_auto["started"]:
+            return
+        _xlsx_auto["dirty"] = True
 
 
 def skriv_utskrift(tekst, utskrift: Path):
@@ -338,6 +418,7 @@ def behandle(tekst, utskrift, csv_sti, reg: Register, sesong, bare_fangst, usb_s
         reg.registrer(n)
     append_csv(rad, csv_sti)                 # SD-kortet — alltid, er fasiten
     synkroniser_usb(csv_sti, usb_sti)         # speiler denne pakken + evt. "hull" fra forrige frakobling, i ett steg
+    marker_xlsx_oppdatering()                # Excel på SD (+ penn) i bakgrunnen
     if status == "ukjent":
         logg("? fant ikke pakkenr — lagret med rådata for manuell sjekk")
     else:
@@ -475,6 +556,7 @@ def les_serie(args, utskrift, csv_sti, reg, sesong, usb_sti: Path | None = None)
     logg(f"Starter. Lytter på {args.port} @ {args.baud} {args.databits}{args.paritet}{args.stoppbits}"
          f"  sesong={sesong}{'  [BARE FANGST]' if args.bare_fangst else ''}"
          f"{f'  usb={usb_sti}' if usb_sti else ''}  (Ctrl+C for å stoppe)")
+    sist_usb_sjekk = 0.0
     while True:
         try:
             ser = serial.Serial(args.port, args.baud, bytesize=args.databits,
@@ -486,14 +568,19 @@ def les_serie(args, utskrift, csv_sti, reg, sesong, usb_sti: Path | None = None)
         try:
             while True:
                 b = ser.read(1)
+                now = time.time()
                 if b:
                     if b[0] == FORMFEED:
                         behandle(rens(bytes(buf)), utskrift, csv_sti, reg, sesong, args.bare_fangst, usb_sti); buf.clear()
                     else:
                         buf += b
-                    sist = time.time()
-                elif buf and (time.time() - sist) > args.flush:
+                    sist = now
+                elif buf and (now - sist) > args.flush:
                     behandle(rens(bytes(buf)), utskrift, csv_sti, reg, sesong, args.bare_fangst, usb_sti); buf.clear()
+                elif usb_sti and (now - sist_usb_sjekk) > 15:
+                    # Hotplug: penn satt inn midt i skift → synk CSV/Excel uten å vente på neste pakke
+                    sist_usb_sjekk = now
+                    synkroniser_usb(csv_sti, usb_sti)
         except serial.SerialException as e:
             logg(f"Mistet forbindelsen ({e}). Kobler til igjen om 5 s …")
             try: ser.close()
@@ -833,7 +920,10 @@ def main():
 
     if args.list_porter:    list_porter(); return
     if args.sett_sesong:    sett_sesong(args.sett_sesong, sesong_fil); return
-    if args.eksporter_xlsx: eksporter_xlsx(csv_sti, xlsx_sti); return
+    if args.eksporter_xlsx:
+        eksporter_xlsx(csv_sti, xlsx_sti)
+        speil_xlsx_til_usb(xlsx_sti, usb_sti)
+        return
     if args.oppsummering:   oppsummering(csv_sti, Path(args.oppsummering_fil)); return
     if args.oppsummering_dimensjon: oppsummering_dimensjon(csv_sti, Path(args.dimensjon_fil)); return
 
@@ -841,14 +931,24 @@ def main():
     if args.registrer:
         registrer_manuelt(args.registrer, csv_sti, mangler_sti, sesong, args.reset_terskel)
         synkroniser_usb(csv_sti, usb_sti)
+        eksporter_xlsx(csv_sti, xlsx_sti)
+        speil_xlsx_til_usb(xlsx_sti, usb_sti)
         return
 
+    # Langkjøring (fangst/simulering): Excel bygges i bakgrunnen etter CSV-endring
+    start_xlsx_auto(csv_sti, xlsx_sti, usb_sti)
     reg = Register(csv_sti, mangler_sti, args.reset_terskel)
     if _usb_tilgjengelig(usb_sti):
         logg(f"Minnepenn funnet ved oppstart ({usb_sti.parent}) — sjekker om noe mangler …")
         synkroniser_usb(csv_sti, usb_sti)
-    if args.simuler: kjor_simulering(args, utskrift, csv_sti, reg, sesong, usb_sti)
-    else:            les_serie(args, utskrift, csv_sti, reg, sesong, usb_sti)
+    if csv_sti.exists():
+        marker_xlsx_oppdatering()  # fersk Excel på SD/penn ved oppstart / etter synk
+    if args.simuler:
+        kjor_simulering(args, utskrift, csv_sti, reg, sesong, usb_sti)
+        eksporter_xlsx(csv_sti, xlsx_sti)
+        speil_xlsx_til_usb(xlsx_sti, usb_sti)
+    else:
+        les_serie(args, utskrift, csv_sti, reg, sesong, usb_sti)
 
 
 if __name__ == "__main__":

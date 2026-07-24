@@ -53,7 +53,7 @@ EOF
   5   Start      — start fangst
   6   Stopp      — stopp fangst
   7   Restart    — ved kræsj / kabelbytte
-  8   Excel      — lag pakkelapper.xlsx
+  8   Excel      — oppdater .xlsx nå (skjer også automatisk på penn)
 
   ANNET
   9   Simuler    — test uten PLS/USB

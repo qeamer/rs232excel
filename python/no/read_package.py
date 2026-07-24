@@ -20,13 +20,13 @@ Lappformat (dekodet fra ekte lapper):
   bunn:     antall · sum_lengde(1 des) · kubikk(3 des) · snittlengde(dm)
             (høyre kolonne med nuller = ubrukt, ignoreres)
 
-Filer (årsbasert — samme fil overskrives hele året, nytt år = ny fil):
-  utskrift.txt           alt råt, med tidsstempel — mister aldri noe
+Filer (årsbasert CSV/Excel/mangler — samme fil overskrives hele året):
   pakkelapperYYYY.csv    én rad per ekte pakke (ingen duplikater)
-  manglerYYYY.csv        hull i pakkenr-rekka (per runde)
+  manglerYYYY.csv        hull i pakkenr-rekka (per runde; friskmeldes ved innkomst)
   pakkelapperYYYY.xlsx   Excel (automatisk + --eksporter-xlsx)
+  utskrift.txt           alt råt, kontinuerlig logg (ikke årsrotert)
   oppsummering.csv       daglig oppsummering (--oppsummering)
-  sesong.txt             gjeldende sesong: "rå"/"tørr" (--sett-sesong)
+  sesong.txt             gjeldende sesong: "rå"/"tørr" (ikke årsrotert)
 
 USB-speiling (sanntid, --usb-sti):
   SD-kortet er alltid fasiten — det er der fangsten faktisk skjer, og
@@ -254,58 +254,159 @@ def parse_lapp(tekst: str, sesong: str) -> dict:
     return rad
 
 
+# Nullstilling 9999→0: krev at vi faktisk er nær telleslutt, og at nytt
+# nummer er nær start. Ellers: reprint av gammel lapp (f.eks. 805→650)
+# ble feiltolket som ny runde («Bug D») og genererte hundrevis av falske hull.
+NULLSTILL_MIN_MAKS = 9000
+
+
 class Register:
-    """Dedup + hull-deteksjon, scopet per RUNDE. Ny runde oppdages når
-    pakkenr hopper langt bakover (9999 → 0). Rekonstrueres fra CSV."""
+    """Dedup + hull-deteksjon, scopet per RUNDE. Ny runde oppdages kun ved
+    ekte teller-nullstilling nær 9999 → lavt nummer. Rekonstrueres fra CSV."""
     def __init__(self, csv_sti: Path, mangler_sti: Path, terskel: int = 100):
         self.csv_sti, self.mangler_sti, self.terskel = csv_sti, mangler_sti, terskel
         self.runde, self.sett, self.maks = 1, set(), None
+        self.manuelle = set()  # pakkenr kun kjent via --registrer (tom rad)
         if csv_sti.exists():
             runder = {}
+            manuelle = {}
             with csv_sti.open(encoding="utf-8") as f:
                 for rad in csv.DictReader(f):
                     if rad.get("status") not in ("ok", "manuell"):
                         continue
                     r = som_tall(rad.get("runde")) or 1
                     n = som_tall(rad.get("pakkenr"))
-                    if n is not None:
-                        runder.setdefault(r, set()).add(n)
+                    if n is None:
+                        continue
+                    runder.setdefault(r, set()).add(n)
+                    if rad.get("status") == "manuell":
+                        manuelle.setdefault(r, set()).add(n)
+                    else:
+                        # ekte lapp vinner over tidligere manuell i samme runde
+                        manuelle.setdefault(r, set()).discard(n)
             if runder:
                 self.runde = max(runder)
                 self.sett = runder[self.runde]
                 self.maks = max(self.sett)
+                self.manuelle = manuelle.get(self.runde, set()) & self.sett
             logg(f"Lastet runde {self.runde}: {len(self.sett)} pakkenr (høyeste {self.maks}).")
 
     def vurder(self, pakkenr_tekst):
         n = som_tall(pakkenr_tekst)
         if n is None:
             return "ukjent", None, False
-        if self.maks is not None and (self.maks - n) > self.terskel:
-            return "ok", n, True                      # stort hopp bakover = nullstilling
+        # Ekte nullstilling: maks nær 9999 OG nytt nr nær 0 — ikke vilkårlig hopp bakover
+        if (self.maks is not None
+                and self.maks > NULLSTILL_MIN_MAKS
+                and n <= self.terskel
+                and (self.maks - n) > self.terskel):
+            return "ok", n, True
         if n in self.sett:
+            # Manuell plassholder: la ekte lapp fylle inn («Bug F»)
+            if n in self.manuelle:
+                return "oppgrader", n, False
             return "duplikat", n, False
         return "ok", n, False
 
     def ny_runde(self):
         self.runde += 1
-        self.sett, self.maks = set(), None
+        self.sett, self.maks, self.manuelle = set(), None, set()
         logg(f"↻ Ny runde {self.runde} — pakkenr ser nullstilt ut (9999 → 0)")
 
-    def registrer(self, n):
+    def registrer(self, n, manuell: bool = False):
         if self.maks is not None and n > self.maks + 1:
             self._skriv_hull(self.maks + 1, n - 1)
         self.sett.add(n)
         self.maks = n if self.maks is None else max(self.maks, n)
+        if manuell:
+            self.manuelle.add(n)
+        else:
+            self.manuelle.discard(n)
+        self._friskmeld_hull(n)
 
     def _skriv_hull(self, fra, til):
         ny = not self.mangler_sti.exists()
         with self.mangler_sti.open("a", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
-            if ny: w.writerow(["oppdaget", "runde", "manglende_pakkenr", "merknad"])
+            if ny: w.writerow(["oppdaget", "runde", "manglende_pakkenr", "merknad", "status"])
             for m in range(fra, til + 1):
                 w.writerow([datetime.datetime.now().isoformat(timespec="seconds"), self.runde, m,
-                            "mulig hull — sjekk om pakken ble kvittert"])
+                            "mulig hull — sjekk om pakken ble kvittert", "åpen"])
         logg(f"⚠  Mulig hull (runde {self.runde}): pakkenr {fra}–{til} → {self.mangler_sti.name}")
+
+    def _friskmeld_hull(self, n):
+        """Når pakken dukker opp: merk åpne hull-rader som funnet («Bug H»)."""
+        if not self.mangler_sti.exists():
+            return
+        try:
+            with self.mangler_sti.open(encoding="utf-8") as f:
+                rader = list(csv.DictReader(f))
+        except OSError:
+            return
+        if not rader:
+            return
+        endret = False
+        for rad in rader:
+            if (str(rad.get("runde") or "") == str(self.runde)
+                    and str(rad.get("manglende_pakkenr") or "") == str(n)
+                    and (rad.get("status") or "åpen") == "åpen"):
+                rad["status"] = "funnet"
+                rad["merknad"] = (rad.get("merknad") or "") + " — friskmeldt (pakke kom inn)"
+                endret = True
+        if not endret:
+            return
+        felt = ["oppdaget", "runde", "manglende_pakkenr", "merknad", "status"]
+        tmp = self.mangler_sti.with_suffix(".tmp.csv")
+        try:
+            with tmp.open("w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=felt, extrasaction="ignore")
+                w.writeheader()
+                for rad in rader:
+                    if "status" not in rad:
+                        rad["status"] = "åpen"
+                    w.writerow(rad)
+            os.replace(tmp, self.mangler_sti)
+            logg(f"✓ Hull friskmeldt: pakkenr {n} (runde {self.runde})")
+        except OSError as e:
+            logg(f"⚠  Klarte ikke friskmelde hull ({e}).")
+            try:
+                if tmp.exists():
+                    tmp.unlink()
+            except OSError:
+                pass
+
+
+def erstatt_manuell_rad(csv_sti: Path, runde, pakkenr, ny_rad: dict) -> bool:
+    """Bytter ut tom manuell rad med ekte lapp-data (samme runde+pakkenr)."""
+    if not csv_sti.exists():
+        return False
+    with csv_sti.open(encoding="utf-8") as f:
+        rader = list(csv.DictReader(f))
+    fant = False
+    for i, rad in enumerate(rader):
+        if (rad.get("status") == "manuell"
+                and str(rad.get("runde") or "") == str(runde)
+                and str(rad.get("pakkenr") or "") == str(pakkenr)):
+            rader[i] = {k: ny_rad.get(k, "") for k in KOLONNER}
+            fant = True
+            break
+    if not fant:
+        return False
+    tmp = csv_sti.with_suffix(".tmp.csv")
+    with tmp.open("w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=KOLONNER, extrasaction="ignore")
+        w.writeheader()
+        w.writerows(rader)
+    os.replace(tmp, csv_sti)
+    return True
+
+
+def ser_komplett_lapp(tekst: str) -> bool:
+    """Unngå at --flush midt i lapp tolkes som ferdig pakke («Bug E»)."""
+    if not tekst or not tekst.strip():
+        return False
+    # Kubikk (3 desimaler) sitter typisk i bunnblokken — uten den er lappen ufullstendig
+    return bool(FLOAT3_RE.search(tekst) and INT_RE.search(tekst))
 
 
 def append_csv(rad, csv_sti: Path):
@@ -402,15 +503,31 @@ def _xlsx_arbeider():
             csv_sti = _xlsx_auto["csv_sti"]
             xlsx_sti = _xlsx_auto["xlsx_sti"]
             usb_sti = _xlsx_auto["usb_sti"]
+        snap = None
         try:
             if csv_sti and xlsx_sti and csv_sti.exists():
-                eksporter_xlsx(csv_sti, xlsx_sti)
+                # Kopi før lesing — unngår Excel midt i append_csv fra fangst-tråden
+                snap = csv_sti.with_suffix(".xlsxsnap.csv")
+                shutil.copy2(csv_sti, snap)
+                eksporter_xlsx(snap, xlsx_sti)
                 speil_xlsx_til_usb(xlsx_sti, usb_sti)
         except Exception as e:
             logg(f"⚠  Automatisk Excel feilet ({e}). Prøver igjen ved neste endring.")
             with _xlsx_auto["lock"]:
                 _xlsx_auto["dirty"] = True
         finally:
+            if snap is not None:
+                try:
+                    snap.unlink(missing_ok=True)
+                except TypeError:
+                    # Python <3.8 fallback (Lite har nyere, men vær trygg)
+                    try:
+                        if snap.exists():
+                            snap.unlink()
+                    except OSError:
+                        pass
+                except OSError:
+                    pass
             with _xlsx_auto["lock"]:
                 _xlsx_auto["busy"] = False
 
@@ -486,17 +603,28 @@ def behandle(tekst, utskrift, state: dict, reg: Register, sesong, bare_fangst):
     skriv_utskrift(tekst, utskrift)
     if bare_fangst:
         logg("rå lapp fanget"); return reg
-    pakkenr = parse_lapp(tekst, sesong)["pakkenr"]
+    rad = parse_lapp(tekst, sesong)
+    pakkenr = rad["pakkenr"]
     status, n, reset = reg.vurder(pakkenr)
     if status == "duplikat":
         logg(f"↺ duplikat pakkenr {pakkenr} — droppet (finnes i utskrift.txt)"); return reg
     if reset:
         reg.ny_runde()
-    rad = parse_lapp(tekst, sesong)
     rad["runde"] = reg.runde
+    if status == "oppgrader":
+        rad["status"] = "ok"
+        reg.registrer(n, manuell=False)
+        if erstatt_manuell_rad(csv_sti, reg.runde, n, rad):
+            logg(f"✓ Oppgradert manuell → ekte lapp for pakke {n} [r{reg.runde}/{sesong}]")
+        else:
+            append_csv(rad, csv_sti)
+            logg(f"✓ Ekte lapp for tidligere manuell pakke {n} [r{reg.runde}/{sesong}] (ny rad)")
+        synkroniser_usb(csv_sti, usb_sti)
+        marker_xlsx_oppdatering()
+        return reg
     rad["status"] = status
     if status == "ok":
-        reg.registrer(n)
+        reg.registrer(n, manuell=False)
     append_csv(rad, csv_sti)                 # SD-kortet — alltid, er fasiten
     synkroniser_usb(csv_sti, usb_sti)         # speiler denne pakken + evt. "hull" fra forrige frakobling, i ett steg
     marker_xlsx_oppdatering()                # Excel på SD (+ penn) i bakgrunnen
@@ -514,13 +642,13 @@ def behandle(tekst, utskrift, state: dict, reg: Register, sesong, bare_fangst):
 def registrer_manuelt(pakkenr, csv_sti, mangler_sti, sesong, terskel):
     reg = Register(csv_sti, mangler_sti, terskel)
     status, n, reset = reg.vurder(pakkenr)
-    if status == "duplikat":
+    if status in ("duplikat", "oppgrader"):
         logg(f"Pakkenr {pakkenr} finnes allerede i runde {reg.runde}. Avbryter."); return
     if n is None:
         logg("Ugyldig pakkenr."); return
     if reset:
         reg.ny_runde()
-    reg.registrer(n)
+    reg.registrer(n, manuell=True)
     rad = {k: "" for k in KOLONNER}
     rad.update(tid_fanget=datetime.datetime.now().isoformat(timespec="seconds"),
                dato=datetime.date.today().isoformat(), pakkenr=str(n),
@@ -660,7 +788,16 @@ def les_serie(args, utskrift, state: dict, reg, sesong):
                         buf += b
                     sist = now
                 elif buf and (now - sist) > args.flush:
-                    reg = behandle(rens(bytes(buf)), utskrift, state, reg, sesong, args.bare_fangst); buf.clear()
+                    # Bare flush-tolk hvis lappen ser komplett ut (ellers vent på mer / FF)
+                    # — unngår at histogram-tall midt i lapp blir «pakkenr» («Bug E»)
+                    tekst = rens(bytes(buf))
+                    if args.bare_fangst or ser_komplett_lapp(tekst):
+                        reg = behandle(tekst, utskrift, state, reg, sesong, args.bare_fangst)
+                        buf.clear()
+                    elif (now - sist) > max(args.flush * 4, 15.0):
+                        logg("⚠  Ufullstendig lapp etter lang pause — rådump til utskrift, dropper fragment")
+                        skriv_utskrift(tekst + "\n[ufullstendig — flush-timeout]", utskrift)
+                        buf.clear()
                 elif state["usb_sti"] and (now - sist_usb_sjekk) > 15:
                     # Hotplug: penn satt inn midt i skift → synk CSV/Excel uten å vente på neste pakke
                     sist_usb_sjekk = now

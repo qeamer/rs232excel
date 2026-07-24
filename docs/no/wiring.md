@@ -43,14 +43,17 @@ PLS-side ──┐
 Pi-gren ───┘
 ```
 
-## Videre til ICUSB232DB25
+## Videre til ICUSB232DB25 (egen grein — ikke inn i PLS/OKI)
+
+Skjøtens **DB25** går bare til PLS og skriver.  
+**ICUSB232DB25** er en egen lyttekabel: serie-ende tar imot WAGO-grenene, **USB-enden** går i huben til Pi.
 
 | Fra WAGO | Til StarTech ICUSB232DB25 |
 |----------|---------------------------|
-| TX (fra DB25 pin 2 / DB9 pin 3) | **RX** |
-| GND (fra DB25 pin 7 / DB9 pin 5) | **GND** |
+| TX (DB25 pin 2 / DB9 pin 3) | **RX** |
+| GND (DB25 pin 7 / DB9 pin 5) | **GND** |
 
-TX → RX — aldri TX til TX. USB-enden av StarTech i huben → `/dev/ttyUSB0`.
+TX → RX — aldri TX til TX. USB → hub → `/dev/ttyUSB0`.
 
 Fest skjøten i kabelrenna. La aldri WAGO henge løst.
 

@@ -43,14 +43,17 @@ PLC side ──┐
 Pi branch ─┘
 ```
 
-## On to the ICUSB232DB25
+## On to the ICUSB232DB25 (separate branch — not into PLC/OKI)
+
+The extension’s **DB25** ends go only into the PLC and printer.  
+The **ICUSB232DB25** is a separate listen cable: serial end takes the WAGO pigtails; the **USB end** goes into the hub toward the Pi.
 
 | From WAGO | To StarTech ICUSB232DB25 |
 |-----------|--------------------------|
 | TX (DB25 pin 2 / DB9 pin 3) | **RX** |
 | GND (DB25 pin 7 / DB9 pin 5) | **GND** |
 
-TX → RX — never TX to TX. StarTech USB into the hub → `/dev/ttyUSB0`.
+TX → RX — never TX to TX. USB → hub → `/dev/ttyUSB0`.
 
 Secure the splice in the cable tray. Never leave a WAGO hanging loose.
 

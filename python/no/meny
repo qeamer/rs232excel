@@ -29,7 +29,7 @@ tegn_meny() {
   1   Porter     — finnes /dev/ttyUSB0?
   2   Sjekk      — bare-fangst (lagrer IKKE)
   3   Logg       — live logg (Ctrl+C = tilbake)
-  4   Status     — tjeneste + USB
+  4   Status     — tjeneste + serieadapter + minnepenn
 
   DRIFT
   5   Start      — start fangst

@@ -90,6 +90,22 @@ case "$cmd" in
     else
       echo "Serieadapter: ikke funnet (sjekk USB-kjede / data-port)"
     fi
+    echo
+    # Minnepenn / USB-lagring
+    if mountpoint -q /media/usb0 2>/dev/null; then
+      echo "Minnepenn: montert på /media/usb0"
+      df -h /media/usb0 2>/dev/null | tail -n 1 || true
+      ls -la /media/usb0 2>/dev/null | head -n 8 || true
+    else
+      echo "Minnepenn: IKKE montert på /media/usb0"
+      if lsblk -o NAME,SIZE,TYPE,TRAN,MOUNTPOINT 2>/dev/null | grep -qi usb \
+         || ls /dev/sd[a-z] /dev/sd[a-z][0-9] 2>/dev/null | grep -q .; then
+        echo "  (USB-disk sett av systemet — mangler mount. Kjør: bash fiks-usb.sh)"
+        lsblk -o NAME,SIZE,TYPE,TRAN,MOUNTPOINT 2>/dev/null | grep -E 'NAME|sd|usb' || true
+      else
+        echo "  (ingen USB-lagring funnet — sjekk hub/strøm/at pennen er i)"
+      fi
+    fi
     ;;
   logg|logs|log)
     echo

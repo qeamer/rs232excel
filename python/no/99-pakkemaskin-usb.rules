@@ -1,4 +1,5 @@
-# Pakkemaskin: auto-monter USB-minnepenn på /media/usb0
-ACTION=="add", SUBSYSTEM=="block", KERNEL=="sd[a-z][0-9]", ENV{ID_USB_DRIVER}=="usb-storage", RUN+="/usr/local/sbin/pakkemaskin-usb-mount.sh %k"
+# Pakkemaskin: auto-monter USB-minnepenn på /media/usb0 ved innsetting
+# og avmonter ved uttrekk (hotplug).
 ACTION=="add", SUBSYSTEM=="block", KERNEL=="sd[a-z][0-9]", ENV{ID_BUS}=="usb", RUN+="/usr/local/sbin/pakkemaskin-usb-mount.sh %k"
-ACTION=="remove", SUBSYSTEM=="block", KERNEL=="sd[a-z][0-9]", RUN+="/usr/local/sbin/pakkemaskin-usb-umount.sh"
+ACTION=="add", SUBSYSTEM=="block", KERNEL=="sd[a-z][0-9]", ENV{ID_USB_DRIVER}=="usb-storage", RUN+="/usr/local/sbin/pakkemaskin-usb-mount.sh %k"
+ACTION=="remove", SUBSYSTEM=="block", KERNEL=="sd[a-z]*", RUN+="/usr/local/sbin/pakkemaskin-usb-umount.sh"

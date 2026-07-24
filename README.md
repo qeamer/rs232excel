@@ -42,17 +42,19 @@ Etter install er Pi-en et **apparat uten login** på HDMI:
 
 ```text
 OPPKOPLING / TEST          DRIFT
-1  Porter                  5  Start
+1  USB (alle enheter)      5  Start
 2  Sjekk (lagrer ikke)     6  Stopp
 3  Logg  (Ctrl+C)          7  Restart
 4  Status                  8  Excel
 ```
 
-Eller skriv ett ord: `porter` `sjekk` `logg` `status` `start` `stopp` `restart` `excel`
+Menyen viser også om minnepenn/serie er funnet. Penn ut/inn → velg **1 USB** igjen (hotplug monterer automatisk).
+
+Eller skriv ett ord: `usb` `sjekk` `logg` `status` `start` `stopp` `restart` `excel`
 
 | Situasjon | Meny | Kommando |
 |-----------|------|----------|
-| Finne USB-adapter | **1** | `porter` |
+| Liste alle USB / minnepenn | **1** | `usb` |
 | Første test uten lagring | **2** | `sjekk` |
 | Se live logg | **3** | `logg` (**Ctrl+C**) |
 | Sjekke at tjenesten går | **4** | `status` |

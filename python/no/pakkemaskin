@@ -42,18 +42,68 @@ kjør() {
   exec python3 read_package.py "$@"
 }
 
+list_usb() {
+  echo "========================================"
+  echo "  USB-ENHETER (live)"
+  echo "========================================"
+  echo
+  echo "— lsusb (alt på bussen) —"
+  if command -v lsusb >/dev/null 2>&1; then
+    lsusb || true
+  else
+    echo "(installer usbutils: sudo apt install usbutils)"
+    ls -1 /sys/bus/usb/devices/ 2>/dev/null | head -n 40 || true
+  fi
+  echo
+  echo "— disker / minnepenn —"
+  lsblk -o NAME,SIZE,TYPE,TRAN,FSTYPE,MOUNTPOINT,MODEL 2>/dev/null || lsblk
+  echo
+  echo "— serieadapter —"
+  if compgen -G '/dev/ttyUSB*' >/dev/null || compgen -G '/dev/ttyACM*' >/dev/null; then
+    ls -l /dev/ttyUSB* /dev/ttyACM* 2>/dev/null || true
+  else
+    echo "Ingen /dev/ttyUSB* eller /dev/ttyACM* (adapter ikke funnet)"
+  fi
+  echo
+  echo "— minnepenn /media/usb0 —"
+  # Prøv montere hvis penn finnes men ikke er montert (hotplug / glemt mount)
+  if ! mountpoint -q /media/usb0 2>/dev/null; then
+    if [[ -x /usr/local/sbin/pakkemaskin-usb-mount.sh ]]; then
+      for part in /dev/sd[a-z][0-9]; do
+        [[ -b "$part" ]] || continue
+        echo "Prøver montere $part …"
+        sudo /usr/local/sbin/pakkemaskin-usb-mount.sh "$part" 2>/dev/null && break || true
+      done
+    fi
+  fi
+  if mountpoint -q /media/usb0 2>/dev/null; then
+    echo "Montert: JA"
+    df -h /media/usb0 | tail -n 1
+    echo "Innhold (første filer):"
+    ls -la /media/usb0 2>/dev/null | head -n 12 || true
+  else
+    echo "Montert: NEI"
+    echo "Tips: sett inn pennen, vent 2 sek, velg USB (1) igjen."
+    echo "Første gangs oppsett:  cd ~/rs232excel/python/no && bash fiks-usb.sh"
+  fi
+  echo
+  echo "Hotplug: penn ut/inn oppdages automatisk (udev)."
+  echo "Oppdater listen: velg 1 USB på nytt (eller skriv: usb)"
+}
+
 hjelp() {
   cat <<EOF
 Pakkemaskin Skriver — korte kommandoer (skriv bare ordet):
 
+  usb         List ALLE USB + minnepenn (hotplug OK)
   start       Start fangst
   stopp       Stopp fangst
   restart     Restart (ved kræsj / kabelbytte)
-  status      Status + USB-adapter
+  status      Status + USB-sammendrag
   logg        Live logg  (stopp med Ctrl+C)
   sjekk       Bare-fangst — viser lapper, lagrer ikke  (Ctrl+C)
   excel       Lag Excel-fil
-  porter      List USB-serieporter
+  porter      List bare serieporter
 
 Samme ting med prefiks:  pakkemaskin start | stopp | logg | …
 
@@ -133,6 +183,9 @@ case "$cmd" in
     fi
     cd "$PAKKEMASKIN_DIR"
     python3 read_package.py --bare-fangst --port /dev/ttyUSB0
+    ;;
+  usb|usb-liste|devices)
+    list_usb
     ;;
   porter|ports)
     kjør --list-porter

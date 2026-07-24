@@ -21,6 +21,14 @@ if ! id -nG "$BRUKER" | grep -qw dialout; then
 fi
 sudo mkdir -p /media/usb0
 sudo chown "$BRUKER:$BRUKER" /media/usb0 2>/dev/null || true
+# Auto-monter minnepenn på /media/usb0
+if [[ -f "$KATALOG/pakkemaskin-usb-mount.sh" ]]; then
+  sudo cp "$KATALOG/pakkemaskin-usb-mount.sh" /usr/local/sbin/pakkemaskin-usb-mount.sh
+  sudo cp "$KATALOG/pakkemaskin-usb-umount.sh" /usr/local/sbin/pakkemaskin-usb-umount.sh
+  sudo chmod +x /usr/local/sbin/pakkemaskin-usb-mount.sh /usr/local/sbin/pakkemaskin-usb-umount.sh
+  sudo cp "$KATALOG/99-pakkemaskin-usb.rules" /etc/udev/rules.d/99-pakkemaskin-usb.rules
+  sudo udevadm control --reload-rules 2>/dev/null || true
+fi
 
 echo "2/5  systemd-tjeneste …"
 sudo tee /etc/systemd/system/pakkemaskin-skriver.service >/dev/null <<EOF
@@ -46,7 +54,7 @@ echo "3/5  Korte kommandoer (start, stopp, logg, …) …"
 echo "PAKKEMASKIN_DIR=${KATALOG}" | sudo tee /etc/pakkemaskin.conf >/dev/null
 sudo cp "$KATALOG/pakkemaskin" /usr/local/bin/pakkemaskin
 sudo chmod +x /usr/local/bin/pakkemaskin
-for navn in start stopp restart status logg sjekk excel porter; do
+for navn in start stopp restart status logg sjekk excel porter usb; do
   sudo ln -sf /usr/local/bin/pakkemaskin "/usr/local/bin/$navn"
 done
 

@@ -18,6 +18,20 @@ pause() {
   read -r -p "Enter for meny …" _
 }
 
+usb_sammendrag() {
+  local serie="—" penn="—"
+  if [[ -e /dev/ttyUSB0 ]]; then serie="/dev/ttyUSB0"
+  elif [[ -e /dev/ttyACM0 ]]; then serie="/dev/ttyACM0"
+  fi
+  if mountpoint -q /media/usb0 2>/dev/null; then
+    penn="OK /media/usb0"
+  else
+    penn="ikke montert"
+  fi
+  echo "  USB nå:  serie=${serie}   minnepenn=${penn}"
+  echo "  (sett inn/ut penn → velg 1 USB for oppdatert liste)"
+}
+
 tegn_meny() {
   clear 2>/dev/null || true
   cat <<EOF
@@ -25,11 +39,15 @@ tegn_meny() {
 ========================================
          PAKKEMASKIN
 ========================================
+EOF
+  usb_sammendrag
+  cat <<EOF
+========================================
   OPPKOPLING / TEST
-  1   Porter     — finnes /dev/ttyUSB0?
+  1   USB        — list ALLE USB (hub/tastatur/penn/adapter)
   2   Sjekk      — bare-fangst (lagrer IKKE)
   3   Logg       — live logg (Ctrl+C = tilbake)
-  4   Status     — tjeneste + serieadapter + minnepenn
+  4   Status     — tjeneste + kort USB-sjekk
 
   DRIFT
   5   Start      — start fangst
@@ -40,7 +58,7 @@ tegn_meny() {
   ANNET
   9   Simuler    — test uten PLS/USB
   0   Ledetekst  — avansert shell
-  q   Omstart meny
+  q   Oppdater meny
 ========================================
 EOF
 }
@@ -50,7 +68,7 @@ while true; do
   printf "Velg (1-9, 0, q): "
   read -r valg || exit 0
   case "$valg" in
-    1) kjør porter; pause ;;
+    1) kjør usb; pause ;;
     2) kjør sjekk || true ;;
     3) kjør logg || true ;;
     4) kjør status; pause ;;
@@ -63,12 +81,11 @@ while true; do
       export PAKKEMASKIN_MENY_KJORT=1
       echo
       echo "Ledetekst. Skriv «meny» for å komme tilbake."
-      echo "Korte kommandoer: porter sjekk logg status start stopp restart excel"
+      echo "Korte kommandoer: usb sjekk logg status start stopp restart excel"
       echo
       exec bash --login
       ;;
     q|Q)
-      # restart meny loop (nyttig etter Ctrl+C rot)
       continue
       ;;
     *)

@@ -103,7 +103,7 @@ if [[ ! -x /usr/local/bin/pakkemaskin ]]; then
   sudo chmod +x /usr/local/bin/pakkemaskin
 fi
 echo "PAKKEMASKIN_DIR=${KATALOG}" | sudo tee /etc/pakkemaskin.conf >/dev/null
-for navn in start stopp restart status logg sjekk excel porter meny; do
+for navn in start stopp restart status logg sjekk excel porter usb meny; do
   if [[ "$navn" == "meny" ]]; then
     sudo cp "$KATALOG/meny" /usr/local/bin/meny
     sudo chmod +x /usr/local/bin/meny
@@ -111,6 +111,10 @@ for navn in start stopp restart status logg sjekk excel porter meny; do
     sudo ln -sf /usr/local/bin/pakkemaskin "/usr/local/bin/$navn"
   fi
 done
+# USB hotplug-mount
+if [[ -f "$KATALOG/fiks-usb.sh" ]]; then
+  bash "$KATALOG/fiks-usb.sh" || true
+fi
 
 # 4) Unødvendige tjenester
 echo "4/5  Skrur av unødvendige tjenester …"
@@ -134,8 +138,8 @@ echo "=== Ferdig ==="
 echo "  Etter reboot på HDMI:"
 echo "    • INGEN login-prompt"
 echo "    • Meny direkte:"
-echo "        1 porter  2 sjekk  3 logg  4 status"
-echo "        5 start   6 stopp  7 restart  8 excel"
+echo "        1 USB  2 sjekk  3 logg  4 status"
+echo "        5 start  6 stopp  7 restart  8 excel"
 echo "    • Nød-login: Alt+F2"
 echo "    • SSH som før: ssh ${BRUKER}@pakkemaskin.local"
 echo

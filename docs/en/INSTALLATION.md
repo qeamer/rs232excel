@@ -94,8 +94,8 @@ See also: [wiring.md](wiring.md)
 Step by step:
 
 1. **Insert the 40 cm extension** between the printer's DB25 port and the existing cable from the sorting plant. Take a photo of the original connection first.
-2. **Mid-cable, slit the jacket** (do **not** cut the whole cable through). Identify **pin 2 (TX)** and **pin 7 (GND)**. Photograph colour coding before cutting.
-3. **Cut only those two conductors** — all other wires stay intact so the printer still gets the full signal.
+2. **Mid-cable, slit the jacket** (often a DB9 cable with DB25 adapters — do **not** cut the whole cable through). Find TX/GND with a **continuity tester** from DB25 pins **2** and **7** (in the DB9 middle = pins **3** and **5**). Colors are not standard — mark wires before cutting.
+3. **Cut only those two conductors** — leave all others intact so the printer still gets the full signal.
 4. **WAGO-join three ends per clamp**: PLC side + printer side + one new thin wire to the USB-serial adapter.
 5. **Secure the splice** with cable ties in the cable tray. Mark the active cable with tape.
 

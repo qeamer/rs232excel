@@ -93,10 +93,10 @@ selv når skriveren er av.
 <img src="docs/no/img/signal-flow.png" width="100%" alt="Systemarkitektur"/>
 
 <p style="font-size: 16px; line-height: 1.5">
-Tappen er <b>fysisk skrivebeskyttet</b>: åpne kappen på 40&nbsp;cm skjøten og klipp
-<b>kun</b> lederne for pinne 2 (TX) og 7 (GND) — ikke hele kabelen. WAGO tre veier;
-TX → adapter-<b>RX</b>. Signal til <code>/dev/ttyUSB0</code>, ikke GPIO.
-Skriveren fortsetter som før.
+Tappen er <b>fysisk skrivebeskyttet</b>: åpne kappen på skjøten (DB9-midt med
+DB25-ender er vanlig) og klipp <b>kun</b> TX+GND — DB25 pin 2/7 (= DB9 pin 3/5).
+Finn leder med pipetest (farger er ikke standard). WAGO tre veier; TX →
+ICUSB232DB25-<b>RX</b>. Signal til <code>/dev/ttyUSB0</code>, ikke GPIO.
 </p>
 
 ---
@@ -161,7 +161,7 @@ USB-hub + tastatur + minnepenn · valgfri SSD1306 OLED.
 Full delerliste i <a href="docs/no/INSTALLATION.md">installasjonsguiden</a>.
 </p>
 
-<p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passiv tapp</b> — åpne kappen, klipp <b>kun</b> leder pin 2 (TX) og 7 (GND). Ikke hele kabelen. WAGO, TX→RX. Ikke GPIO.</p>
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passiv tapp</b> — PLS/OKI er DB25; skjøt kan være DB9-kabel med DB25-adaptere. Tapp TX/GND (DB25 pin 2/7 = DB9 pin 3/5). Finn leder med pipetest — farger er ikke standard. WAGO, TX→RX på ICUSB232DB25.</p>
 <img src="docs/no/img/passiv-rs232-tapp.png" width="100%" alt="Passiv RS-232-tapp"/>
 
 <p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB-kjede</b> — WAGO-tapp → <b>ICUSB232DB25</b> → hub (med tastatur + penn). PWR IN = strøm (≥2,5 A); data-port → OTG → hub.</p>

@@ -133,7 +133,7 @@ Raspberry Pi Zero WH · StarTech ICUSB232DB25 · WAGO 221 · 40 cm DB25 extensio
 USB hub + keyboard + flash drive · optional SSD1306 OLED.
 Full parts list in the [installation guide](docs/en/INSTALLATION.md).
 
-<p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passive tap</b> — slit the jacket; cut <b>only</b> pin 2 (TX) and pin 7 (GND) conductors. Not the whole cable. WAGO, TX→RX. Not GPIO.</p>
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passive tap</b> — PLC/OKI are DB25; the extension may be a DB9 cable with DB25 adapters. Tap TX/GND (DB25 pins 2/7 = DB9 pins 3/5). Find wires with continuity — colors are not standard. WAGO, TX→RX on ICUSB232DB25.</p>
 <img src="docs/en/img/passive-rs232-tap.png" width="100%" alt="Passive RS-232 tap"/>
 
 <p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB chain</b> — WAGO tap → <b>ICUSB232DB25</b> → hub (with keyboard + stick). PWR IN = power (≥2.5 A); data port → OTG → hub.</p>

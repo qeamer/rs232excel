@@ -132,8 +132,8 @@ Se også: [wiring.md](wiring.md)
 Steg for steg:
 
 1. **Sett inn 40 cm skjøtekabel** mellom skriverens DB25 og eksisterende kabel fra sorteringsanlegget. Ta bilde av originaltilkoblingen først.
-2. **Åpne kappen** midt på skjøten (klipp **ikke** hele kabelen over). Finn lederne for **pinne 2 (TX)** og **pinne 7 (GND)**. Fotografer fargekoding før klipping.
-3. **Klipp kun disse to lederne** — alle andre ledere urørt, så skriveren fortsatt får hele signalet.
+2. **Åpne kappen** midt på skjøten (ofte DB9-kabel med DB25-adaptere — klipp **ikke** hele kabelen over). Finn TX/GND med **pipetest** fra DB25-pinne **2** og **7** (i DB9-midten = pin **3** og **5**). Farger er ikke standard — merk lederne før klipping.
+3. **Klipp kun disse to lederne** — alle andre urørt, så skriveren fortsatt får hele signalet.
 4. **WAGO: tre ender per klemme** — PLS-side + skriver-side (signalet går ubrutt) + ny tynn ledning til USB-serieadapter.
 5. **Fest skjøten** med strips i kabelrenna — la aldri WAGO henge løst. Merk aktiv kabel med tape.
 

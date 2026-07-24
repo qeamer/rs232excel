@@ -4,6 +4,7 @@ rs232excel repository structure
 ├── README.md                          GitHub main page (Norwegian, primary — Scandinavian sawmills)
 ├── README.en.md                       English translation (secondary)
 ├── README.no.md                       Redirect → README.md
+├── CHANGELOG.md                       Endringslogg (norsk) — Pi/USB/integritet 2026-07-24+
 ├── skaak_logo_vektor.png              Skjåk Trelast logo (white on transparent, for GitHub)
 │
 ├── docs/

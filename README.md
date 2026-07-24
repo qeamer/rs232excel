@@ -42,11 +42,14 @@ Etter install er Pi-en et **apparat uten login** på HDMI:
 
 ```text
 OPPKOPLING / TEST          DRIFT
-1  USB (alle enheter)      5  Start
+1  USB (+ integritet)      5  Start
 2  Sjekk (lagrer ikke)     6  Stopp
 3  Logg  (Ctrl+C)          7  Restart
 4  Status                  8  Excel
 ```
+
+Før du kopierer fra minnepennen til PC: skriv `integritet` (skal si at radene er speilet trygt).  
+Full dagslogg: **[CHANGELOG.md](CHANGELOG.md)**.
 
 Menyen viser også om minnepenn/serie er funnet. Penn ut/inn → velg **1 USB** igjen (hotplug monterer automatisk).
 

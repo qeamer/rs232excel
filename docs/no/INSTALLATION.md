@@ -59,11 +59,20 @@ Windows uten ssh? [PuTTY](https://putty.org) eller WSL.
 
 ## 4 · Installer programvaren
 
-Lim inn disse blokkene én om gangen i SSH:
+Når Pi OS er på plass og du er innlogget over SSH, last ned og installer med **én kommando**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/qeamer/rs232excel/main/scripts/last-ned-pakkemaskin.sh | bash
+```
+
+Skriptet oppdaterer systemet, kloner repoet til `~/rs232excel`, installerer avhengigheter, legger brukeren i `dialout`, lager `/media/usb0`, aktiverer systemd-tjenesten (uten å starte den ennå), og kjører en rask simuleringstest.
+
+Manuelt, steg for steg:
 
 ```bash
 # Systemoppdatering (~5 min)
 sudo apt update && sudo apt upgrade -y
+sudo apt install -y git python3-pip
 
 # Klon repoet
 git clone https://github.com/qeamer/rs232excel.git
@@ -71,6 +80,9 @@ cd rs232excel/python/no
 
 # Avhengigheter og autostart
 bash installer.sh
+
+# Røyktest uten PLS
+python3 read_package.py --simuler eksempel.txt
 ```
 
 Valgfri OLED-skjerm:
@@ -142,7 +154,7 @@ python3 read_package.py --port /dev/ttyUSB0 --usb-sti /media/usb0
 
 Kjør 2–3 pakker, sjekk `pakkelapper.csv` mot papirlappene, trekk ut minnepennen midt i kjøring (fangst fortsetter), sett den inn igjen (manglende rader synkes).
 
-**Produksjon.** Tjenesten fra steg 4 starter automatisk ved boot:
+**Produksjon.** Tjenesten ble aktivert i steg 4 (autostart ved boot). Start den nå:
 
 ```bash
 sudo systemctl start pakkemaskin-skriver

@@ -33,10 +33,14 @@ The tap is **physically read-only**: only pin 2 (TX) and pin 7 (GND) are branche
 ## Quick start
 
 ```bash
+# On the Pi (after SSH): one command downloads and installs
+curl -fsSL https://raw.githubusercontent.com/qeamer/rs232excel/main/scripts/bootstrap-package-machine.sh | bash
+
+# Or manually
 git clone https://github.com/qeamer/rs232excel.git
 cd rs232excel/python/en
-pip install -r requirements.txt
-python3 read_package.py --port /dev/ttyUSB0 --usb-mirror /media/usb0
+bash install.sh
+python3 read_package.py --port /dev/ttyUSB0
 python3 read_package.py --export-xlsx
 ```
 

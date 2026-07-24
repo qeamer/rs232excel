@@ -1,3 +1,5 @@
+# Referansemal — installer.sh genererer den faktiske unit-fila med
+# riktig User= og WorkingDirectory= for den innloggede brukeren.
 [Unit]
 Description=Pakkemaskin Skriver - pakkelapp-fangst
 After=multi-user.target

@@ -12,10 +12,18 @@
 ## `/no/` — Norsk produksjonsversjon ⭐
 
 - `read_package.py` — fangst, parsing, CSV, Excel
-- `installer.sh` — systemd-tjeneste
-- `pakkemaskin-skriver.service` — autostart
+- `installer.sh` — systemd-tjeneste (bruker + dialout + USB-mappe)
+- `pakkemaskin-skriver.service` — referansemal for autostart
 - `vis_status.py` — valgfri OLED-skjerm
 - `eksempel.txt` — testlapper for `--simuler`
+
+Én-kommando på Pi (anbefalt):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/qeamer/rs232excel/main/scripts/last-ned-pakkemaskin.sh | bash
+```
+
+Manuelt:
 
 ```bash
 cd rs232excel/python/no
@@ -28,13 +36,25 @@ python3 read_package.py --eksporter-xlsx
 
 - `read_package.py` — same logic, English strings
 - `install.sh` — installation script
-- `read-package.service` — systemd unit
+- `read-package.service` — systemd unit template
+
+One-liner on the Pi:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/qeamer/rs232excel/main/scripts/bootstrap-package-machine.sh | bash
+```
+
+Manually:
 
 ```bash
 cd rs232excel/python/en
 bash install.sh
-python3 read_package.py --port /dev/ttyUSB0 --usb-mirror /media/usb0
+python3 read_package.py --port /dev/ttyUSB0
 python3 read_package.py --export-xlsx
 ```
 
 Begge versjoner er funksjonelt like — kun språk skiller dem.
+
+Bootstrap-skript ligger i `scripts/`:
+- `last-ned-pakkemaskin.sh` (norsk)
+- `bootstrap-package-machine.sh` (English)

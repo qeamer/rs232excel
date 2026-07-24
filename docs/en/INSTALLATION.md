@@ -59,11 +59,20 @@ Windows without ssh? Install [PuTTY](https://putty.org) or use WSL.
 
 ## 4 · Install the software
 
-Paste these blocks one at a time into the SSH session:
+Once Pi OS is up and you are logged in over SSH, download and install with **one command**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/qeamer/rs232excel/main/scripts/bootstrap-package-machine.sh | bash
+```
+
+The script updates the system, clones the repo to `~/rs232excel`, installs dependencies, adds the user to `dialout`, creates `/media/usb0`, enables the systemd service (without starting it yet), and runs a quick simulation smoke test.
+
+Or step by step:
 
 ```bash
 # System update (~5 min)
 sudo apt update && sudo apt upgrade -y
+sudo apt install -y git python3-pip
 
 # Clone the repo
 git clone https://github.com/qeamer/rs232excel.git
@@ -71,6 +80,9 @@ cd rs232excel/python/en
 
 # Install dependencies and enable autostart
 bash install.sh
+
+# Smoke test without PLC
+python3 read_package.py --simulate example.txt
 ```
 
 Optional OLED display:
@@ -142,7 +154,7 @@ python3 read_package.py --port /dev/ttyUSB0 --usb-mirror /media/usb0
 
 Run 2–3 packages, check `packages.csv` against the paper labels, pull the flash drive mid-run (capture continues), re-insert it (missed rows sync automatically).
 
-**Go live.** The service installed in step 4 autostarts on every boot:
+**Go live.** The service was enabled in step 4 (autostart on boot). Start it now:
 
 ```bash
 sudo systemctl start read-package

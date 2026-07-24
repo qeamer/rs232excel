@@ -4,7 +4,8 @@ rs232excel repository structure
 ├── README.md                          GitHub main page (Norwegian, primary — Scandinavian sawmills)
 ├── README.en.md                       English translation (secondary)
 ├── README.no.md                       Redirect → README.md
-├── skaak_logo_vektor.png              Skjåk Trelast logo (white on transparent, for GitHub)
+├── skaak_logo_vektor.png              Skjåk Trelast logo (green brand mark, GitHub README)
+├── skaak_logo_vektor.svg              Vector source for brand mark
 │
 ├── docs/
 │   ├── README.md                      Language picker → en / no

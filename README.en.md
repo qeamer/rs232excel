@@ -32,7 +32,20 @@ A Raspberry Pi listens silently on the RS-232 line between a 1980s Telemecanique
 
 <img src="docs/en/img/signal-flow.png" width="100%" alt="System architecture"/>
 
-The tap is **physically read-only**: slit the jacket on the 40 cm extension and cut **only** the conductors for pin 2 (TX) and pin 7 (GND) — not the whole cable. WAGO three-way join; TX → adapter **RX**. Signal to `/dev/ttyUSB0`, not GPIO. The printer keeps printing as before.
+The tap is **physically read-only**: only TX+GND via WAGO; TX → ICUSB232DB25 **RX**. Signal to `/dev/ttyUSB0`, not GPIO. The printer keeps printing as before.
+
+---
+
+## Choose your extension: DB25 or DB9
+
+PLC and OKI use **DB25**. The jumper between them can be either:
+
+| Extension you buy | Where you tap | TX | GND |
+|---|---|---|---|
+| **Full DB25** M→F | Open the jacket mid DB25 cable | pin **2** | pin **7** |
+| **DB9 cable** with a DB25 adapter on each end *(common purchase)* | Open the jacket on the **DB9** middle | DB9 pin **3**<br/>(= DB25 pin 2) | DB9 pin **5**<br/>(= DB25 pin 7) |
+
+Both are correct — same signals. **Do not cut the whole cable**, only those two conductors. **Wire colors are not standard**: find TX/GND with a continuity tester from the DB25 end (pins 2 and 7) before cutting. Then WAGO (three-way) → StarTech **ICUSB232DB25** (TX→RX). Details: [docs/en/wiring.md](docs/en/wiring.md).
 
 ---
 

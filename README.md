@@ -93,10 +93,39 @@ selv når skriveren er av.
 <img src="docs/no/img/signal-flow.png" width="100%" alt="Systemarkitektur"/>
 
 <p style="font-size: 16px; line-height: 1.5">
-Tappen er <b>fysisk skrivebeskyttet</b>: åpne kappen på skjøten (DB9-midt med
-DB25-ender er vanlig) og klipp <b>kun</b> TX+GND — DB25 pin 2/7 (= DB9 pin 3/5).
-Finn leder med pipetest (farger er ikke standard). WAGO tre veier; TX →
-ICUSB232DB25-<b>RX</b>. Signal til <code>/dev/ttyUSB0</code>, ikke GPIO.
+Tappen er <b>fysisk skrivebeskyttet</b>: kun TX+GND via WAGO, TX → ICUSB232DB25-<b>RX</b>.
+Signal til <code>/dev/ttyUSB0</code>, ikke GPIO. Skriveren fortsetter som før.
+</p>
+
+---
+
+<h2 style="font-size: 1.5em">Velg skjøtekabel: DB25 eller DB9</h2>
+
+<p style="font-size: 16px; line-height: 1.55">
+PLS og OKI har <b>DB25</b>. Skjøten mellom dem kan være enten:
+</p>
+
+<table style="font-size: 16px">
+<tr><th>Skjøt du kjøper</th><th>Hvor du tapper</th><th>TX</th><th>GND</th></tr>
+<tr>
+  <td><b>Hel DB25</b> hann→hunn</td>
+  <td>Åpne kappen midt på DB25-kabelen</td>
+  <td>pin <b>2</b></td>
+  <td>pin <b>7</b></td>
+</tr>
+<tr>
+  <td><b>DB9-kabel</b> med DB25-adapter i hver ende<br/>(vanlig kjøp)</td>
+  <td>Åpne kappen midt på <b>DB9</b>-delen</td>
+  <td>DB9 pin <b>3</b><br/>(= DB25 pin 2)</td>
+  <td>DB9 pin <b>5</b><br/>(= DB25 pin 7)</td>
+</tr>
+</table>
+
+<p style="font-size: 16px; line-height: 1.55">
+Begge er riktig — samme signal. <b>Klipp ikke hele kabelen</b>, bare de to lederne.
+<b>Farger er ikke standard</b>: finn TX/GND med pipetest fra DB25-enden (pin 2 og 7)
+før du klipper. Deretter WAGO (tre veier) → StarTech <b>ICUSB232DB25</b> (TX→RX).
+Detaljer: <a href="docs/no/wiring.md">docs/no/wiring.md</a>.
 </p>
 
 ---

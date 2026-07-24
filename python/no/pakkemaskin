@@ -102,7 +102,7 @@ Pakkemaskin Skriver — korte kommandoer (skriv bare ordet):
   status      Status + USB-sammendrag
   logg        Live logg  (stopp med Ctrl+C)
   sjekk       Bare-fangst — viser lapper, lagrer ikke  (Ctrl+C)
-  excel       Oppdater Excel nå (skjer også automatisk på SD + minnepenn)
+  excel       Oppdater årets Excel nå (ellers automatisk på SD + minnepenn)
   porter      List bare serieporter
 
 Samme ting med prefiks:  pakkemaskin start | stopp | logg | …
@@ -192,9 +192,10 @@ case "$cmd" in
     ;;
   excel|xlsx)
     kjør --eksporter-xlsx
-    echo "Fil: $PAKKEMASKIN_DIR/pakkelapper.xlsx"
-    if mountpoint -q /media/usb0 2>/dev/null && [[ -f /media/usb0/pakkelapper.xlsx ]]; then
-      echo "Speilet: /media/usb0/pakkelapper.xlsx"
+    aar="$(date +%Y)"
+    echo "Fil: $PAKKEMASKIN_DIR/pakkelapper${aar}.xlsx"
+    if mountpoint -q /media/usb0 2>/dev/null && [[ -f "/media/usb0/pakkelapper${aar}.xlsx" ]]; then
+      echo "Speilet: /media/usb0/pakkelapper${aar}.xlsx"
     fi
     ;;
   simuler|simulate)

@@ -155,7 +155,7 @@ USB midt ─── OTG ─── USB-hub (gjerne med egen strøm)
 ```
 
 - SD-kortet er alltid fasiten (fangst fortsetter uten minnepenn).
-- Minnepennen speiler **CSV + Excel** automatisk (`pakkelapper.csv` og `pakkelapper.xlsx` på `/media/usb0`). Ingen manuell eksport i daglig drift — trekk ut pennen og åpne på PC.
+- Minnepennen speiler **CSV + Excel** automatisk som **årets** filer, f.eks. `pakkelapper2026.csv` + `pakkelapper2026.xlsx` på `/media/usb0`. Samme filer oppdateres på stedet (ikke nye kopier hver gang). Ved årsskifte startes nye `…2027…`-filer.
 - Menyvalg **8 Excel** / kommando `excel` er valgfri «oppdater nå»; Wi‑Fi-henting kan komme senere.
 - Passiv hub uten ekstra strøm fungerer ofte med 2,5–3 A vegglader; ved ustabilitet: **hub med egen PSU**.
 - Tastatur med innebygd hub: OK — sett minnepenn/serieadapter i den, eller bruk separat hub.
@@ -193,7 +193,7 @@ python3 read_package.py --port /dev/ttyUSB0 --usb-sti /media/usb0
 
 <img src="img/terminal-capture.png" width="100%" alt="Sanntidsfangst"/>
 
-Kjør 2–3 pakker, sjekk `pakkelapper.csv` mot papirlappene, trekk ut minnepennen midt i kjøring (fangst fortsetter), sett den inn igjen (manglende rader synkes).
+Kjør 2–3 pakker, sjekk `pakkelapperYYYY.csv` mot papirlappene, trekk ut minnepennen midt i kjøring (fangst fortsetter), sett den inn igjen (manglende rader synkes).
 
 **Produksjon.** Tjenesten fra steg 4 starter automatisk ved boot:
 
@@ -216,7 +216,7 @@ logg     # live logg
 <img src="img/excel-charts.png" width="42%" alt="Excel grafer"/>
 </p>
 
-Trekk ut minnepennen når som helst — `pakkelapper.csv` og `pakkelapper.xlsx` ligger klare på pennen (Excel oppdateres automatisk i bakgrunnen under fangst).
+Trekk ut minnepennen når som helst — årets `pakkelapperYYYY.csv` og `pakkelapperYYYY.xlsx` ligger klare på pennen (samme filer oppdateres under fangst; nytt år = nye filnavn).
 
 ---
 

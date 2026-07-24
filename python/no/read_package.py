@@ -20,24 +20,24 @@ Lappformat (dekodet fra ekte lapper):
   bunn:     antall · sum_lengde(1 des) · kubikk(3 des) · snittlengde(dm)
             (høyre kolonne med nuller = ubrukt, ignoreres)
 
-Filer:
-  utskrift.txt      alt råt, med tidsstempel — mister aldri noe
-  pakkelapper.csv   én rad per ekte pakke (ingen duplikater)
-  mangler.csv       hull i pakkenr-rekka (per runde)
-  oppsummering.csv  daglig oppsummering (--oppsummering)
-  pakkelapper.xlsx  Excel med ett ark per sesong (automatisk + --eksporter-xlsx)
-  sesong.txt        gjeldende sesong: "rå"/"tørr" (--sett-sesong)
+Filer (årsbasert — samme fil overskrives hele året, nytt år = ny fil):
+  utskrift.txt           alt råt, med tidsstempel — mister aldri noe
+  pakkelapperYYYY.csv    én rad per ekte pakke (ingen duplikater)
+  manglerYYYY.csv        hull i pakkenr-rekka (per runde)
+  pakkelapperYYYY.xlsx   Excel (automatisk + --eksporter-xlsx)
+  oppsummering.csv       daglig oppsummering (--oppsummering)
+  sesong.txt             gjeldende sesong: "rå"/"tørr" (--sett-sesong)
 
 USB-speiling (sanntid, --usb-sti):
   SD-kortet er alltid fasiten — det er der fangsten faktisk skjer, og
   ingen pakke går tapt selv om ingen minnepenn er tilkoblet. Er en
   minnepenn montert på oppgitt sti, speiles CSV i samme øyeblikk, og
-  Excel (pakkelapper.xlsx) oppdateres automatisk i bakgrunnen (kort
-  debounce, så serieporten ikke blokkeres). Trekk ut pennen og åpne
-  filene på PC — ingen manuell «excel»-kommando nødvendig. Er
-  minnepennen borte når en pakke kommer inn, skrives den kun til
-  SD-kortet — og neste gang pennen er tilkoblet synkroniseres
-  automatisk alt som manglet (CSV + ny Excel).
+  Excel oppdateres automatisk i bakgrunnen (kort debounce, så
+  serieporten ikke blokkeres). På pennen ligger typisk bare årets
+  to filer (pakkelapperYYYY.csv + .xlsx) — de oppdateres på stedet,
+  ikke som nye kopier hver gang. Ved årsskifte startes nye
+  YYYY-filer. Trekk ut pennen og åpne på PC — ingen manuell
+  «excel»-kommando nødvendig.
 
 Avhengigheter: pip install pyserial openpyxl
 """
@@ -47,6 +47,47 @@ from pathlib import Path
 
 FORMFEED = 0x0C
 ESC = 0x1B
+
+
+def aarsfiler(aar: int | None = None) -> dict:
+    """Filnavn for ett kalenderår — samme fil hele året, nytt år = nye navn."""
+    aar = aar or datetime.datetime.now().year
+    return {
+        "aar": aar,
+        "csv": f"pakkelapper{aar}.csv",
+        "xlsx": f"pakkelapper{aar}.xlsx",
+        "mangler": f"mangler{aar}.csv",
+    }
+
+
+def migrer_legacy_aarsfiler(csv_sti: Path, xlsx_sti: Path, mangler_sti: Path):
+    """Første gangs oppgradering: pakkelapper.csv → pakkelapperYYYY.csv osv."""
+    legacy_csv = Path("pakkelapper.csv")
+    if not csv_sti.exists() and legacy_csv.exists() and csv_sti.resolve() != legacy_csv.resolve():
+        logg(f"Flytter {legacy_csv.name} → {csv_sti.name} (årsfil)")
+        legacy_csv.rename(csv_sti)
+    legacy_xlsx = Path("pakkelapper.xlsx")
+    if not xlsx_sti.exists() and legacy_xlsx.exists() and xlsx_sti.resolve() != legacy_xlsx.resolve():
+        logg(f"Flytter {legacy_xlsx.name} → {xlsx_sti.name} (årsfil)")
+        legacy_xlsx.rename(xlsx_sti)
+    legacy_mangler = Path("mangler.csv")
+    if not mangler_sti.exists() and legacy_mangler.exists() and mangler_sti.resolve() != legacy_mangler.resolve():
+        logg(f"Flytter {legacy_mangler.name} → {mangler_sti.name} (årsfil)")
+        legacy_mangler.rename(mangler_sti)
+
+
+def migrer_usb_legacy(usb_mappe: Path | None, csv_navn: str, xlsx_navn: str):
+    """Samme på minnepennen — én CSV + én Excel per år, ikke gamle generiske navn."""
+    if usb_mappe is None or not usb_mappe.exists():
+        return
+    for legacy, ny in (("pakkelapper.csv", csv_navn), ("pakkelapper.xlsx", xlsx_navn)):
+        old, new = usb_mappe / legacy, usb_mappe / ny
+        if old.exists() and not new.exists():
+            try:
+                old.rename(new)
+                logg(f"📀 Minnepenn: {legacy} → {ny}")
+            except OSError as e:
+                logg(f"⚠  Klarte ikke rename på minnepenn ({e}).")
 
 KOLONNER = ["tid_fanget", "dato", "pakkenr", "dimensjon", "treslag",
             "sort", "sort_navn", "antall_plank", "sum_lengde_lm", "kubikk_m3",
@@ -387,6 +428,13 @@ def start_xlsx_auto(csv_sti: Path, xlsx_sti: Path, usb_sti: Path | None):
         t.start()
 
 
+def _oppdater_xlsx_auto_stier(csv_sti: Path, xlsx_sti: Path, usb_sti: Path | None):
+    with _xlsx_auto["lock"]:
+        _xlsx_auto["csv_sti"] = csv_sti
+        _xlsx_auto["xlsx_sti"] = xlsx_sti
+        _xlsx_auto["usb_sti"] = usb_sti
+
+
 def marker_xlsx_oppdatering():
     """Merk at CSV er endret — Excel bygges om etter debounce."""
     with _xlsx_auto["lock"]:
@@ -395,20 +443,53 @@ def marker_xlsx_oppdatering():
         _xlsx_auto["dirty"] = True
 
 
+def ny_fangst_state(csv_sti: Path, xlsx_sti: Path, mangler_sti: Path,
+                    usb_sti: Path | None, terskel: int, aar: int) -> dict:
+    """Mutable stier for langkjøring — byttes ved årsskifte."""
+    return {
+        "aar": aar,
+        "csv_sti": csv_sti,
+        "xlsx_sti": xlsx_sti,
+        "mangler_sti": mangler_sti,
+        "usb_sti": usb_sti,
+        "terskel": terskel,
+    }
+
+
+def sikr_gjeldende_aar(state: dict, reg: "Register") -> "Register":
+    """Ved 1. januar under fangst: nye årsfiler (gamle beholdes på SD)."""
+    aar = datetime.datetime.now().year
+    if aar == state["aar"]:
+        return reg
+    filer = aarsfiler(aar)
+    logg(f"Nytt år {aar} — starter {filer['csv']} / {filer['xlsx']} "
+         f"(forrige års filer beholdes på SD)")
+    state["aar"] = aar
+    state["csv_sti"] = Path(filer["csv"])
+    state["xlsx_sti"] = Path(filer["xlsx"])
+    state["mangler_sti"] = Path(filer["mangler"])
+    usb_mappe = state["usb_sti"].parent if state["usb_sti"] else None
+    state["usb_sti"] = (usb_mappe / filer["csv"]) if usb_mappe else None
+    _oppdater_xlsx_auto_stier(state["csv_sti"], state["xlsx_sti"], state["usb_sti"])
+    return Register(state["csv_sti"], state["mangler_sti"], state["terskel"])
+
+
 def skriv_utskrift(tekst, utskrift: Path):
     with utskrift.open("a", encoding="utf-8") as f:
         f.write(f"\n===== {datetime.datetime.now().isoformat(timespec='seconds')} =====\n{tekst}\n")
 
 
-def behandle(tekst, utskrift, csv_sti, reg: Register, sesong, bare_fangst, usb_sti: Path | None = None):
-    if not tekst: return
+def behandle(tekst, utskrift, state: dict, reg: Register, sesong, bare_fangst):
+    if not tekst: return reg
+    reg = sikr_gjeldende_aar(state, reg)
+    csv_sti, usb_sti = state["csv_sti"], state["usb_sti"]
     skriv_utskrift(tekst, utskrift)
     if bare_fangst:
-        logg("rå lapp fanget"); return
+        logg("rå lapp fanget"); return reg
     pakkenr = parse_lapp(tekst, sesong)["pakkenr"]
     status, n, reset = reg.vurder(pakkenr)
     if status == "duplikat":
-        logg(f"↺ duplikat pakkenr {pakkenr} — droppet (finnes i utskrift.txt)"); return
+        logg(f"↺ duplikat pakkenr {pakkenr} — droppet (finnes i utskrift.txt)"); return reg
     if reset:
         reg.ny_runde()
     rad = parse_lapp(tekst, sesong)
@@ -427,6 +508,7 @@ def behandle(tekst, utskrift, csv_sti, reg: Register, sesong, bare_fangst, usb_s
              f"{rad['dimensjon'] or '?'} {rad['treslag'] or '?'} "
              f"sort {rad['sort'] or '?'}({rad['sort_navn'] or '?'}), "
              f"{rad['antall_plank'] or '?'} plank, {rad['kubikk_m3'] or '?'} m³")
+    return reg
 
 
 def registrer_manuelt(pakkenr, csv_sti, mangler_sti, sesong, terskel):
@@ -550,11 +632,13 @@ def list_porter():
     for p in porter: print("  ", p)
 
 
-def les_serie(args, utskrift, csv_sti, reg, sesong, usb_sti: Path | None = None):
+def les_serie(args, utskrift, state: dict, reg, sesong):
     import serial
     paritet = {"N": serial.PARITY_NONE, "E": serial.PARITY_EVEN, "O": serial.PARITY_ODD}[args.paritet]
+    usb_sti = state["usb_sti"]
     logg(f"Starter. Lytter på {args.port} @ {args.baud} {args.databits}{args.paritet}{args.stoppbits}"
          f"  sesong={sesong}{'  [BARE FANGST]' if args.bare_fangst else ''}"
+         f"  filer={state['csv_sti'].name}/{state['xlsx_sti'].name}"
          f"{f'  usb={usb_sti}' if usb_sti else ''}  (Ctrl+C for å stoppe)")
     sist_usb_sjekk = 0.0
     while True:
@@ -571,32 +655,34 @@ def les_serie(args, utskrift, csv_sti, reg, sesong, usb_sti: Path | None = None)
                 now = time.time()
                 if b:
                     if b[0] == FORMFEED:
-                        behandle(rens(bytes(buf)), utskrift, csv_sti, reg, sesong, args.bare_fangst, usb_sti); buf.clear()
+                        reg = behandle(rens(bytes(buf)), utskrift, state, reg, sesong, args.bare_fangst); buf.clear()
                     else:
                         buf += b
                     sist = now
                 elif buf and (now - sist) > args.flush:
-                    behandle(rens(bytes(buf)), utskrift, csv_sti, reg, sesong, args.bare_fangst, usb_sti); buf.clear()
-                elif usb_sti and (now - sist_usb_sjekk) > 15:
+                    reg = behandle(rens(bytes(buf)), utskrift, state, reg, sesong, args.bare_fangst); buf.clear()
+                elif state["usb_sti"] and (now - sist_usb_sjekk) > 15:
                     # Hotplug: penn satt inn midt i skift → synk CSV/Excel uten å vente på neste pakke
                     sist_usb_sjekk = now
-                    synkroniser_usb(csv_sti, usb_sti)
+                    reg = sikr_gjeldende_aar(state, reg)
+                    synkroniser_usb(state["csv_sti"], state["usb_sti"])
         except serial.SerialException as e:
             logg(f"Mistet forbindelsen ({e}). Kobler til igjen om 5 s …")
             try: ser.close()
             except Exception: pass
             time.sleep(5); continue
         except KeyboardInterrupt:
-            if buf: behandle(rens(bytes(buf)), utskrift, csv_sti, reg, sesong, args.bare_fangst, usb_sti)
+            if buf: behandle(rens(bytes(buf)), utskrift, state, reg, sesong, args.bare_fangst)
             ser.close(); logg("Stoppet."); return
 
 
-def kjor_simulering(args, utskrift, csv_sti, reg, sesong, usb_sti: Path | None = None):
+def kjor_simulering(args, utskrift, state: dict, reg, sesong):
     data = Path(args.simuler).read_bytes()
     logg(f"Simulerer fra {args.simuler} …  sesong={sesong}")
     for chunk in data.split(bytes([FORMFEED])):
-        behandle(rens(chunk), utskrift, csv_sti, reg, sesong, args.bare_fangst, usb_sti)
+        reg = behandle(rens(chunk), utskrift, state, reg, sesong, args.bare_fangst)
     logg("Ferdig.")
+    return reg
 
 
 def eksporter_xlsx(csv_sti, xlsx_sti):
@@ -892,16 +978,20 @@ def main():
     p.add_argument("--flush", type=float, default=3.0)
     p.add_argument("--reset-terskel", type=int, default=100,
                    help="hvor stort hopp bakover som regnes som nullstilling")
-    p.add_argument("--csv", default="pakkelapper.csv")
-    p.add_argument("--xlsx", default="pakkelapper.xlsx")
+    filer = aarsfiler()
+    p.add_argument("--csv", default=None,
+                   help=f"CSV-fil (standard: {filer['csv']} — nytt navn hvert år)")
+    p.add_argument("--xlsx", default=None,
+                   help=f"Excel-fil (standard: {filer['xlsx']} — oppdateres på stedet)")
     p.add_argument("--utskrift", default="utskrift.txt")
-    p.add_argument("--mangler", default="mangler.csv")
+    p.add_argument("--mangler", default=None,
+                   help=f"hull-logg (standard: {filer['mangler']})")
     p.add_argument("--oppsummering-fil", default="oppsummering.csv")
     p.add_argument("--dimensjon-fil", default="oppsummering_dimensjon.csv")
     p.add_argument("--sesong-fil", default="sesong.txt")
     p.add_argument("--usb-sti", default="/media/usb0",
                    help='mappe der en minnepenn forventes montert, for sanntids-speiling av '
-                        'pakkelapper.csv. SD-kortet er alltid fasiten uansett — sett til "" '
+                        'årets CSV/Excel. SD-kortet er alltid fasiten uansett — sett til "" '
                         'for å slå speiling helt av.')
     p.add_argument("--bare-fangst", action="store_true")
     p.add_argument("--simuler")
@@ -914,12 +1004,22 @@ def main():
     p.add_argument("--sett-sesong", help='sett gjeldende sesong: "rå" eller "tørr"')
     args = p.parse_args()
 
-    utskrift, csv_sti = Path(args.utskrift), Path(args.csv)
-    mangler_sti, xlsx_sti, sesong_fil = Path(args.mangler), Path(args.xlsx), Path(args.sesong_fil)
-    usb_sti = (Path(args.usb_sti) / args.csv) if args.usb_sti else None
+    csv_navn = args.csv or filer["csv"]
+    xlsx_navn = args.xlsx or filer["xlsx"]
+    mangler_navn = args.mangler or filer["mangler"]
+    utskrift = Path(args.utskrift)
+    csv_sti, xlsx_sti = Path(csv_navn), Path(xlsx_navn)
+    mangler_sti, sesong_fil = Path(mangler_navn), Path(args.sesong_fil)
+    usb_mappe = Path(args.usb_sti) if args.usb_sti else None
+    usb_sti = (usb_mappe / csv_navn) if usb_mappe else None
 
     if args.list_porter:    list_porter(); return
     if args.sett_sesong:    sett_sesong(args.sett_sesong, sesong_fil); return
+
+    # Oppgrader gamle generiske filnavn → årsfiler (én gang)
+    migrer_legacy_aarsfiler(csv_sti, xlsx_sti, mangler_sti)
+    migrer_usb_legacy(usb_mappe, csv_navn, xlsx_navn)
+
     if args.eksporter_xlsx:
         eksporter_xlsx(csv_sti, xlsx_sti)
         speil_xlsx_til_usb(xlsx_sti, usb_sti)
@@ -936,6 +1036,7 @@ def main():
         return
 
     # Langkjøring (fangst/simulering): Excel bygges i bakgrunnen etter CSV-endring
+    state = ny_fangst_state(csv_sti, xlsx_sti, mangler_sti, usb_sti, args.reset_terskel, filer["aar"])
     start_xlsx_auto(csv_sti, xlsx_sti, usb_sti)
     reg = Register(csv_sti, mangler_sti, args.reset_terskel)
     if _usb_tilgjengelig(usb_sti):
@@ -944,11 +1045,11 @@ def main():
     if csv_sti.exists():
         marker_xlsx_oppdatering()  # fersk Excel på SD/penn ved oppstart / etter synk
     if args.simuler:
-        kjor_simulering(args, utskrift, csv_sti, reg, sesong, usb_sti)
-        eksporter_xlsx(csv_sti, xlsx_sti)
-        speil_xlsx_til_usb(xlsx_sti, usb_sti)
+        kjor_simulering(args, utskrift, state, reg, sesong)
+        eksporter_xlsx(state["csv_sti"], state["xlsx_sti"])
+        speil_xlsx_til_usb(state["xlsx_sti"], state["usb_sti"])
     else:
-        les_serie(args, utskrift, csv_sti, reg, sesong, usb_sti)
+        les_serie(args, utskrift, state, reg, sesong)
 
 
 if __name__ == "__main__":

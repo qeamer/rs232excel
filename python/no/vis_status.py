@@ -4,7 +4,7 @@ vis_status.py — Pakkemaskin Skriver (Skjåk Trelast)
 
 Liten OLED-skjerm (0,96" SSD1306, I2C) som roterer mellom to
 statusvisninger, hver 10. sekund. Kjører som EGET, uavhengig program
-— leser bare pakkelapper.csv utenfra og rører aldri fangst-koden.
+— leser bare årets pakkelapperYYYY.csv utenfra og rører aldri fangst-koden.
 
 Skjermer (roterer i denne rekkefølgen):
   1. Dagens og årets oppsummering (antall pakker + kubikk)
@@ -20,7 +20,16 @@ Avhengigheter (på selve Pi-en):
 import csv, datetime, sys, time
 from pathlib import Path
 
-CSV_STI = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("pakkelapper.csv")
+def _standard_csv() -> Path:
+    aar = datetime.datetime.now().year
+    aarsfil = Path(f"pakkelapper{aar}.csv")
+    if aarsfil.exists():
+        return aarsfil
+    legacy = Path("pakkelapper.csv")
+    return legacy if legacy.exists() else aarsfil
+
+
+CSV_STI = Path(sys.argv[1]) if len(sys.argv) > 1 else _standard_csv()
 DATA_OPPDATER_SEK = 3     # hvor ofte vi sjekker CSV-filen for nye pakker
 SKJERM_BYTT_SEK = 10      # hvor lenge hver skjerm vises før den bytter
 

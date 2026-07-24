@@ -103,7 +103,7 @@ if [[ ! -x /usr/local/bin/pakkemaskin ]]; then
   sudo chmod +x /usr/local/bin/pakkemaskin
 fi
 echo "PAKKEMASKIN_DIR=${KATALOG}" | sudo tee /etc/pakkemaskin.conf >/dev/null
-for navn in start stopp restart status logg sjekk excel porter usb meny; do
+for navn in start stopp restart status logg sjekk excel porter usb integritet meny; do
   if [[ "$navn" == "meny" ]]; then
     sudo cp "$KATALOG/meny" /usr/local/bin/meny
     sudo chmod +x /usr/local/bin/meny

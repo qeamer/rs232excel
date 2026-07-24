@@ -156,6 +156,7 @@ USB midt ─── OTG ─── USB-hub (gjerne med egen strøm)
 
 - SD-kortet er alltid fasiten (fangst fortsetter uten minnepenn).
 - Minnepennen speiler **CSV + Excel** automatisk som **årets** filer, f.eks. `pakkelapper2026.csv` + `pakkelapper2026.xlsx` på `/media/usb0`. Samme filer oppdateres på stedet (ikke nye kopier hver gang). Ved årsskifte startes nye `…2027…`-filer.
+- USB-skriving bruker **fsync** og ved korrupt/avvik **atomisk omskriving** fra SD. Kommando `integritet` (eller meny **1 USB**) sjekker/helbreder pennen etter hard yank uten trygg utløsing.
 - Menyvalg **8 Excel** / kommando `excel` er valgfri «oppdater nå»; Wi‑Fi-henting kan komme senere.
 - Passiv hub uten ekstra strøm fungerer ofte med 2,5–3 A vegglader; ved ustabilitet: **hub med egen PSU**.
 - Tastatur med innebygd hub: OK — sett minnepenn/serieadapter i den, eller bruk separat hub.

@@ -55,7 +55,7 @@ sudo cp "$KATALOG/pakkemaskin-autologin.sh" /usr/local/sbin/pakkemaskin-autologi
 sudo chmod +x /usr/local/sbin/pakkemaskin-autologin.sh
 # Sørg for at autologin-scriptet bruker riktig hjemmemappe
 echo "PAKKEMASKIN_DIR=${KATALOG}" | sudo tee /etc/pakkemaskin.conf >/dev/null
-for navn in start stopp restart status logg sjekk excel porter usb; do
+for navn in start stopp restart status logg sjekk excel porter usb integritet; do
   sudo ln -sf /usr/local/bin/pakkemaskin "/usr/local/bin/$navn"
 done
 # USB auto-mount (minnepenn inn/ut)

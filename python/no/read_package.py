@@ -410,11 +410,46 @@ def ser_komplett_lapp(tekst: str) -> bool:
 
 
 def append_csv(rad, csv_sti: Path):
+    """Append til SD (fasit) med flush+fsync — mindre tap ved strømbrudd."""
     ny = not csv_sti.exists()
     with csv_sti.open("a", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=KOLONNER, extrasaction="ignore")
         if ny: w.writeheader()
         w.writerow(rad)
+        f.flush()
+        os.fsync(f.fileno())
+
+
+def _fsync_dir(sti: Path):
+    """fsync på mappen — nødvendig for at rename skal overleve yank på FAT."""
+    try:
+        fd = os.open(str(sti.parent), os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def skriv_trygt(sti: Path, rader, fieldnames=None):
+    """Atomisk CSV-skriving: tmp → flush/fsync → replace → fsync dir.
+
+    Brukes på minnepennen slik at en hard yank midt i skriving ikke etterlater
+    halv/korrupt pakkelapperYYYY.csv. SD er fortsatt fasiten."""
+    fieldnames = fieldnames or KOLONNER
+    sti = Path(sti)
+    sti.parent.mkdir(parents=True, exist_ok=True)
+    tmp = sti.with_name(sti.name + ".tmp")
+    with tmp.open("w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
+        w.writeheader()
+        for rad in rader:
+            w.writerow({k: rad.get(k, "") for k in fieldnames})
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, sti)
+    _fsync_dir(sti)
 
 
 # ── USB-speiling (sanntid, med automatisk innhenting) ────────────────
@@ -429,34 +464,119 @@ def _nokkel(rad) -> tuple:
     return (str(rad.get("runde") or ""), str(rad.get("pakkenr") or ""))
 
 
-def _les_nokler(csv_sti: Path) -> set:
+def _les_rader(csv_sti: Path):
+    """Les CSV. Returnerer liste, [] hvis mangler, None hvis korrupt/uleselig."""
     if not csv_sti.exists():
+        return []
+    try:
+        with csv_sti.open(encoding="utf-8") as f:
+            leser = csv.DictReader(f)
+            if not leser.fieldnames:
+                return None
+            felter = set(leser.fieldnames)
+            # Tom/korrupt penn uten våre kolonner → helbred med full omskriving
+            if "pakkenr" not in felter or "runde" not in felter:
+                return None
+            return list(leser)
+    except (OSError, csv.Error, UnicodeError) as e:
+        logg(f"⚠  Klarte ikke lese {csv_sti}: {e}")
+        return None
+
+
+def _les_nokler(csv_sti: Path) -> set:
+    rader = _les_rader(csv_sti)
+    if rader is None:
         return set()
-    with csv_sti.open(encoding="utf-8") as f:
-        return {_nokkel(rad) for rad in csv.DictReader(f)}
+    return {_nokkel(rad) for rad in rader}
+
+
+def sjekk_og_helbred(csv_sti: Path, usb_sti: Path | None) -> dict:
+    """Sjekk at minnepennen speiler SD. Ved avvik/korrupt fil: skriv hele CSV
+    atomisk fra SD (fasit). Trygt å kalle ofte og via CLI «integritet»."""
+    ut = {"ok": False, "helbredt": False, "manglet": 0, "ekstra": 0,
+          "rader_sd": 0, "rader_usb": 0, "melding": ""}
+    if not _usb_tilgjengelig(usb_sti):
+        ut["melding"] = "Minnepenn ikke montert"
+        return ut
+    if not csv_sti.exists():
+        ut["ok"] = True
+        ut["melding"] = "Ingen CSV på SD ennå — ingenting å speile"
+        return ut
+
+    sd_rader = _les_rader(csv_sti)
+    if sd_rader is None:
+        ut["melding"] = "SD-CSV uleselig — avbryter (fasit må være lesbar)"
+        return ut
+    ut["rader_sd"] = len(sd_rader)
+    sd_nokler = {_nokkel(r) for r in sd_rader}
+
+    usb_rader = _les_rader(usb_sti) if usb_sti.exists() else []
+    korrupt = usb_rader is None
+    if korrupt:
+        usb_rader = []
+    ut["rader_usb"] = len(usb_rader)
+    usb_nokler = {_nokkel(r) for r in usb_rader}
+
+    mangler = sd_nokler - usb_nokler
+    ekstra = usb_nokler - sd_nokler
+    ut["manglet"] = len(mangler)
+    ut["ekstra"] = len(ekstra)
+
+    if not korrupt and not mangler and not ekstra and len(sd_rader) == len(usb_rader):
+        ut["ok"] = True
+        ut["melding"] = f"OK — {len(sd_rader)} rader speilet trygt på minnepenn"
+        return ut
+
+    try:
+        # Rask sti: friske fil + kun manglende rader → append med fsync
+        if not korrupt and mangler and not ekstra:
+            for rad in sd_rader:
+                if _nokkel(rad) in mangler:
+                    append_csv(rad, usb_sti)
+            ut["ok"] = True
+            ut["helbredt"] = True
+            ut["melding"] = (
+                f"Helbredt — la til {len(mangler)} manglende rad(er) "
+                f"(fsync, {len(sd_rader)} totalt på SD)"
+            )
+            marker_xlsx_oppdatering()
+            return ut
+
+        # Korrupt / ekstra / ulikt antall → full atomisk omskriving fra SD
+        skriv_trygt(usb_sti, sd_rader)
+        ut["ok"] = True
+        ut["helbredt"] = True
+        årsak = []
+        if korrupt:
+            årsak.append("korrupt/uleselig fil")
+        if mangler:
+            årsak.append(f"{len(mangler)} manglet")
+        if ekstra:
+            årsak.append(f"{len(ekstra)} ekstra (fjernet)")
+        if len(sd_rader) != len(usb_rader) and not mangler and not ekstra:
+            årsak.append("ulikt antall rader")
+        ut["melding"] = (
+            f"Helbredt — skrev {len(sd_rader)} rader atomisk fra SD "
+            f"({', '.join(årsak) or 'avvik'})"
+        )
+        marker_xlsx_oppdatering()
+    except OSError as e:
+        ut["melding"] = f"Klarte ikke helbrede minnepenn ({e})"
+    return ut
 
 
 def synkroniser_usb(csv_sti: Path, usb_sti: Path | None):
-    """Kalles hver gang minnepennen er tilkoblet. Sammenligner hva som
-    finnes på SD-kortet mot hva som finnes på minnepennen, og etterfyller
-    automatisk alt som ble fanget mens minnepennen var borte (f.eks. mens
-    den forrige turen til PC-en pågikk). Trygt å kalle ofte — den gjør
-    ingenting hvis minnepennen allerede er fullt oppdatert."""
+    """Speil SD → minnepenn via sjekk_og_helbred (atomisk ved behov)."""
     if not _usb_tilgjengelig(usb_sti) or not csv_sti.exists():
         return
-    try:
-        nokler_usb = _les_nokler(usb_sti)
-        manglet = 0
-        with csv_sti.open(encoding="utf-8") as f:
-            for rad in csv.DictReader(f):
-                if _nokkel(rad) not in nokler_usb:
-                    append_csv(rad, usb_sti)
-                    manglet += 1
-        if manglet:
-            logg(f"📀 Minnepenn oppdatert — hentet inn {manglet} pakke(r) som ble fanget mens den var frakoblet.")
-            marker_xlsx_oppdatering()
-    except OSError as e:
-        logg(f"⚠  Klarte ikke synkronisere minnepenn ({e}).")
+    r = sjekk_og_helbred(csv_sti, usb_sti)
+    if r["helbredt"] and r["manglet"]:
+        logg(f"📀 Minnepenn oppdatert — hentet inn {r['manglet']} pakke(r) "
+             f"som ble fanget mens den var frakoblet.")
+    elif r["helbredt"]:
+        logg(f"📀 {r['melding']}")
+    elif not r["ok"] and r["melding"]:
+        logg(f"⚠  {r['melding']}")
 
 
 # ── Automatisk Excel (bakgrunn, debounce) ────────────────────────────
@@ -474,14 +594,17 @@ _xlsx_auto = {
 
 
 def speil_xlsx_til_usb(xlsx_sti: Path, usb_sti: Path | None):
-    """Kopierer ferdig Excel til minnepennen (atomisk replace)."""
+    """Kopierer ferdig Excel til minnepennen (atomisk replace + fsync)."""
     if not _usb_tilgjengelig(usb_sti) or not xlsx_sti.exists():
         return
     dest = usb_sti.parent / xlsx_sti.name
-    tmp = dest.with_suffix(".tmp.xlsx")
+    tmp = dest.with_name(dest.name + ".tmp")
     try:
         shutil.copy2(xlsx_sti, tmp)
+        with tmp.open("rb") as f:
+            os.fsync(f.fileno())
         os.replace(tmp, dest)
+        _fsync_dir(dest)
         logg(f"📀 Excel speilet til {dest}")
     except OSError as e:
         logg(f"⚠  Klarte ikke speile Excel til minnepenn ({e}).")
@@ -1134,6 +1257,8 @@ def main():
     p.add_argument("--simuler")
     p.add_argument("--list-porter", action="store_true")
     p.add_argument("--eksporter-xlsx", action="store_true")
+    p.add_argument("--sjekk-usb", action="store_true",
+                   help="sjekk/helbred at minnepennen speiler SD (atomisk omskriv ved avvik)")
     p.add_argument("--oppsummering", action="store_true")
     p.add_argument("--oppsummering-dimensjon", action="store_true",
                    help="antall/plank/kubikk gruppert per dimensjon (uavhengig av dato)")
@@ -1156,6 +1281,14 @@ def main():
     # Oppgrader gamle generiske filnavn → årsfiler (én gang)
     migrer_legacy_aarsfiler(csv_sti, xlsx_sti, mangler_sti)
     migrer_usb_legacy(usb_mappe, csv_navn, xlsx_navn)
+
+    if args.sjekk_usb:
+        r = sjekk_og_helbred(csv_sti, usb_sti)
+        print(r["melding"])
+        if r["helbredt"] and csv_sti.exists():
+            eksporter_xlsx(csv_sti, xlsx_sti)
+            speil_xlsx_til_usb(xlsx_sti, usb_sti)
+        raise SystemExit(0 if r["ok"] else 1)
 
     if args.eksporter_xlsx:
         eksporter_xlsx(csv_sti, xlsx_sti)

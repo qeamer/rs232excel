@@ -87,8 +87,19 @@ list_usb() {
     echo "Første gangs oppsett:  cd ~/rs232excel/python/no && bash fiks-usb.sh"
   fi
   echo
+  echo "— integritet (SD ↔ penn) —"
+  if mountpoint -q /media/usb0 2>/dev/null; then
+    # Ikke bruk kjør/exec — vi skal fortsette utskriften
+    if [[ -f "$PAKKEMASKIN_DIR/read_package.py" ]]; then
+      (cd "$PAKKEMASKIN_DIR" && python3 read_package.py --sjekk-usb) || true
+    fi
+  else
+    echo "Hopper over — penn ikke montert"
+  fi
+  echo
   echo "Hotplug: penn ut/inn oppdages automatisk (udev)."
   echo "Oppdater listen: velg 1 USB på nytt (eller skriv: usb)"
+  echo "Bare integritet:  integritet"
 }
 
 hjelp() {
@@ -96,6 +107,7 @@ hjelp() {
 Pakkemaskin Skriver — korte kommandoer (skriv bare ordet):
 
   usb         List ALLE USB + minnepenn (hotplug OK)
+  integritet  Sjekk/helbred at pennen speiler SD (trygt etter hard yank)
   start       Start fangst
   stopp       Stopp fangst
   restart     Restart (ved kræsj / kabelbytte)
@@ -186,6 +198,9 @@ case "$cmd" in
     ;;
   usb|usb-liste|devices)
     list_usb
+    ;;
+  integritet|helbred|usb-sjekk)
+    kjør --sjekk-usb
     ;;
   porter|ports)
     kjør --list-porter

@@ -13,6 +13,8 @@ from read_package import (
     append_csv,
     erstatt_manuell_rad,
     ser_komplett_lapp,
+    sjekk_og_helbred,
+    skriv_trygt,
     KOLONNER,
 )
 
@@ -116,6 +118,62 @@ class TestBugEFlush(unittest.TestCase):
     def test_full_label_complete(self):
         # minimal: heltall + kubikk med 3 desimaler
         self.assertTrue(ser_komplett_lapp("645 75X 150\n84  123,4  4,025  30"))
+
+
+class TestUsbIntegritet(unittest.TestCase):
+    def _rad(self, pakkenr, runde=1):
+        rad = {k: "" for k in KOLONNER}
+        rad.update(pakkenr=str(pakkenr), runde=str(runde), status="ok")
+        return rad
+
+    def test_skriv_trygt_atomic(self):
+        with tempfile.TemporaryDirectory() as d:
+            sti = Path(d) / "p.csv"
+            skriv_trygt(sti, [self._rad(1), self._rad(2)])
+            with sti.open(encoding="utf-8") as f:
+                rader = list(csv.DictReader(f))
+            self.assertEqual([r["pakkenr"] for r in rader], ["1", "2"])
+            self.assertFalse(sti.with_name("p.csv.tmp").exists())
+
+    def test_helbred_mangler_append(self):
+        with tempfile.TemporaryDirectory() as d:
+            sd = Path(d) / "sd.csv"
+            usb = Path(d) / "usb" / "p.csv"
+            usb.parent.mkdir()
+            skriv_trygt(sd, [self._rad(1), self._rad(2), self._rad(3)])
+            skriv_trygt(usb, [self._rad(1)])
+            r = sjekk_og_helbred(sd, usb)
+            self.assertTrue(r["ok"])
+            self.assertTrue(r["helbredt"])
+            self.assertEqual(r["manglet"], 2)
+            with usb.open(encoding="utf-8") as f:
+                n = {row["pakkenr"] for row in csv.DictReader(f)}
+            self.assertEqual(n, {"1", "2", "3"})
+
+    def test_helbred_korrupt_full_rewrite(self):
+        with tempfile.TemporaryDirectory() as d:
+            sd = Path(d) / "sd.csv"
+            usb = Path(d) / "usb" / "p.csv"
+            usb.parent.mkdir()
+            skriv_trygt(sd, [self._rad(10), self._rad(11)])
+            usb.write_text("dette er ikke csv\x00\x00", encoding="utf-8")
+            r = sjekk_og_helbred(sd, usb)
+            self.assertTrue(r["ok"])
+            self.assertTrue(r["helbredt"])
+            with usb.open(encoding="utf-8") as f:
+                rader = list(csv.DictReader(f))
+            self.assertEqual([x["pakkenr"] for x in rader], ["10", "11"])
+
+    def test_ok_nar_lik(self):
+        with tempfile.TemporaryDirectory() as d:
+            sd = Path(d) / "sd.csv"
+            usb = Path(d) / "usb" / "p.csv"
+            usb.parent.mkdir()
+            skriv_trygt(sd, [self._rad(1)])
+            skriv_trygt(usb, [self._rad(1)])
+            r = sjekk_og_helbred(sd, usb)
+            self.assertTrue(r["ok"])
+            self.assertFalse(r["helbredt"])
 
 
 if __name__ == "__main__":

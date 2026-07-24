@@ -54,7 +54,7 @@ echo "3/5  Korte kommandoer (start, stopp, logg, …) …"
 echo "PAKKEMASKIN_DIR=${KATALOG}" | sudo tee /etc/pakkemaskin.conf >/dev/null
 sudo cp "$KATALOG/pakkemaskin" /usr/local/bin/pakkemaskin
 sudo chmod +x /usr/local/bin/pakkemaskin
-for navn in start stopp restart status logg sjekk excel porter usb; do
+for navn in start stopp restart status logg sjekk excel porter usb integritet; do
   sudo ln -sf /usr/local/bin/pakkemaskin "/usr/local/bin/$navn"
 done
 

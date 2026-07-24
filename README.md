@@ -152,13 +152,20 @@ Daglig bruk: se <b>Daglig bruk på Pi</b> øverst. Under er flag for direkte kj�
 
 <h2 style="font-size: 1.5em">Hardware</h2>
 
-<img src="docs/no/img/wiring-tap.png" width="100%" alt="Kobling"/>
-
 <p style="font-size: 16px">
-Raspberry Pi Zero WH · StarTech ICUSB232DB25 · WAGO 221-412 · 40 cm DB25 skjøtekabel i serie ·
-IP54 kapsling · valgfri SSD1306 OLED. Full delerliste i
-<a href="docs/no/INSTALLATION.md">installasjonsguiden</a>.
+Raspberry Pi Zero WH · StarTech ICUSB232DB25 · WAGO 221 · 40 cm DB25 skjøt ·
+USB-hub + tastatur + minnepenn · valgfri SSD1306 OLED.
+Full delerliste i <a href="docs/no/INSTALLATION.md">installasjonsguiden</a>.
 </p>
+
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passiv tapp</b> — kun pin 2 (TX) og 7 (GND), WAGO, TX→RX. Ikke GPIO.</p>
+<img src="docs/no/img/passiv-rs232-tapp.png" width="100%" alt="Passiv RS-232-tapp"/>
+
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB-kjede</b> — PWR IN = strøm (≥2,5 A). Data-port → OTG → hub → tastatur, penn, adapter.</p>
+<img src="docs/no/img/usb-kjede-komplett.png" width="100%" alt="USB-kjede"/>
+
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>3 · OLED (valgfritt)</b> — 0,96" SSD1306 I2C, fire ledninger. Roterer dag/år, siste pakke, sort.</p>
+<img src="docs/no/img/oled-i2c-korrekt.png" width="72%" alt="OLED I2C"/>
 
 <h2 style="font-size: 1.5em">Mapper i repoet</h2>
 

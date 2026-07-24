@@ -1,3 +1,5 @@
+# Reference template — install.sh generates the live unit file with
+# the correct User= and WorkingDirectory= for the logged-in account.
 [Unit]
 Description=rs232excel — Package label capture from OKI Microline printer tap
 After=multi-user.target

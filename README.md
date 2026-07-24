@@ -51,9 +51,13 @@ midt på kabelen. Skriveren fortsetter helt som før — ingenting sendes tilbak
 <h2 style="font-size: 1.5em">Hurtigstart (norsk produksjonsversjon)</h2>
 
 ```bash
+# På Pi (HDMI/tastatur eller SSH) — norsk produksjonsversjon
+curl -fsSL https://raw.githubusercontent.com/qeamer/rs232excel/main/python/no/install.sh | bash
+
+# Eller manuelt med git
 git clone https://github.com/qeamer/rs232excel.git
 cd rs232excel/python/no
-pip install -r requirements.txt
+bash installer.sh
 python3 read_package.py --port /dev/ttyUSB0 --usb-sti /media/usb0
 python3 read_package.py --eksporter-xlsx
 ```

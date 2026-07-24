@@ -6,6 +6,12 @@ rs232excel repository structure
 ├── README.no.md                       Redirect → README.md
 ├── skaak_logo_vektor.png              Skjåk Trelast logo (white on transparent, for GitHub)
 │
+├── install.sh                         Norwegian one-liner entry (curl | bash)
+├── scripts/
+│   ├── last-ned-pakkemaskin.sh        Alias → python/no/install.sh
+│   ├── bootstrap-package-machine.sh   One-liner bootstrap (English)
+│   └── gen_en_screenshots.py          Doc screenshot helper
+│
 ├── docs/
 │   ├── README.md                      Language picker → en / no
 │   ├── en/
@@ -36,6 +42,11 @@ rs232excel repository structure
         └── vis_status.py              Optional OLED status display
 
 Installation (choose your language):
+  # On a fresh Pi OS install (recommended):
+  curl -fsSL …/scripts/last-ned-pakkemaskin.sh | bash          # Norwegian
+  curl -fsSL …/scripts/bootstrap-package-machine.sh | bash     # English
+
+  # Or from a cloned repo:
   cd python/en   && bash install.sh    # English version for GitHub/international
   cd python/no   && bash installer.sh  # Norwegian version for Skjåk Trelast
 

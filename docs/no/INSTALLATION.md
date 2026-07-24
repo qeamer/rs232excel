@@ -59,18 +59,27 @@ Windows uten ssh? [PuTTY](https://putty.org) eller WSL.
 
 ## 4 · Installer programvaren
 
-Lim inn disse blokkene én om gangen i SSH:
+Når Pi OS er på plass (HDMI/tastatur **eller** SSH), lim inn **én** kommando:
 
 ```bash
-# Systemoppdatering (~5 min)
-sudo apt update && sudo apt upgrade -y
+curl -fsSL https://raw.githubusercontent.com/qeamer/rs232excel/main/python/no/install.sh | bash
+```
 
-# Klon repoet
+> Filnavn: norsk install heter `python/no/install.sh` (og `installer.sh` lokalt).
+> Ikke bruk `python/en/install.sh` — det er engelsk speilversjon.
+> Bruk alltid `raw.githubusercontent.com` (ikke `github.com/.../raw/...` i nettleseren uten `-L`).
+
+Skriptet installerer git/pip ved behov, kloner til `~/rs232excel`, setter `dialout` + `/media/usb0`, aktiverer systemd-tjenesten (uten å starte den), og kjører en simuleringstest.
+
+**Uten curl** (ren git — fungerer alltid med HDMI/tastatur):
+
+```bash
+sudo apt update
+sudo apt install -y git python3-pip
 git clone https://github.com/qeamer/rs232excel.git
 cd rs232excel/python/no
-
-# Avhengigheter og autostart
 bash installer.sh
+python3 read_package.py --simuler eksempel.txt
 ```
 
 Valgfri OLED-skjerm:
@@ -142,7 +151,7 @@ python3 read_package.py --port /dev/ttyUSB0 --usb-sti /media/usb0
 
 Kjør 2–3 pakker, sjekk `pakkelapper.csv` mot papirlappene, trekk ut minnepennen midt i kjøring (fangst fortsetter), sett den inn igjen (manglende rader synkes).
 
-**Produksjon.** Tjenesten fra steg 4 starter automatisk ved boot:
+**Produksjon.** Tjenesten ble aktivert i steg 4 (autostart ved boot). Start den nå:
 
 ```bash
 sudo systemctl start pakkemaskin-skriver

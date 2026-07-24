@@ -34,7 +34,11 @@
 
 ## Daglig bruk på Pi — husk bare dette
 
-Etter install skriver du **ett ord**. Ingen `pakkemaskin`, ingen mapper.
+Etter install er Pi-en et **enkelt apparat**:
+
+- Stille oppstart + **autologin** på HDMI (ingen brukernavn/passord)
+- **Tallmeny** kommer opp av seg selv
+- Eller skriv **ett ord**
 
 ```bash
 start          # start fangst
@@ -44,20 +48,18 @@ status         # går den? ser den USB-adapter?
 logg           # live logg — stopp med Ctrl+C
 sjekk          # første gang — viser lapper, lagrer ikke (Ctrl+C)
 excel          # lag Excel-fil
-porter         # list USB-serieporter
+meny           # åpne tallmenyen igjen
 ```
 
-| Situasjon | Kommando |
-|-----------|----------|
-| Oppstart / start fangst | `start` |
-| Stoppe fangst | `stopp` |
-| Noe kræsjet / byttet kabel | `restart` |
-| Sjekke at alt er OK | `status` |
-| Se hva som skjer live | `logg` (stopp: **Ctrl+C**) |
-| Første test uten å lagre | `sjekk` (stopp: **Ctrl+C**) |
+| Situasjon | Kommando / meny |
+|-----------|-----------------|
+| Oppstart / start fangst | `start` eller meny **1** |
+| Stoppe fangst | `stopp` eller **2** |
+| Noe kræsjet / byttet kabel | `restart` eller **3** |
+| Sjekke at alt er OK | `status` eller **4** |
+| Se hva som skjer live | `logg` (**Ctrl+C**) |
+| Første test uten å lagre | `sjekk` (**Ctrl+C**) |
 | Hente Excel til PC | `excel` |
-
-> `pakkemaskin start` osv. fungerer fortsatt om du vil.
 
 📖 Full guide: **[docs/no/INSTALLATION.md](docs/no/INSTALLATION.md)** · English: [docs/en/INSTALLATION.md](docs/en/INSTALLATION.md)
 

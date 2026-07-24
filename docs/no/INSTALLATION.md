@@ -4,6 +4,8 @@ Komplett gjennomgang — fra tom SD-kort til fangst i produksjon på høvleriet.
 
 ## Allerede installert? Bruk bare dette
 
+På HDMI kommer **tallmeny** etter reboot (autologin). Eller skriv:
+
 ```bash
 start          # start fangst
 stopp          # stopp fangst
@@ -12,6 +14,14 @@ status         # sjekk at alt går
 logg           # live logg — stopp med Ctrl+C
 sjekk          # første test (lagrer ikke) — stopp med Ctrl+C
 excel          # lag Excel
+meny           # åpne menyen
+```
+
+Forenkle en Pi som allerede kjører:
+```bash
+cd ~/rs232excel/python/no
+bash forenkle-pi.sh
+sudo reboot
 ```
 
 Resten av denne siden er **første gangs installasjon** (SD-kort → kabler → verifisering).

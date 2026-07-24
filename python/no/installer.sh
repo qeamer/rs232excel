@@ -12,7 +12,7 @@ fi
 
 cd "$KATALOG"
 
-echo "1/4  Avhengigheter …"
+echo "1/5  Avhengigheter …"
 pip3 install --break-system-packages pyserial openpyxl pillow 2>/dev/null \
   || pip3 install --break-system-packages pyserial openpyxl
 if ! id -nG "$BRUKER" | grep -qw dialout; then
@@ -22,7 +22,7 @@ fi
 sudo mkdir -p /media/usb0
 sudo chown "$BRUKER:$BRUKER" /media/usb0 2>/dev/null || true
 
-echo "2/4  systemd-tjeneste …"
+echo "2/5  systemd-tjeneste …"
 sudo tee /etc/systemd/system/pakkemaskin-skriver.service >/dev/null <<EOF
 [Unit]
 Description=Pakkemaskin Skriver - pakkelapp-fangst
@@ -42,24 +42,20 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl enable pakkemaskin-skriver.service
 
-echo "3/4  Korte kommandoer (start, stopp, logg, …) …"
+echo "3/5  Korte kommandoer (start, stopp, logg, …) …"
 echo "PAKKEMASKIN_DIR=${KATALOG}" | sudo tee /etc/pakkemaskin.conf >/dev/null
 sudo cp "$KATALOG/pakkemaskin" /usr/local/bin/pakkemaskin
 sudo chmod +x /usr/local/bin/pakkemaskin
-# Korte alias — samme script, ulikt navn (unngår «test» som finnes i systemet)
 for navn in start stopp restart status logg sjekk excel porter; do
   sudo ln -sf /usr/local/bin/pakkemaskin "/usr/local/bin/$navn"
 done
 
-echo "4/4  Ferdig."
+echo "4/5  Forenkler Pi til apparat (autologin + meny) …"
+bash "$KATALOG/forenkle-pi.sh"
+
+echo "5/5  Ferdig."
 echo
-echo "  Skriv bare:"
-echo "    start       start fangst"
-echo "    stopp       stopp fangst"
-echo "    restart     ved kræsj"
-echo "    status      sjekk at alt går"
-echo "    logg        live logg (Ctrl+C)"
-echo "    sjekk       første test uten lagring"
-echo "    excel       lag Excel"
+echo "  På HDMI etter reboot: tallmeny (1 start, 2 stopp, …)"
+echo "  Eller skriv bare:  start  stopp  restart  status  logg  sjekk  excel"
 echo
-echo "  Når USB-adapter er koblet:  start"
+echo "  Reboot anbefales:  sudo reboot"

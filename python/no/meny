@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# meny — enkel tekstmeny på HDMI-konsoll (Pi Zero som apparat)
+set -euo pipefail
+
+# Kjør den underliggende pakkemaskin-kommandoen
+kjør() {
+  if command -v pakkemaskin >/dev/null 2>&1; then
+    pakkemaskin "$@"
+  else
+    echo "pakkemaskin er ikke installert. Kjør: bash installer.sh" >&2
+    return 1
+  fi
+}
+
+tegn_meny() {
+  clear 2>/dev/null || true
+  cat <<EOF
+
+========================================
+         PAKKEMASKIN
+========================================
+  1   Start fangst
+  2   Stopp fangst
+  3   Restart (ved kræsj)
+  4   Status
+  5   Logg          (Ctrl+C for å gå tilbake)
+  6   Sjekk / test  (Ctrl+C for å gå tilbake)
+  7   Excel
+  8   Porter (USB)
+  0   Vanlig ledetekst (avansert)
+  q   Logg ut
+========================================
+EOF
+}
+
+while true; do
+  tegn_meny
+  printf "Velg: "
+  read -r valg || exit 0
+  case "$valg" in
+    1) kjør start; read -r -p "Enter for meny …" _ ;;
+    2) kjør stopp; read -r -p "Enter for meny …" _ ;;
+    3) kjør restart; read -r -p "Enter for meny …" _ ;;
+    4) kjør status; read -r -p "Enter for meny …" _ ;;
+    5) kjør logg || true ;;
+    6) kjør sjekk || true ;;
+    7) kjør excel; read -r -p "Enter for meny …" _ ;;
+    8) kjør porter; read -r -p "Enter for meny …" _ ;;
+    0)
+      export PAKKEMASKIN_MENY_KJORT=1
+      echo
+      echo "Vanlig ledetekst. Skriv «meny» for å komme tilbake."
+      echo "Korte kommandoer: start  stopp  restart  status  logg  sjekk  excel"
+      echo
+      exec bash -l
+      ;;
+    q|Q)
+      exit 0
+      ;;
+    *)
+      echo "Ugyldig valg."
+      sleep 1
+      ;;
+  esac
+done

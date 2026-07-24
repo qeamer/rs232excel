@@ -141,7 +141,23 @@ Steg for steg:
 
 <img src="img/usb-chain.png" width="100%" alt="USB-kjede"/>
 
-OTG-adapteren **må** i **data**-porten midt på Pi Zero — hjørneporten er kun strøm.
+OTG-adapteren **må** i **data**-porten midt på Pi Zero — hjørneporten er kun strøm (**PWR IN**).
+
+**Anbefalt produksjonsoppsett (tastatur + minnepenn + serieadapter samtidig):**
+
+```text
+PWR IN (hjørne) ─── 5V / ≥2,5 A vegglader
+
+USB midt ─── OTG ─── USB-hub (gjerne med egen strøm)
+                         ├── tastatur
+                         ├── minnepenn      → speiles til /media/usb0
+                         └── RS-232-adapter → /dev/ttyUSB0
+```
+
+- SD-kortet er alltid fasiten (fangst fortsetter uten minnepenn).
+- Minnepennen speiler CSV i sanntid (`--usb-sti /media/usb0`).
+- Passiv hub uten ekstra strøm fungerer ofte med 2,5–3 A vegglader; ved ustabilitet: **hub med egen PSU**.
+- Tastatur med innebygd hub: OK — sett minnepenn/serieadapter i den, eller bruk separat hub.
 
 ### OLED statusskjerm (valgfritt)
 

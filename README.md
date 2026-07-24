@@ -66,7 +66,7 @@ Samme ting som ett ord (SSH/skall): `usb` `integritet` `sjekk` `logg` `status` `
 
 Nød-login (hvis du trenger shell): **Alt+F2** · SSH: `ssh pi@pakkemaskin.local`
 
-📖 Full guide: **[docs/no/INSTALLATION.md](docs/no/INSTALLATION.md)** · English: [docs/en/INSTALLATION.md](docs/en/INSTALLATION.md) · Endringslogg: [CHANGELOG.md](CHANGELOG.md)
+📖 Full guide: **[docs/no/INSTALLATION.md](docs/no/INSTALLATION.md)** · English: [docs/en/INSTALLATION.md](docs/en/INSTALLATION.md) · Endringslogg: [CHANGELOG.md](CHANGELOG.md) · Claude-handoff: [docs/no/HANDOFF-CLAUDE.md](docs/no/HANDOFF-CLAUDE.md)
 
 ---
 

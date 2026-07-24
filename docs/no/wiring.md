@@ -11,12 +11,39 @@
 
 Ingen kniv i kabel. Ikke GPIO. Signal → `/dev/ttyUSB0`.
 
-| Fra breakout | Til USB–DB25 |
-|--------------|--------------|
-| Skrue **2** (TX) | **RX** |
-| Skrue **7** (GND) | **GND** |
+### Pinner — hva som er hva
 
-TX → RX — aldri TX til TX.
+På **anleggs-breakouten** (PLS↔skriver) er skruenummer = DB25-pinne:
+
+| Breakout-skrue | Signal på linja | Betydning |
+|----------------|-----------------|-----------|
+| **2** | TX | Data PLS → skriver (tapp her) |
+| **7** | GND | Signaljord (tapp her) |
+| 3 | RX | Skriver→PLS — **rør ikke** til lytting |
+| øvrige | — | går bare 1:1 gjennom |
+
+På **lytteadapteren** (USB–DB25, typisk DTE som PC-port):
+
+| Adapter-pinne | Signal | Kobles fra breakout |
+|---------------|--------|---------------------|
+| **3** | **RX** (lytter inn) | ← breakout skrue **2** (TX) |
+| **7** | **GND** | ← breakout skrue **7** |
+| 2 | TX ut fra adapter | **koble ikke** (la stå åpen) |
+
+```text
+ANLEGG (breakout)              LYTTEADAPTER (USB–DB25)
+─────────────────              ───────────────────────
+skrue 2  TX  ────────────────→  pin 3  RX
+skrue 7  GND ───────────────→  pin 7  GND
+```
+
+**Hvordan inn i lytteadapteren (velg én):**
+
+1. **Best:** egen DB25-hunn breakout med skruer. USB–DB25 **hann** plugges inn. Ledning fra anlegg-skrue 2 → lytte-skrue **3**, anlegg-skrue 7 → lytte-skrue **7**.
+2. **DuPont DB25-hunn** på adapter-hannen: bruk ledning merket **3** og **7** mot anlegg 2 og 7.
+3. Ikke GPIO. Ikke lodde i hubben.
+
+TX → RX — aldri TX til TX. Får du null data: prøv å bytte 2↔3 **bare på lytteenden** (noen adaptere er DCE).
 
 ## Deler
 

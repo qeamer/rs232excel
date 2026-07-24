@@ -11,12 +11,39 @@
 
 No cutting. Not GPIO. Signal → `/dev/ttyUSB0`.
 
-| From breakout | To USB–DB25 |
-|---------------|-------------|
-| Screw **2** (TX) | **RX** |
-| Screw **7** (GND) | **GND** |
+### Pins — what maps where
 
-TX → RX — never TX to TX.
+On the **plant breakout** (PLC↔printer), screw number = DB25 pin:
+
+| Breakout screw | Line signal | Meaning |
+|----------------|-------------|---------|
+| **2** | TX | Data PLC → printer (tap here) |
+| **7** | GND | Signal ground (tap here) |
+| 3 | RX | Printer→PLC — **do not tap** for listen |
+| others | — | pass 1:1 only |
+
+On the **listen adapter** (USB–DB25, typically DTE like a PC port):
+
+| Adapter pin | Signal | From plant breakout |
+|-------------|--------|---------------------|
+| **3** | **RX** (listen in) | ← breakout screw **2** (TX) |
+| **7** | **GND** | ← breakout screw **7** |
+| 2 | TX out from adapter | **do not connect** (leave open) |
+
+```text
+PLANT (breakout)               LISTEN ADAPTER (USB–DB25)
+────────────────               ────────────────────────
+screw 2  TX  ────────────────→  pin 3  RX
+screw 7  GND ───────────────→  pin 7  GND
+```
+
+**How into the listen adapter (pick one):**
+
+1. **Best:** separate DB25-female screw breakout. Plug USB–DB25 **male** into it. Wire plant screw 2 → listen screw **3**, plant screw 7 → listen screw **7**.
+2. **DuPont DB25 female** on the adapter male: use leads labeled **3** and **7** to plant 2 and 7.
+3. Not GPIO. Don’t cut the hub cable.
+
+TX → RX — never TX to TX. No data? Try swapping 2↔3 **on the listen end only** (some adapters are DCE).
 
 ## Parts
 

@@ -57,13 +57,17 @@ Full Norwegian docs (primary): **[README.md](README.md)** · **[docs/no/INSTALLA
 
 ---
 
-## Quick start (English mirror)
+## Quick start
+
+**Production (Skjåk / appliance CLI, USB mirror, yearly files):** use [`python/no/`](python/no/) — see Norwegian README.
+
+**English script mirror** (`python/en/` — flags in English; USB appliance tooling lives in `python/no/`):
 
 ```bash
 git clone https://github.com/qeamer/rs232excel.git
 cd rs232excel/python/en
 pip install -r requirements.txt
-python3 read_package.py --port /dev/ttyUSB0 --usb-mirror /media/usb0
+python3 read_package.py --port /dev/ttyUSB0
 python3 read_package.py --export-xlsx
 ```
 

@@ -146,10 +146,19 @@ def kjor_skjerm():
     from luma.core.interface.serial import i2c
     from luma.core.render import canvas
     from luma.oled.device import ssd1306
+    from luma.core.error import DeviceNotFoundError
     from PIL import ImageFont
 
-    serial = i2c(port=1, address=0x3C)
-    enhet = ssd1306(serial)
+    try:
+        serial = i2c(port=1, address=0x3C)
+        enhet = ssd1306(serial)
+    except (DeviceNotFoundError, OSError) as e:
+        print("OLED ikke funnet på I2C (forventet 0x3C).")
+        print("Sjekk: sudo i2cdetect -y 1  — skal vise «3c».")
+        print("Kobling: VCC→pin1 (3,3V)  SDA→pin3  SCL→pin5  GND→pin6")
+        print(f"({e})")
+        raise SystemExit(1) from e
+
     try:
         font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 13)
     except OSError:

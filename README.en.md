@@ -36,24 +36,34 @@ The tap is **physically read-only**: slit the jacket on the 40 cm extension and 
 
 ---
 
-## Daily use on the Pi (short commands)
+## Daily use on the Pi
 
-After the Norwegian production install (`python/no`), type **one word**:
+After the Norwegian production install (`python/no`), HDMI shows a number menu (no login). Same actions work as one-word commands over SSH.
+
+**First time / after rewiring** — confirm hardware before saving:
+
+1. **USB** — hub, keyboard, stick, and serial adapter visible? Stick mounted?
+2. **Sjekk** — dry-run one package through the plant (shown on screen, **not** saved).
+3. **Logg** — once capture is running: live messages (**Ctrl+C** returns to the menu).
+
+**Normal shift** — keep the service running:
+
+5. **Start** — save packages (SD + mirror to stick)  
+6. **Stopp** — end of shift / before troubleshooting  
+7. **Restart** — if the service hangs, or after swapping USB cable/adapter  
+8. **Excel** — optional “refresh now” (Excel is also mirrored automatically)
 
 ```bash
 usb            # list USB + integrity check (SD ↔ stick)
 integritet     # verify / heal flash drive from SD master
-start          # start capture
-stopp          # stop capture
-restart        # after a crash or cable swap
-status         # service + USB summary
-logg           # live log — stop with Ctrl+C
-sjekk          # first-time dry run (does not save)
-excel          # refresh Excel now (also built automatically)
+start   stopp   restart   status
+logg           # live log — Ctrl+C to stop
+sjekk          # dry run (does not save)
+excel          # refresh Excel now
 ```
 
 Yearly files on SD/stick: `pakkelapperYYYY.csv` + `.xlsx` (updated in place; new year → new names).  
-Full Norwegian docs (primary): **[README.md](README.md)** · **[docs/no/INSTALLATION.md](docs/no/INSTALLATION.md)** · **[CHANGELOG.md](CHANGELOG.md)**
+Primary docs: **[README.md](README.md)** · **[docs/no/INSTALLATION.md](docs/no/INSTALLATION.md)** · **[CHANGELOG.md](CHANGELOG.md)**
 
 ---
 

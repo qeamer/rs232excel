@@ -36,38 +36,33 @@
 
 ## Daglig bruk på Pi — husk bare dette
 
-Etter install er Pi-en et **apparat uten login** på HDMI:
+Etter install er Pi-en et **apparat**: HDMI viser tallmeny med en gang (ingen `login:`).
 
-- Skjermen viser **tallmeny** direkte (ingen `login:`)
-- Ved oppkopling: **1** USB → **2** sjekk → **3** logg
-- Ved drift: **5** start · **6** stopp · **7** restart
+**Første gang / etter kabelbytte** — sjekk at utstyret lever, før du lagrer noe:
+
+1. **USB** — ser du hub, tastatur, minnepenn og serieadapter? Er pennen montert?
+2. **Sjekk** — kjør én pakke gjennom anlegget. Lappen vises på skjermen, men lagres **ikke**.
+3. **Logg** — når fangsten kjører: se live meldinger (**Ctrl+C** = tilbake til meny).
+
+**Vanlig skift** — tjenesten skal bare gå:
+
+5. **Start** — begynn å lagre pakker (SD + speil til penn)  
+6. **Stopp** — når skiftet er over, eller før du feilsøker  
+7. **Restart** — hvis tjenesten henger, eller du har byttet USB-kabel/adapter  
+8. **Excel** — valgfri «oppdater nå» (Excel speiles også automatisk)
 
 ```text
-OPPKOPLING / TEST          DRIFT
-1  USB (+ integritet)      5  Start
-2  Sjekk (lagrer ikke)     6  Stopp
-3  Logg  (Ctrl+C)          7  Restart
-4  Status                  8  Excel
+1  USB          5  Start
+2  Sjekk        6  Stopp
+3  Logg         7  Restart
+4  Status       8  Excel
 ```
 
-Før du kopierer fra minnepennen til PC: skriv `integritet` (skal si at radene er speilet trygt).  
+Før du kopierer fra minnepennen til PC: skriv `integritet` (eller velg **1**).  
 Filer på penn/SD: `pakkelapperYYYY.csv` + `.xlsx` (samme fil hele året).  
-Full dagslogg: **[CHANGELOG.md](CHANGELOG.md)**.
+Endringslogg: **[CHANGELOG.md](CHANGELOG.md)**.
 
-Menyen viser om minnepenn/serie er funnet. Penn ut/inn → velg **1 USB** igjen (hotplug).
-
-Ett ord: `usb` `integritet` `sjekk` `logg` `status` `start` `stopp` `restart` `excel`
-
-| Situasjon | Meny | Kommando |
-|-----------|------|----------|
-| Liste USB + sjekk penn mot SD | **1** | `usb` / `integritet` |
-| Første test uten lagring | **2** | `sjekk` |
-| Se live logg | **3** | `logg` (**Ctrl+C**) |
-| Sjekke at tjenesten går | **4** | `status` |
-| Start fangst | **5** | `start` |
-| Stopp | **6** | `stopp` |
-| Kræsj / kabelbytte | **7** | `restart` |
-| Oppdater Excel nå (skjer også automatisk) | **8** | `excel` |
+Samme ting som ett ord (SSH/skall): `usb` `integritet` `sjekk` `logg` `status` `start` `stopp` `restart` `excel`
 
 Nød-login (hvis du trenger shell): **Alt+F2** · SSH: `ssh pi@pakkemaskin.local`
 

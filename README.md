@@ -192,8 +192,7 @@ USB-hub + tastatur + minnepenn · valgfri SSD1306 OLED.
 Full delerliste i <a href="docs/no/INSTALLATION.md">installasjonsguiden</a>.
 </p>
 
-<p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passiv tapp</b> — se tabellen <b>Velg skjøtekabel</b> over. Diagram under viser DB9-midt + DB25-adaptere (vanligste kjøp).</p>
-<img src="docs/no/img/passiv-rs232-tapp.png" width="100%" alt="Passiv RS-232-tapp DB9/DB25"/>
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passiv tapp</b> — se <a href="#velg-skjøtekabel-db25-eller-db9">Velg skjøtekabel</a> (bilde over).</p>
 
 <p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB-kjede</b> — WAGO-tapp → <b>ICUSB232DB25</b> → hub (med tastatur + penn). PWR IN = strøm (≥2,5 A); data-port → OTG → hub.</p>
 <img src="docs/no/img/usb-kjede-komplett.png" width="100%" alt="USB-kjede med WAGO og ICUSB232DB25"/>

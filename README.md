@@ -185,13 +185,13 @@ Daglig bruk: se <b>Daglig bruk på Pi</b> øverst. Under er flag for direkte kj�
 <h2 style="font-size: 1.5em">Hardware</h2>
 
 <p style="font-size: 16px">
-Raspberry Pi Zero WH · StarTech ICUSB232DB25 · WAGO 221 · 40 cm DB25 skjøt ·
+Raspberry Pi Zero WH · StarTech ICUSB232DB25 · WAGO 221 · skjøt (DB25 <i>eller</i> DB9+adaptere) ·
 USB-hub + tastatur + minnepenn · valgfri SSD1306 OLED.
 Full delerliste i <a href="docs/no/INSTALLATION.md">installasjonsguiden</a>.
 </p>
 
-<p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passiv tapp</b> — PLS/OKI er DB25; skjøt kan være DB9-kabel med DB25-adaptere. Tapp TX/GND (DB25 pin 2/7 = DB9 pin 3/5). Finn leder med pipetest — farger er ikke standard. WAGO, TX→RX på ICUSB232DB25.</p>
-<img src="docs/no/img/passiv-rs232-tapp.png" width="100%" alt="Passiv RS-232-tapp"/>
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passiv tapp</b> — se tabellen <b>Velg skjøtekabel</b> over. Diagram under viser DB9-midt + DB25-adaptere (vanligste kjøp).</p>
+<img src="docs/no/img/passiv-rs232-tapp.png" width="100%" alt="Passiv RS-232-tapp DB9/DB25"/>
 
 <p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB-kjede</b> — WAGO-tapp → <b>ICUSB232DB25</b> → hub (med tastatur + penn). PWR IN = strøm (≥2,5 A); data-port → OTG → hub.</p>
 <img src="docs/no/img/usb-kjede-komplett.png" width="100%" alt="USB-kjede med WAGO og ICUSB232DB25"/>

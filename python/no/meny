@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
-# meny — enkel tekstmeny på HDMI-konsoll (Pi Zero som apparat)
+# meny — HDMI-apparatmeny for pakkemaskin (ingen login nødvendig)
 set -euo pipefail
 
-# Kjør den underliggende pakkemaskin-kommandoen
 kjør() {
   if command -v pakkemaskin >/dev/null 2>&1; then
     pakkemaskin "$@"
+  elif [[ -x /usr/local/bin/pakkemaskin ]]; then
+    /usr/local/bin/pakkemaskin "$@"
   else
     echo "pakkemaskin er ikke installert. Kjør: bash installer.sh" >&2
     return 1
   fi
+}
+
+pause() {
+  echo
+  read -r -p "Enter for meny …" _
 }
 
 tegn_meny() {
@@ -19,46 +25,54 @@ tegn_meny() {
 ========================================
          PAKKEMASKIN
 ========================================
-  1   Start fangst
-  2   Stopp fangst
-  3   Restart (ved kræsj)
-  4   Status
-  5   Logg          (Ctrl+C for å gå tilbake)
-  6   Sjekk / test  (Ctrl+C for å gå tilbake)
-  7   Excel
-  8   Porter (USB)
-  0   Vanlig ledetekst (avansert)
-  q   Logg ut
+  OPPKOPLING / TEST
+  1   Porter     — finnes /dev/ttyUSB0?
+  2   Sjekk      — bare-fangst (lagrer IKKE)
+  3   Logg       — live logg (Ctrl+C = tilbake)
+  4   Status     — tjeneste + USB
+
+  DRIFT
+  5   Start      — start fangst
+  6   Stopp      — stopp fangst
+  7   Restart    — ved kræsj / kabelbytte
+  8   Excel      — lag pakkelapper.xlsx
+
+  ANNET
+  9   Simuler    — test uten PLS/USB
+  0   Ledetekst  — avansert shell
+  q   Omstart meny
 ========================================
 EOF
 }
 
 while true; do
   tegn_meny
-  printf "Velg: "
+  printf "Velg (1-9, 0, q): "
   read -r valg || exit 0
   case "$valg" in
-    1) kjør start; read -r -p "Enter for meny …" _ ;;
-    2) kjør stopp; read -r -p "Enter for meny …" _ ;;
-    3) kjør restart; read -r -p "Enter for meny …" _ ;;
-    4) kjør status; read -r -p "Enter for meny …" _ ;;
-    5) kjør logg || true ;;
-    6) kjør sjekk || true ;;
-    7) kjør excel; read -r -p "Enter for meny …" _ ;;
-    8) kjør porter; read -r -p "Enter for meny …" _ ;;
+    1) kjør porter; pause ;;
+    2) kjør sjekk || true ;;
+    3) kjør logg || true ;;
+    4) kjør status; pause ;;
+    5) kjør start; pause ;;
+    6) kjør stopp; pause ;;
+    7) kjør restart; pause ;;
+    8) kjør excel; pause ;;
+    9) kjør simuler; pause ;;
     0)
       export PAKKEMASKIN_MENY_KJORT=1
       echo
-      echo "Vanlig ledetekst. Skriv «meny» for å komme tilbake."
-      echo "Korte kommandoer: start  stopp  restart  status  logg  sjekk  excel"
+      echo "Ledetekst. Skriv «meny» for å komme tilbake."
+      echo "Korte kommandoer: porter sjekk logg status start stopp restart excel"
       echo
-      exec bash -l
+      exec bash --login
       ;;
     q|Q)
-      exit 0
+      # restart meny loop (nyttig etter Ctrl+C rot)
+      continue
       ;;
     *)
-      echo "Ugyldig valg."
+      echo "Ugyldig valg — bruk 1-9, 0 eller q."
       sleep 1
       ;;
   esac

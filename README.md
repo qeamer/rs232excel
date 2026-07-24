@@ -34,32 +34,34 @@
 
 ## Daglig bruk på Pi — husk bare dette
 
-Etter install er Pi-en et **enkelt apparat**:
+Etter install er Pi-en et **apparat uten login** på HDMI:
 
-- Stille oppstart + **autologin** på HDMI (ingen brukernavn/passord)
-- **Tallmeny** kommer opp av seg selv
-- Eller skriv **ett ord**
+- Skjermen viser **tallmeny** direkte (ingen `login:`)
+- Ved oppkopling: **1** porter → **2** sjekk → **3** logg
+- Ved drift: **5** start · **6** stopp · **7** restart
 
-```bash
-start          # start fangst
-stopp          # stopp fangst
-restart        # ved kræsj eller kabelbytte
-status         # går den? ser den USB-adapter?
-logg           # live logg — stopp med Ctrl+C
-sjekk          # første gang — viser lapper, lagrer ikke (Ctrl+C)
-excel          # lag Excel-fil
-meny           # åpne tallmenyen igjen
+```text
+OPPKOPLING / TEST          DRIFT
+1  Porter                  5  Start
+2  Sjekk (lagrer ikke)     6  Stopp
+3  Logg  (Ctrl+C)          7  Restart
+4  Status                  8  Excel
 ```
 
-| Situasjon | Kommando / meny |
-|-----------|-----------------|
-| Oppstart / start fangst | `start` eller meny **1** |
-| Stoppe fangst | `stopp` eller **2** |
-| Noe kræsjet / byttet kabel | `restart` eller **3** |
-| Sjekke at alt er OK | `status` eller **4** |
-| Se hva som skjer live | `logg` (**Ctrl+C**) |
-| Første test uten å lagre | `sjekk` (**Ctrl+C**) |
-| Hente Excel til PC | `excel` |
+Eller skriv ett ord: `porter` `sjekk` `logg` `status` `start` `stopp` `restart` `excel`
+
+| Situasjon | Meny | Kommando |
+|-----------|------|----------|
+| Finne USB-adapter | **1** | `porter` |
+| Første test uten lagring | **2** | `sjekk` |
+| Se live logg | **3** | `logg` (**Ctrl+C**) |
+| Sjekke at tjenesten går | **4** | `status` |
+| Start fangst | **5** | `start` |
+| Stopp | **6** | `stopp` |
+| Kræsj / kabelbytte | **7** | `restart` |
+| Hente Excel | **8** | `excel` |
+
+Nød-login (hvis du trenger shell): **Alt+F2** · SSH: `ssh pi@pakkemaskin.local`
 
 📖 Full guide: **[docs/no/INSTALLATION.md](docs/no/INSTALLATION.md)** · English: [docs/en/INSTALLATION.md](docs/en/INSTALLATION.md)
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# forenkle-pi.sh — gjør Raspberry Pi OS Lite om til et enkelt pakkemaskin-apparat.
+# forenkle-pi.sh — Pi Zero som pakkemaskin-apparat (INGEN login på HDMI)
 #
-#  • Stille oppstart (mindre tekst som ødelegger login)
-#  • Autologin på HDMI-skjerm (tty1) — slipper brukernavn/passord
-#  • Enkel tallmeny ved oppstart
-#  • Skrur av ting Zero ikke trenger (Bluetooth, modem, støyete apt-timere)
+#  • Stille oppstart
+#  • tty1 = direkte meny (getty/login er AV) — fikser hengende login-bug
+#  • tty2 = vanlig login (nød: Alt+F2)
+#  • Skrur av Bluetooth/modem/apt-støy
 #
 # Kjør:  bash forenkle-pi.sh
 # Kalles også fra installer.sh
@@ -15,6 +15,7 @@ if [[ "$BRUKER" == "root" ]]; then
   echo "Kjør som vanlig bruker (f.eks. pi), ikke som root." >&2
   exit 1
 fi
+HJEM="$(getent passwd "$BRUKER" | cut -d: -f6)"
 KATALOG="$(cd "$(dirname "$0")" && pwd)"
 
 echo "=== Forenkler Pi til pakkemaskin-apparat ==="
@@ -44,77 +45,84 @@ else
 fi
 echo 'kernel.printk = 3 4 1 3' | sudo tee /etc/sysctl.d/20-pakkemaskin-quiet.conf >/dev/null
 
-# 2) Autologin på tty1 (HDMI) + frisk prompt etter støyete boot-meldinger
-echo "2/5  Autologin på skjerm …"
-sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
-sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null <<EOF
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --autologin ${BRUKER} --noclear %I \$TERM
-EOF
-
-# Sen kernel/boot-tekst (f.eks. «Completed socket interaction…») kan ødelegge
-# login-prompten på tty1 slik at tastaturet «ikke virker». Restart getty når
-# boot er ferdig → ren autologin/meny.
-sudo tee /etc/systemd/system/pakkemaskin-frisk-konsoll.service >/dev/null <<'EOF'
-[Unit]
-Description=Pakkemaskin — frisk HDMI-login etter boot-støy
-After=multi-user.target
-Before=getty@tty1.service
-
-[Service]
-Type=oneshot
-# Vent til sen boot-spam er ferdig, deretter ny getty på tty1
-ExecStart=/bin/sleep 3
-ExecStart=/bin/systemctl restart getty@tty1.service
-
-[Install]
-WantedBy=multi-user.target
-EOF
-# After+restart pattern: run after multi-user is up
-sudo tee /etc/systemd/system/pakkemaskin-frisk-konsoll.service >/dev/null <<'EOF'
-[Unit]
-Description=Pakkemaskin — frisk HDMI-login etter boot-støy
-After=multi-user.target network-online.target
-Wants=network-online.target
-
-[Service]
-Type=oneshot
-ExecStartPre=/bin/sleep 5
-ExecStart=/bin/systemctl restart getty@tty1.service
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF
-sudo systemctl daemon-reload
-sudo systemctl enable pakkemaskin-frisk-konsoll.service
-# Ekstra login på tty2 — nødutgang med Alt+F2 hvis tty1 henger
-sudo systemctl enable getty@tty2.service 2>/dev/null || true
-
-# 3) Meny ved innlogging på tty1 (ikke SSH)
-echo "3/5  Oppstartsmeny …"
+# 2) HDMI tty1 = meny DIREKTE (ingen login/getty) — det er fiksen mot hengende login
+echo "2/5  HDMI-meny uten login …"
 sudo cp "$KATALOG/meny" /usr/local/bin/meny
 sudo chmod +x /usr/local/bin/meny
-sudo tee /etc/profile.d/pakkemaskin-meny.sh >/dev/null <<'EOF'
-# Pakkemaskin-apparat: meny kun på HDMI-konsoll (tty1), ikke via SSH
-if [ -z "${PAKKEMASKIN_MENY_KJORT:-}" ] && [ "$(tty 2>/dev/null)" = "/dev/tty1" ]; then
-  export PAKKEMASKIN_MENY_KJORT=1
-  exec meny
-fi
+
+# Fjern gammel autologin/frisk-konsoll om den finnes
+sudo rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf
+sudo rm -f /etc/systemd/system/pakkemaskin-frisk-konsoll.service
+sudo systemctl disable pakkemaskin-frisk-konsoll.service 2>/dev/null || true
+
+# Egen konsoll-tjeneste som eier tty1 — bypasser getty helt
+sudo tee /etc/systemd/system/pakkemaskin-konsoll.service >/dev/null <<EOF
+[Unit]
+Description=Pakkemaskin HDMI-meny (ingen login)
+After=multi-user.target
+Conflicts=getty@tty1.service
+ConditionPathExists=/dev/tty1
+
+[Service]
+Type=idle
+User=${BRUKER}
+Group=${BRUKER}
+WorkingDirectory=${HJEM}
+Environment=PAKKEMASKIN_MENY_KJORT=1
+Environment=TERM=linux
+ExecStartPre=/bin/sleep 2
+ExecStart=/usr/local/bin/meny
+Restart=always
+RestartSec=1
+StandardInput=tty
+StandardOutput=tty
+StandardError=tty
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+
+[Install]
+WantedBy=multi-user.target
 EOF
-sudo chmod 644 /etc/profile.d/pakkemaskin-meny.sh
+
+# Skru AV getty på tty1 (det er den som henger), behold tty2 for nød-login
+sudo systemctl disable getty@tty1.service 2>/dev/null || true
+sudo systemctl stop getty@tty1.service 2>/dev/null || true
+sudo systemctl enable getty@tty2.service 2>/dev/null || true
+sudo systemctl daemon-reload
+sudo systemctl enable pakkemaskin-konsoll.service
+
+# profile.d trengs ikke lenger for tty1, men lar «meny» fungere fra shell
+sudo rm -f /etc/profile.d/pakkemaskin-meny.sh
 
 sudo tee /etc/motd >/dev/null <<'EOF'
 
   PAKKEMASKIN — Skjåk Trelast
-  Kommandoer:  start  stopp  restart  status  logg  sjekk  excel
-  Eller skriv:  meny
+  HDMI: tallmeny (ingen login)
+  Nød-login: Alt+F2
+  Kommandoer: porter sjekk logg status start stopp restart excel
 
 EOF
 if [[ -d /etc/update-motd.d ]]; then
   sudo chmod -x /etc/update-motd.d/* 2>/dev/null || true
 fi
+
+# 3) Sørg for korte kommandoer finnes
+echo "3/5  Sjekker korte kommandoer …"
+if [[ ! -x /usr/local/bin/pakkemaskin ]]; then
+  sudo cp "$KATALOG/pakkemaskin" /usr/local/bin/pakkemaskin
+  sudo chmod +x /usr/local/bin/pakkemaskin
+fi
+echo "PAKKEMASKIN_DIR=${KATALOG}" | sudo tee /etc/pakkemaskin.conf >/dev/null
+for navn in start stopp restart status logg sjekk excel porter meny; do
+  if [[ "$navn" == "meny" ]]; then
+    sudo cp "$KATALOG/meny" /usr/local/bin/meny
+    sudo chmod +x /usr/local/bin/meny
+  else
+    sudo ln -sf /usr/local/bin/pakkemaskin "/usr/local/bin/$navn"
+  fi
+done
 
 # 4) Unødvendige tjenester
 echo "4/5  Skrur av unødvendige tjenester …"
@@ -136,10 +144,11 @@ sudo systemctl restart systemd-journald 2>/dev/null || true
 echo
 echo "=== Ferdig ==="
 echo "  Etter reboot på HDMI:"
-echo "    • Ingen login-prompt (autologin)"
-echo "    • Tallmeny: 1=start  2=stopp  3=restart  4=status  5=logg …"
-echo "    • SSH fungerer som før (uten meny)"
+echo "    • INGEN login-prompt"
+echo "    • Meny direkte:"
+echo "        1 porter  2 sjekk  3 logg  4 status"
+echo "        5 start   6 stopp  7 restart  8 excel"
+echo "    • Nød-login: Alt+F2"
+echo "    • SSH som før: ssh ${BRUKER}@pakkemaskin.local"
 echo
-echo "  Merk: tastatur må sitte i USB-port midt på Zero (via OTG)."
-echo "  Hvis login henger på tty1:  Alt+F2  (ny login på tty2)"
 echo "  Reboot:   sudo reboot"

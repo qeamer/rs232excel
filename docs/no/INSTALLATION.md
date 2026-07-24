@@ -4,22 +4,20 @@ Komplett gjennomgang — fra tom SD-kort til fangst i produksjon på høvleriet.
 
 ## Allerede installert? Bruk bare dette
 
-På HDMI kommer **tallmeny** etter reboot (autologin). Eller skriv:
+På HDMI: **ingen login** — tallmeny direkte.
 
-```bash
-start          # start fangst
-stopp          # stopp fangst
-restart        # ved kræsj eller kabelbytte
-status         # sjekk at alt går
-logg           # live logg — stopp med Ctrl+C
-sjekk          # første test (lagrer ikke) — stopp med Ctrl+C
-excel          # lag Excel
-meny           # åpne menyen
+```text
+1  Porter     2  Sjekk     3  Logg     4  Status
+5  Start      6  Stopp     7  Restart   8  Excel
 ```
 
-Forenkle en Pi som allerede kjører:
+Oppdater / fiks hengende login (kjør via **SSH** — HDMI-login kan henge):
+
 ```bash
-cd ~/rs232excel/python/no
+ssh pi@192.168.1.53
+cd ~/rs232excel
+git pull origin cursor/pakkemaskin-cli-ef03
+cd python/no
 bash forenkle-pi.sh
 sudo reboot
 ```

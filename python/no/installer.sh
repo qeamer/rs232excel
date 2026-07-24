@@ -55,7 +55,8 @@ bash "$KATALOG/forenkle-pi.sh"
 
 echo "5/5  Ferdig."
 echo
-echo "  På HDMI etter reboot: tallmeny (1 start, 2 stopp, …)"
-echo "  Eller skriv bare:  start  stopp  restart  status  logg  sjekk  excel"
+echo "  På HDMI etter reboot: MENY UTEN LOGIN"
+echo "    1 porter  2 sjekk  3 logg  4 status"
+echo "    5 start   6 stopp  7 restart  8 excel"
 echo
-echo "  Reboot anbefales:  sudo reboot"
+echo "  Reboot:  sudo reboot"

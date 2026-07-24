@@ -128,6 +128,8 @@ før du klipper. Deretter WAGO (tre veier) → StarTech <b>ICUSB232DB25</b> (TX�
 Detaljer: <a href="docs/no/wiring.md">docs/no/wiring.md</a>.
 </p>
 
+<img src="docs/no/img/passiv-rs232-tapp.png" width="100%" alt="Passiv RS-232-tapp — DB25 eller DB9-skjøt"/>
+
 ---
 
 <h2 style="font-size: 1.5em">Det du får</h2>

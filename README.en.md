@@ -47,6 +47,8 @@ PLC and OKI use **DB25**. The jumper between them can be either:
 
 Both are correct — same signals. **Do not cut the whole cable**, only those two conductors. **Wire colors are not standard**: find TX/GND with a continuity tester from the DB25 end (pins 2 and 7) before cutting. Then WAGO (three-way) → StarTech **ICUSB232DB25** (TX→RX). Details: [docs/en/wiring.md](docs/en/wiring.md).
 
+<img src="docs/en/img/passive-rs232-tap.png" width="100%" alt="Passive RS-232 tap — DB25 or DB9 extension"/>
+
 ---
 
 ## Daily use on the Pi

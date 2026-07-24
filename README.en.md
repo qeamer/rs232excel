@@ -150,7 +150,7 @@ Full parts list in the [installation guide](docs/en/INSTALLATION.md).
 
 <p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passive tap</b> — see <a href="#choose-your-extension-db25-or-db9">Choose your extension</a> (image above).</p>
 
-<p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB chain</b> — WAGO tap → <b>ICUSB232DB25</b> → hub (with keyboard + stick). PWR IN = power (≥2.5 A); data port → OTG → hub.</p>
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB chain</b> — Pi OTG: micro-USB → USB-A <b>female</b>. Listen adapter: USB-A <b>male</b> → DB9 → DB25 (WAGO on serial end). Hub with keyboard + stick. PWR IN ≥2.5 A.</p>
 <img src="docs/en/img/usb-chain-complete.png" width="100%" alt="USB chain with WAGO and ICUSB232DB25"/>
 
 <p style="font-size: 15px; margin-bottom: 0.4em"><b>3 · OLED (optional)</b> — 0.96" SSD1306 I2C, four wires. Rotates day/year, last package, sort mix.</p>

@@ -32,25 +32,28 @@ A Raspberry Pi listens silently on the RS-232 line between a 1980s Telemecanique
 
 <img src="docs/en/img/signal-flow.png" width="100%" alt="System architecture"/>
 
-The tap is **physically read-only**: only pin 2 (TX) and pin 7 (GND) are branched via WAGO clamps mid-cable. The printer keeps printing exactly as before, and nothing can be transmitted back toward the PLC.
+The tap is **physically read-only**: slit the jacket on the 40 cm extension and cut **only** the conductors for pin 2 (TX) and pin 7 (GND) — not the whole cable. WAGO three-way join; TX → adapter **RX**. Signal to `/dev/ttyUSB0`, not GPIO. The printer keeps printing as before.
 
 ---
 
 ## Daily use on the Pi (short commands)
 
-After the Norwegian production install, type **one word**:
+After the Norwegian production install (`python/no`), type **one word**:
 
 ```bash
+usb            # list USB + integrity check (SD ↔ stick)
+integritet     # verify / heal flash drive from SD master
 start          # start capture
 stopp          # stop capture
 restart        # after a crash or cable swap
-status         # is it running? USB adapter seen?
+status         # service + USB summary
 logg           # live log — stop with Ctrl+C
 sjekk          # first-time dry run (does not save)
-excel          # build Excel workbook
+excel          # refresh Excel now (also built automatically)
 ```
 
-Full Norwegian docs (primary): **[README.md](README.md)** · **[docs/no/INSTALLATION.md](docs/no/INSTALLATION.md)**
+Yearly files on SD/stick: `pakkelapperYYYY.csv` + `.xlsx` (updated in place; new year → new names).  
+Full Norwegian docs (primary): **[README.md](README.md)** · **[docs/no/INSTALLATION.md](docs/no/INSTALLATION.md)** · **[CHANGELOG.md](CHANGELOG.md)**
 
 ---
 
@@ -75,7 +78,7 @@ python3 read_package.py --export-xlsx
 <img src="docs/en/img/excel-charts.png" width="42%" alt="Excel charts"/>
 </p>
 
-A branded Excel workbook, generated on demand from the live CSV:
+A branded Excel workbook — in Norwegian production it is built **automatically** during capture and mirrored to the stick (`pakkelapperYYYY.xlsx`). `excel` / `--export-xlsx` is optional “refresh now”:
 
 - **Summary** sheet — totals per sort category, per day / month / year, with pie, stacked-bar, and line charts. All values are live formulas over the raw data.
 - **One sheet per sort category** (5th Grade / Crooked / Floor / Rejected / No Category) — frozen headers, autofilter, per-dimension mini-summary
@@ -87,12 +90,12 @@ A branded Excel workbook, generated on demand from the live CSV:
 
 | Situation on the floor | What the software does |
 |---|---|
-| Operator presses confirm twice | **Dedup** — package stored once, raw copy kept in `capture.txt` |
-| A package never gets confirmed | **Gap detection** — missing numbers logged to `missing.csv` |
-| Counter rolls over 9999 → 0 | **Round tracking** — detected automatically, dedup/gaps scoped per round |
+| Operator presses confirm twice | **Dedup** — package stored once, raw copy kept in `utskrift.txt` / `capture.txt` |
+| A package never gets confirmed | **Gap detection** — logged in `manglerYYYY.csv` / `missing.csv`; cleared when the package arrives |
+| Counter rolls over 9999 → 0 | **Round** — only if max &gt; 9000 and the new number is low (mid-series reprint does **not** start a new round) |
 | Printer is off / out of paper | Data is on the wire anyway — capture continues |
-| Flash drive pulled mid-run | SD card is the master; drive re-syncs missed rows on re-insert |
-| Label never printed at all | `--register N` adds it manually |
+| Flash drive yanked mid-run | SD is master; stick syncs/heals on re-insert (`integritet` / fsync + atomic rewrite) |
+| Label never printed at all | `--register N` / `--registrer N` — a later real label upgrades an empty manual row |
 | PLC sends odd ESC sequences | Full Epson/IBM escape table; unknown codes logged, never corrupt data |
 
 ## Commands (English)

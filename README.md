@@ -39,7 +39,7 @@
 Etter install er Pi-en et **apparat uten login** på HDMI:
 
 - Skjermen viser **tallmeny** direkte (ingen `login:`)
-- Ved oppkopling: **1** porter → **2** sjekk → **3** logg
+- Ved oppkopling: **1** USB → **2** sjekk → **3** logg
 - Ved drift: **5** start · **6** stopp · **7** restart
 
 ```text
@@ -51,22 +51,23 @@ OPPKOPLING / TEST          DRIFT
 ```
 
 Før du kopierer fra minnepennen til PC: skriv `integritet` (skal si at radene er speilet trygt).  
+Filer på penn/SD: `pakkelapperYYYY.csv` + `.xlsx` (samme fil hele året).  
 Full dagslogg: **[CHANGELOG.md](CHANGELOG.md)**.
 
-Menyen viser også om minnepenn/serie er funnet. Penn ut/inn → velg **1 USB** igjen (hotplug monterer automatisk).
+Menyen viser om minnepenn/serie er funnet. Penn ut/inn → velg **1 USB** igjen (hotplug).
 
-Eller skriv ett ord: `usb` `sjekk` `logg` `status` `start` `stopp` `restart` `excel`
+Ett ord: `usb` `integritet` `sjekk` `logg` `status` `start` `stopp` `restart` `excel`
 
 | Situasjon | Meny | Kommando |
 |-----------|------|----------|
-| Liste alle USB / minnepenn | **1** | `usb` |
+| Liste USB + sjekk penn mot SD | **1** | `usb` / `integritet` |
 | Første test uten lagring | **2** | `sjekk` |
 | Se live logg | **3** | `logg` (**Ctrl+C**) |
 | Sjekke at tjenesten går | **4** | `status` |
 | Start fangst | **5** | `start` |
 | Stopp | **6** | `stopp` |
 | Kræsj / kabelbytte | **7** | `restart` |
-| Hente Excel | **8** | `excel` |
+| Oppdater Excel nå (skjer også automatisk) | **8** | `excel` |
 
 Nød-login (hvis du trenger shell): **Alt+F2** · SSH: `ssh pi@pakkemaskin.local`
 
@@ -79,10 +80,11 @@ Nød-login (hvis du trenger shell): **Alt+F2** · SSH: `ssh pi@pakkemaskin.local
 ```bash
 git clone https://github.com/qeamer/rs232excel.git
 cd rs232excel/python/no
-bash installer.sh          # installerer start, stopp, logg, …
+bash installer.sh          # PATH-kommandoer + tjeneste
+bash fiks-usb.sh           # auto-mount minnepenn → /media/usb0
 ```
 
-Deretter: `sjekk` → `start`.
+Deretter: `sjekk` → `start`. Før kopi til PC: `integritet`.
 
 ---
 
@@ -96,8 +98,10 @@ selv når skriveren er av.
 <img src="docs/no/img/signal-flow.png" width="100%" alt="Systemarkitektur"/>
 
 <p style="font-size: 16px; line-height: 1.5">
-Tappen er <b>fysisk skrivebeskyttet</b>: kun pinne 2 (TX) og pinne 7 (GND) grener av via WAGO
-midt på kabelen. Skriveren fortsetter helt som før — ingenting sendes tilbake mot PLS-en.
+Tappen er <b>fysisk skrivebeskyttet</b>: åpne kappen på 40&nbsp;cm skjøten og klipp
+<b>kun</b> lederne for pinne 2 (TX) og 7 (GND) — ikke hele kabelen. WAGO tre veier;
+TX → adapter-<b>RX</b>. Signal til <code>/dev/ttyUSB0</code>, ikke GPIO.
+Skriveren fortsetter som før.
 </p>
 
 ---
@@ -110,7 +114,8 @@ midt på kabelen. Skriveren fortsetter helt som før — ingenting sendes tilbak
 </p>
 
 <p style="font-size: 16px; line-height: 1.55">
-Merkeprofilert Excel-arbeidsbok, generert på kommando fra live CSV:
+Merkeprofilert Excel-arbeidsbok — bygges <b>automatisk</b> under fangst og speiles til
+minnepennen (<code>pakkelapperYYYY.xlsx</code>). Meny <b>8</b> / <code>excel</code> er valgfri «oppdater nå»:
 </p>
 
 <ul style="font-size: 16px; line-height: 1.6">
@@ -126,11 +131,11 @@ Merkeprofilert Excel-arbeidsbok, generert på kommando fra live CSV:
 <table style="font-size: 16px">
 <tr><th>Situasjon på gulvet</th><th>Hva programmet gjør</th></tr>
 <tr><td>Operatør trykker kvittering to ganger</td><td><b>Dedup</b> — pakke lagres én gang, råkopi i <code>utskrift.txt</code></td></tr>
-<tr><td>Pakke aldri kvittert</td><td><b>Hull-deteksjon</b> — manglende numre i <code>mangler.csv</code></td></tr>
+<tr><td>Pakke aldri kvittert</td><td><b>Hull-deteksjon</b> — manglende numre i <code>manglerYYYY.csv</code> (friskmeldes når pakken kommer)</td></tr>
 <tr><td>Teller nullstiller 9999 → 0</td><td><b>Runde</b> — kun når maks &gt; 9000 og nytt nr er lavt (reprint midt i serien starter ikke ny runde)</td></tr>
 <tr><td>Skriver av / tom for papir</td><td>Data ligger på kabelen uansett</td></tr>
-<tr><td>Minnepenn trukket ut</td><td>SD-kort er fasit; minnepenn synkes ved ny tilkobling</td></tr>
-<tr><td>Lapp aldri skrevet ut</td><td><code>--registrer N</code> legger inn manuelt</td></tr>
+<tr><td>Minnepenn trukket ut</td><td>SD er fasit; penn synkes/helbredes ved ny tilkobling (<code>integritet</code>)</td></tr>
+<tr><td>Lapp aldri skrevet ut</td><td><code>--registrer N</code> — ekte lapp senere oppgraderer tom manuell rad</td></tr>
 </table>
 
 <h2 style="font-size: 1.5em">Avanserte flag (valgfritt)</h2>
@@ -143,10 +148,11 @@ Daglig bruk: se <b>Daglig bruk på Pi</b> øverst. Under er flag for direkte kj�
 <table style="font-size: 16px">
 <tr><th>Flag</th><th>Formål</th></tr>
 <tr><td><code>--port /dev/ttyUSB0</code></td><td>Live fangst (produksjon)</td></tr>
-<tr><td><code>--usb-sti /media/usb0</code></td><td>Speil CSV til minnepenn i sanntid</td></tr>
+<tr><td><code>--usb-sti /media/usb0</code></td><td>Speil årets CSV + Excel til minnepenn</td></tr>
+<tr><td><code>--sjekk-usb</code></td><td>Sjekk/helbred penn mot SD (samme som <code>integritet</code>)</td></tr>
 <tr><td><code>--bare-fangst</code></td><td>Bare vis rådata — verifiser første gang</td></tr>
 <tr><td><code>--sett-sesong rå</code> / <code>tørr</code></td><td>Match sesongbryter på maskinen</td></tr>
-<tr><td><code>--eksporter-xlsx</code></td><td>Generer Excel-arbeidsbok</td></tr>
+<tr><td><code>--eksporter-xlsx</code></td><td>Generer Excel nå (ellers automatisk)</td></tr>
 <tr><td><code>--oppsummering</code></td><td>Daglige totaler i terminalen</td></tr>
 <tr><td><code>--registrer 1234</code></td><td>Manuell pakke</td></tr>
 <tr><td><code>--simuler eksempel.txt</code></td><td>Offline test — uten PLS</td></tr>

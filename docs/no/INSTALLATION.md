@@ -81,6 +81,11 @@ ssh pi@192.168.1.42
 
 Windows uten ssh? [PuTTY](https://putty.org) eller WSL.
 
+> **Login på HDMI henger / tastaturet «virker ikke» ved `login:`?**  
+> Det er ofte en sen boot-melding som ødelegger prompten — ikke dødt tastatur.  
+> Trykk **Alt+F2** for en ny, ren login på tty2. (Tilbake til første skjerm: **Alt+F1**.)  
+> Eller SSH: `ssh pi@192.168.x.x` (IP vises ofte over login-linjen).
+
 ---
 
 ## 4 · Installer programvaren

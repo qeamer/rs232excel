@@ -44,7 +44,7 @@ else
 fi
 echo 'kernel.printk = 3 4 1 3' | sudo tee /etc/sysctl.d/20-pakkemaskin-quiet.conf >/dev/null
 
-# 2) Autologin på tty1 (HDMI)
+# 2) Autologin på tty1 (HDMI) + frisk prompt etter støyete boot-meldinger
 echo "2/5  Autologin på skjerm …"
 sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
 sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null <<EOF
@@ -52,7 +52,45 @@ sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null <<EO
 ExecStart=
 ExecStart=-/sbin/agetty --autologin ${BRUKER} --noclear %I \$TERM
 EOF
+
+# Sen kernel/boot-tekst (f.eks. «Completed socket interaction…») kan ødelegge
+# login-prompten på tty1 slik at tastaturet «ikke virker». Restart getty når
+# boot er ferdig → ren autologin/meny.
+sudo tee /etc/systemd/system/pakkemaskin-frisk-konsoll.service >/dev/null <<'EOF'
+[Unit]
+Description=Pakkemaskin — frisk HDMI-login etter boot-støy
+After=multi-user.target
+Before=getty@tty1.service
+
+[Service]
+Type=oneshot
+# Vent til sen boot-spam er ferdig, deretter ny getty på tty1
+ExecStart=/bin/sleep 3
+ExecStart=/bin/systemctl restart getty@tty1.service
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# After+restart pattern: run after multi-user is up
+sudo tee /etc/systemd/system/pakkemaskin-frisk-konsoll.service >/dev/null <<'EOF'
+[Unit]
+Description=Pakkemaskin — frisk HDMI-login etter boot-støy
+After=multi-user.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 5
+ExecStart=/bin/systemctl restart getty@tty1.service
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
 sudo systemctl daemon-reload
+sudo systemctl enable pakkemaskin-frisk-konsoll.service
+# Ekstra login på tty2 — nødutgang med Alt+F2 hvis tty1 henger
+sudo systemctl enable getty@tty2.service 2>/dev/null || true
 
 # 3) Meny ved innlogging på tty1 (ikke SSH)
 echo "3/5  Oppstartsmeny …"
@@ -103,4 +141,5 @@ echo "    • Tallmeny: 1=start  2=stopp  3=restart  4=status  5=logg …"
 echo "    • SSH fungerer som før (uten meny)"
 echo
 echo "  Merk: tastatur må sitte i USB-port midt på Zero (via OTG)."
+echo "  Hvis login henger på tty1:  Alt+F2  (ny login på tty2)"
 echo "  Reboot:   sudo reboot"

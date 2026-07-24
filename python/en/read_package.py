@@ -460,7 +460,7 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
     KANT = Side(style="thin", color="D9D9D9")
     RAMME = Border(left=KANT, right=KANT, top=KANT, bottom=KANT)
     TITTEL_FONT = Font(name=FONT_NAVN, size=14, bold=True, color="FFFFFF")
-    UNDERTITTEL_FONT = Font(name=FONT_NAVN, size=9, italic=True, color="D9D9D9")
+    UNDERTITTEL_FONT = Font(name=FONT_NAVN, size=9, italic=True, color="D9E5E1")
     HEADER_FONT = Font(name=FONT_NAVN, size=10, bold=True, color="FFFFFF")
     HEADER_FILL = PatternFill("solid", fgColor=TEMA_GRØNN)
     TITTEL_FILL = PatternFill("solid", fgColor=TEMA_GRØNN)
@@ -468,10 +468,8 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
     RAA_FONT = Font(name=FONT_NAVN, size=8, italic=True, color=GRÅ_TEKST)
     SUBTOTAL_FONT = Font(name=FONT_NAVN, size=9, bold=True, color="1B4D3E")
     SUBTOTAL_FILL = PatternFill("solid", fgColor="E8F0EE")
+    GRAF_FARGER = ["1B4D3E", "2E7D62", "5A9E8F", "8FBFB0", "C5A46E", "A67C52", "7A8B7A"]
 
-    # Sort: kun brukt i "Uavklart"-fanen (der flere sorter blandes); i de navngitte
-    # fanene (5Sort/Krok/Hogges) er sorten allerede gitt av fanenavnet, så fargekode
-    # på sort-cellen er overflødig der.
     SORT_FARGER = {
         "5": (PatternFill("solid", fgColor="C6EFCE"), Font(name=FONT_NAVN, size=10, color="2E7D32")),
         "4": (PatternFill("solid", fgColor="BDD7EE"), Font(name=FONT_NAVN, size=10, color="1F4E78")),
@@ -481,17 +479,15 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
     }
 
     NUMMER_FORMAT = {
-        "antall_plank": "#,##0", "sum_lengde_lm": "#,##0.0", "kubikk_m3": "0.000",
+        "antall_plank": "#,##0", "sum_lengde_lm": "#,##0.0", "kubikk_m3": "#,##0.000",
         "snittlengde_m": "0.0", "runde": "0", "pakkenr": "0",
-        "antall_pakker": "#,##0", "sum_plank": "#,##0", "sum_kubikk_m3": "0.000",
+        "antall_pakker": "#,##0", "sum_plank": "#,##0", "sum_kubikk_m3": "#,##0.000",
     }
-    # Bredde = plass til hele overskriften + buffer til nedtrekkspilen fra autofilter,
-    # ellers kuttes teksten visuelt bak pilen (f.eks. "Antall pl..").
     KOLONNEBREDDE = {
         "tid_fanget": 18, "dato": 13, "pakkenr": 11, "dimensjon": 13, "treslag": 12,
         "sort": 8, "sort_navn": 14, "antall_plank": 16, "sum_lengde_lm": 18,
         "kubikk_m3": 15, "snittlengde_m": 18, "sesong": 11, "runde": 9,
-        "status": 11, "raa": 40,
+        "status": 11, "raa": 28,
         "antall_pakker": 16, "sum_plank": 13, "sum_kubikk_m3": 18,
     }
 
@@ -596,8 +592,9 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
     with csv_sti.open(encoding="utf-8") as f:
         alle_rader = list(csv.DictReader(f))
 
+    gyldige = [r for r in alle_rader if r.get("status") in ("ok", "manuell")]
     fane_data = {navn: [] for navn in FANE_REKKEFØLGE}
-    for rad in alle_rader:
+    for rad in gyldige:
         fane = SORT_FANE.get(rad.get("sort"), FANE_UAVKLART)
         fane_data[fane].append(rad)
     for rader in fane_data.values():
@@ -634,11 +631,11 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
 
     # ── Rådata (flatt ark) — grunnlaget Sammendrag-formlene regner på ────────
     from openpyxl.chart import BarChart, LineChart, PieChart, Reference
+    from openpyxl.chart.label import DataLabelList
+    from openpyxl.chart.series import DataPoint
 
     ok_rader = []
-    for r in alle_rader:
-        if r.get("status") not in ("ok", "manuell"):
-            continue
+    for r in gyldige:
         try:    d = datetime.date.fromisoformat(r.get("dato", ""))
         except ValueError: continue
         ok_rader.append({
@@ -654,6 +651,7 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
 
     rd = wb.create_sheet("Raw data")
     rd.sheet_view.showGridLines = False
+    rd.sheet_properties.tabColor = "7A9E94"
     for j, (felt, tittel, br) in enumerate([
             ("dato", "Date", 12), ("kategori", "Category", 12),
             ("sesong", "Season", 10), ("dimensjon", "Dimension", 12),
@@ -670,50 +668,71 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
         rd.cell(i, 4, r["dimensjon"])
         rd.cell(i, 5, r["plank"]).number_format = "#,##0"
         rd.cell(i, 6, round(r["lm"], 1)).number_format = "#,##0.0"
-        rd.cell(i, 7, round(r["kubikk"], 3)).number_format = "0.000"
+        rd.cell(i, 7, round(r["kubikk"], 3)).number_format = "#,##0.000"
         for j in range(1, 8):
             rd.cell(i, j).font = DATA_FONT
+            rd.cell(i, j).border = RAMME
     rd.freeze_panes = "A2"
+    if ok_rader:
+        rd.auto_filter.ref = f"A1:G{1 + len(ok_rader)}"
 
     # ── Sammendrag — totaler per sort/dag/måned/år, med grafer ──────────────
     # Alle tall er formler (COUNTIFS/SUMIFS) mot Rådata-arket, så de
     # oppdateres om noen redigerer/filtrerer bort rader der.
     sm = wb.create_sheet("Summary", 0)
     sm.sheet_view.showGridLines = False
+    sm.sheet_properties.tabColor = "1B4D3E"
+    sm.page_setup.orientation = "landscape"
+    sm.page_setup.fitToPage = True
+    sm.page_setup.fitToWidth = 1
+    sm.page_setup.fitToHeight = 0
+    sm.print_title_rows = "1:3"
 
     for j, br in enumerate([16, 10, 10, 15, 13, 12, 12, 12, 12, 12], start=1):
         sm.column_dimensions[get_column_letter(j)].width = br
 
-    # Kompakt grønt banner (rad 1–3) med hvit knockout-logo integrert til venstre
-    # og rapporttittelen til høyre — samme visuelle sprawk som fane-titlene, og
-    # tar bare ~55 px høyde i stedet for en halv skjerm.
-    BANNER_H = [20, 20, 15]          # radhøyder i banneret
+    BANNER_H = [20, 20, 15]
     for i, h in enumerate(BANNER_H, start=1):
         sm.row_dimensions[i].height = h
-        for kol_i in range(1, 11):
+        for kol_i in range(1, 12):
             sm.cell(i, kol_i).fill = TITTEL_FILL
 
     logo_sti = Path(__file__).parent / "skaak_logo_hvit.png"
     if logo_sti.exists():
-        from openpyxl.drawing.image import Image as XLImage
-        from PIL import Image as PILImage
-        with PILImage.open(logo_sti) as _im:
-            fw, fh = _im.size
-        vis_h = 40                    # px — passer inni banneret
-        logo = XLImage(str(logo_sti))
-        logo.height, logo.width = vis_h, int(vis_h * fw / fh)
-        logo.anchor = "A1"
-        sm.add_image(logo, "A1")
+        try:
+            from openpyxl.drawing.image import Image as XLImage
+            from PIL import Image as PILImage
+            with PILImage.open(logo_sti) as _im:
+                fw, fh = _im.size
+            vis_h = 42
+            logo = XLImage(str(logo_sti))
+            logo.height, logo.width = vis_h, max(1, int(vis_h * fw / fh))
+            sm.add_image(logo, "A1")
+        except Exception:
+            sm.cell(1, 1, "SKJÅK TRELAST AS").font = Font(
+                name=FONT_NAVN, size=11, bold=True, color="FFFFFF")
+    else:
+        sm.cell(1, 1, "SKJÅK TRELAST AS").font = Font(
+            name=FONT_NAVN, size=11, bold=True, color="FFFFFF")
 
-    sm.merge_cells("D1:J2")
+    sm.merge_cells("D1:K2")
     c = sm.cell(1, 4, "Production control — Half-year report")
     c.font = Font(name=FONT_NAVN, size=13, bold=True, color="FFFFFF")
     c.alignment = Alignment(horizontal="right", vertical="center", indent=1)
-    sm.merge_cells("D3:J3")
+    sm.merge_cells("D3:K3")
     c = sm.cell(3, 4, f"Generated {datetime.datetime.now():%d.%m.%Y %H:%M}  ·  "
                       f"{len(ok_rader)} packages  ·  formulas over Raw data sheet")
     c.font = Font(name=FONT_NAVN, size=8, italic=True, color="D9E5E1")
     c.alignment = Alignment(horizontal="right", vertical="center", indent=1)
+
+    if not ok_rader:
+        sm.cell(5, 1, "No packages registered yet.").font = DATA_FONT
+        sm.freeze_panes = "A4"
+        wb.active = 0
+        tmp = xlsx_sti.with_suffix(".tmp.xlsx")
+        wb.save(tmp); os.replace(tmp, xlsx_sti)
+        log(f"Exported to {xlsx_sti}  (empty — no valid packages)")
+        return
 
     RD = "'Raw data'"
     MND_NAVN = {1:"Jan",2:"Feb",3:"Mar",4:"Apr",5:"May",6:"Jun",
@@ -755,7 +774,21 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
     def k_dag(d):        return f"{RD}!$A:$A,DATE({d.year},{d.month},{d.day})"
 
     STD = ["Packages", "Boards", "Running metres (lm)", "Volume (m³)"]
-    STD_FMT = ["#,##0", "#,##0", "#,##0.0", "0.000"]
+    STD_FMT = ["#,##0", "#,##0", "#,##0.0", "#,##0.000"]
+
+    def sett_serie_farger(chart):
+        for i, ser in enumerate(chart.series):
+            ser.graphicalProperties.solidFill = GRAF_FARGER[i % len(GRAF_FARGER)]
+
+    def sett_kake_farger(kake, n):
+        if not kake.series:
+            return
+        pts = []
+        for i in range(n):
+            pt = DataPoint(idx=i)
+            pt.graphicalProperties.solidFill = GRAF_FARGER[i % len(GRAF_FARGER)]
+            pts.append(pt)
+        kake.series[0].data_points = pts
 
     def std_formler(krit):
         return [f"={cnt(krit)}", f"={sums('E', krit)}",
@@ -773,11 +806,14 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
             sm_celle(rad, j, f, fmt)
         rad += 1
     kat_siste = rad - 1
-    sm_celle(rad, 1, "Total", fet=True)
-    for j, fmt in enumerate(STD_FMT, start=2):
-        kb = get_column_letter(j)
-        sm_celle(rad, j, f"=SUM({kb}{kat_forste}:{kb}{kat_siste})", fmt, fet=True)
-    rad += 2
+    if kat_siste >= kat_forste:
+        sm_celle(rad, 1, "Total", fet=True)
+        for j, fmt in enumerate(STD_FMT, start=2):
+            kb = get_column_letter(j)
+            sm_celle(rad, j, f"=SUM({kb}{kat_forste}:{kb}{kat_siste})", fmt, fet=True)
+        rad += 2
+    else:
+        rad += 1
 
     # 2) Per år -----------------------------------------------------------------
     sm_seksjon(rad, "Per year"); rad += 1
@@ -799,7 +835,7 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
         for j, (f, fmt) in enumerate(zip(std_formler(k_mnd(y, m)), STD_FMT), start=2):
             sm_celle(rad, j, f, fmt)
         for j, kat in enumerate(kategorier, start=6):
-            sm_celle(rad, j, f"={sums('G', k_mnd(y, m) + ',' + k_kat(kat))}", "0.000")
+            sm_celle(rad, j, f"={sums('G', k_mnd(y, m) + ',' + k_kat(kat))}", "#,##0.000")
         rad += 1
     mnd_siste = rad - 1
     rad += 1
@@ -816,40 +852,52 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
         rad += 1
     dag_siste = rad - 1
 
-    # Grafer -------------------------------------------------------------------
-    def stil(ch, tittel, h=8.2, b=15.5):
+    # Charts -------------------------------------------------------------------
+    def stil(ch, tittel, h=8.0, b=14.5):
         ch.title = tittel; ch.height = h; ch.width = b
         ch.style = 10
         return ch
 
-    kake = stil(PieChart(), "Volume by sort category", h=7.6, b=11.5)
-    kake.add_data(Reference(sm, min_col=5, min_row=kat_forste, max_row=kat_siste))
-    kake.set_categories(Reference(sm, min_col=1, min_row=kat_forste, max_row=kat_siste))
-    sm.add_chart(kake, "L4")
+    if kategorier and kat_siste >= kat_forste:
+        kake = stil(PieChart(), "Volume by sort category", h=7.4, b=11.0)
+        kake.add_data(Reference(sm, min_col=5, min_row=kat_forste, max_row=kat_siste))
+        kake.set_categories(Reference(sm, min_col=1, min_row=kat_forste, max_row=kat_siste))
+        kake.dataLabels = DataLabelList()
+        kake.dataLabels.showPercent = True
+        kake.dataLabels.showVal = False
+        kake.dataLabels.showCatName = False
+        sett_kake_farger(kake, len(kategorier))
+        sm.add_chart(kake, "L4")
 
-    stab = stil(BarChart(), "Volume per month, by sort")
-    stab.type = "col"; stab.grouping = "stacked"; stab.overlap = 100
-    stab.add_data(Reference(sm, min_col=6, max_col=5 + len(kategorier),
-                            min_row=mnd_hode, max_row=mnd_siste), titles_from_data=True)
-    stab.set_categories(Reference(sm, min_col=1, min_row=mnd_forste, max_row=mnd_siste))
-    stab.y_axis.title = "m³"
-    sm.add_chart(stab, "L20")
+    if mnd_liste and kategorier and mnd_siste >= mnd_forste:
+        stab = stil(BarChart(), "Volume per month, by sort")
+        stab.type = "col"; stab.grouping = "stacked"; stab.overlap = 100
+        stab.add_data(Reference(sm, min_col=6, max_col=5 + len(kategorier),
+                                min_row=mnd_hode, max_row=mnd_siste), titles_from_data=True)
+        stab.set_categories(Reference(sm, min_col=1, min_row=mnd_forste, max_row=mnd_siste))
+        stab.y_axis.title = "m³"
+        sett_serie_farger(stab)
+        sm.add_chart(stab, "L20")
 
-    meter = stil(BarChart(), "Running metres per month")
-    meter.type = "col"
-    meter.add_data(Reference(sm, min_col=4, min_row=mnd_hode, max_row=mnd_siste),
-                   titles_from_data=True)
-    meter.set_categories(Reference(sm, min_col=1, min_row=mnd_forste, max_row=mnd_siste))
-    meter.y_axis.title = "lm"; meter.legend = None
-    sm.add_chart(meter, "L37")
+        meter = stil(BarChart(), "Running metres per month")
+        meter.type = "col"
+        meter.add_data(Reference(sm, min_col=4, min_row=mnd_hode, max_row=mnd_siste),
+                       titles_from_data=True)
+        meter.set_categories(Reference(sm, min_col=1, min_row=mnd_forste, max_row=mnd_siste))
+        meter.y_axis.title = "lm"; meter.legend = None
+        sett_serie_farger(meter)
+        sm.add_chart(meter, "L37")
 
-    linje_ch = stil(LineChart(), f"Volume per day (last {len(dag_liste)} days)")
-    linje_ch.add_data(Reference(sm, min_col=5, min_row=dag_hode, max_row=dag_siste),
-                      titles_from_data=True)
-    linje_ch.set_categories(Reference(sm, min_col=1, min_row=dag_forste, max_row=dag_siste))
-    linje_ch.y_axis.title = "m³"; linje_ch.legend = None
-    sm.add_chart(linje_ch, "L53")
+    if dag_liste and dag_siste >= dag_forste:
+        linje_ch = stil(LineChart(), f"Volume per day (last {len(dag_liste)} days)")
+        linje_ch.add_data(Reference(sm, min_col=5, min_row=dag_hode, max_row=dag_siste),
+                          titles_from_data=True)
+        linje_ch.set_categories(Reference(sm, min_col=1, min_row=dag_forste, max_row=dag_siste))
+        linje_ch.y_axis.title = "m³"; linje_ch.legend = None
+        sett_serie_farger(linje_ch)
+        sm.add_chart(linje_ch, "L53")
 
+    sm.freeze_panes = "A4"
     wb.active = 0
 
     tmp = xlsx_sti.with_suffix(".tmp.xlsx")

@@ -25,7 +25,7 @@ Filer:
   pakkelapper.csv   én rad per ekte pakke (ingen duplikater)
   mangler.csv       hull i pakkenr-rekka (per runde)
   oppsummering.csv  daglig oppsummering (--oppsummering)
-  pakkelapper.xlsx  Excel med ett ark per sesong (--eksporter-xlsx)
+  pakkelapper.xlsx  Excel: Sammendrag (formler+grafer), sort-ark, Rådata
   sesong.txt        gjeldende sesong: "rå"/"tørr" (--sett-sesong)
 
 USB-speiling (sanntid, --usb-sti):
@@ -38,7 +38,7 @@ USB-speiling (sanntid, --usb-sti):
   fanget i mellomtiden. Ingen manuell eksport nødvendig; bare la en
   minnepenn stå i, eller bytt den ut mot en annen når som helst.
 
-Avhengigheter: pip install pyserial openpyxl
+Avhengigheter: pip install pyserial openpyxl pillow
 """
 
 import argparse, csv, datetime, glob, os, re, time
@@ -513,21 +513,26 @@ def kjor_simulering(args, utskrift, csv_sti, reg, sesong, usb_sti: Path | None =
 
 
 def eksporter_xlsx(csv_sti, xlsx_sti):
+    """Eksporter merkeprofilert arbeidsbok: Sammendrag (formler + grafer),
+    ett ark per sort, Per dimensjon, Rådata."""
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from openpyxl.utils import get_column_letter
+    from openpyxl.chart import BarChart, LineChart, PieChart, Reference
+    from openpyxl.chart.label import DataLabelList
+    from openpyxl.chart.series import DataPoint
 
     if not csv_sti.exists():
         logg(f"Finner ikke {csv_sti}."); return
 
     FONT_NAVN = "Calibri"
-    TEMA_GRØNN = "1B4D3E"      # tittel/header-bakgrunn — varm, dempet, trelast-aktig
+    TEMA_GRØNN = "1B4D3E"
     GRÅ_TEKST = "595959"
-    BAND_GRÅ = "F2F2F2"        # svak skygge — markerer ny dimensjon, ikke en sterk farge
+    BAND_GRÅ = "F2F2F2"
     KANT = Side(style="thin", color="D9D9D9")
     RAMME = Border(left=KANT, right=KANT, top=KANT, bottom=KANT)
     TITTEL_FONT = Font(name=FONT_NAVN, size=14, bold=True, color="FFFFFF")
-    UNDERTITTEL_FONT = Font(name=FONT_NAVN, size=9, italic=True, color="D9D9D9")
+    UNDERTITTEL_FONT = Font(name=FONT_NAVN, size=9, italic=True, color="D9E5E1")
     HEADER_FONT = Font(name=FONT_NAVN, size=10, bold=True, color="FFFFFF")
     HEADER_FILL = PatternFill("solid", fgColor=TEMA_GRØNN)
     TITTEL_FILL = PatternFill("solid", fgColor=TEMA_GRØNN)
@@ -536,9 +541,9 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
     SUBTOTAL_FONT = Font(name=FONT_NAVN, size=9, bold=True, color="1B4D3E")
     SUBTOTAL_FILL = PatternFill("solid", fgColor="E8F0EE")
 
-    # Sort: kun brukt i "Uavklart"-fanen (der flere sorter blandes); i de navngitte
-    # fanene (5Sort/Krok/Hogges) er sorten allerede gitt av fanenavnet, så fargekode
-    # på sort-cellen er overflødig der.
+    # Brand-palett for grafer (samme familie som banner — ikke Excel-default-regnbue)
+    GRAF_FARGER = ["1B4D3E", "2E7D62", "5A9E8F", "8FBFB0", "C5A46E", "A67C52", "7A8B7A"]
+
     SORT_FARGER = {
         "5": (PatternFill("solid", fgColor="C6EFCE"), Font(name=FONT_NAVN, size=10, color="2E7D32")),
         "4": (PatternFill("solid", fgColor="BDD7EE"), Font(name=FONT_NAVN, size=10, color="1F4E78")),
@@ -546,21 +551,29 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
         "3": (PatternFill("solid", fgColor="F8CBAD"), Font(name=FONT_NAVN, size=10, color="943126")),
         "6": (PatternFill("solid", fgColor="E0E0E0"), Font(name=FONT_NAVN, size=10, color="595959")),
     }
+    TAB_FARGER = {
+        "Sammendrag": "1B4D3E", "5Sort": "2E7D32", "Krok": "C5A46E",
+        "Gulv": "1F4E78", "Hogges": "943126", "B.L": "5A9E8F",
+        "B.BL": "5A9E8F", "Uavklart": "7A7A7A", "Per dimensjon (alle)": "4A6B5E",
+        "Rådata": "7A9E94",
+    }
 
     NUMMER_FORMAT = {
-        "antall_plank": "#,##0", "sum_lengde_lm": "#,##0.0", "kubikk_m3": "0.000",
+        "antall_plank": "#,##0", "sum_lengde_lm": "#,##0.0", "kubikk_m3": "#,##0.000",
         "snittlengde_m": "0.0", "runde": "0", "pakkenr": "0",
-        "antall_pakker": "#,##0", "sum_plank": "#,##0", "sum_kubikk_m3": "0.000",
+        "antall_pakker": "#,##0", "sum_plank": "#,##0", "sum_kubikk_m3": "#,##0.000",
     }
-    # Bredde = plass til hele overskriften + buffer til nedtrekkspilen fra autofilter,
-    # ellers kuttes teksten visuelt bak pilen (f.eks. "Antall pl..").
     KOLONNEBREDDE = {
         "tid_fanget": 18, "dato": 13, "pakkenr": 11, "dimensjon": 13, "treslag": 12,
         "sort": 8, "sort_navn": 14, "antall_plank": 16, "sum_lengde_lm": 18,
         "kubikk_m3": 15, "snittlengde_m": 18, "sesong": 11, "runde": 9,
-        "status": 11, "raa": 40,
+        "status": 11, "raa": 28,
         "antall_pakker": 16, "sum_plank": 13, "sum_kubikk_m3": 18,
     }
+
+    def fyll_banner_rad(ws, rad_nr, kol_til):
+        for j in range(1, kol_til + 1):
+            ws.cell(rad_nr, j).fill = TITTEL_FILL
 
     def skriv_header(ws, kol_start, rad_nr, felter):
         for j, felt in enumerate(felter, start=kol_start):
@@ -601,6 +614,11 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
         n = len(felter)
         bredde_kol = max(n, 5)
         ws.sheet_view.showGridLines = False
+        if ws.title in TAB_FARGER:
+            ws.sheet_properties.tabColor = TAB_FARGER[ws.title]
+        # Banner — fyll alle celler i merge-området (print/PDF)
+        for rr in (1, 2):
+            fyll_banner_rad(ws, rr, bredde_kol)
         ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=bredde_kol)
         c = ws.cell(1, 1, tittel); c.font = TITTEL_FONT; c.fill = TITTEL_FILL
         c.alignment = Alignment(horizontal="left", vertical="center", indent=1)
@@ -613,39 +631,8 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
             felt_her = felter[j - 1] if j <= n else ""
             ws.column_dimensions[get_column_letter(j)].width = KOLONNEBREDDE.get(felt_her, 12)
 
-        rad_nr = 4
-
-        # Liten dimensjonsoversikt øverst i fanen — egen, kort tabell (ikke filtrerbar,
-        # så den forstyrrer ikke autofilteret på hovedtabellen under).
-        if vis_dimensjonsoversikt and rader:
-            dim_sum = {}
-            for r in rader:
-                d = r.get("dimensjon") or "ukjent"
-                g = dim_sum.setdefault(d, {"pakker": 0, "plank": 0, "kubikk": 0.0})
-                g["pakker"] += 1
-                g["plank"] += som_tall(r.get("antall_plank")) or 0
-                try: g["kubikk"] += float(str(r.get("kubikk_m3", "")).replace(",", "."))
-                except ValueError: pass
-            c = ws.cell(rad_nr, 1, "Per dimensjon i denne fanen:")
-            c.font = SUBTOTAL_FONT
-            rad_nr += 1
-            overskrift = ["Dimensjon", "Pakker", "Plank", "Kubikk (m³)"]
-            for j, h in enumerate(overskrift, start=1):
-                c = ws.cell(rad_nr, j, h); c.font = SUBTOTAL_FONT; c.fill = SUBTOTAL_FILL
-                c.alignment = Alignment(horizontal="center")
-            rad_nr += 1
-            for d in sorted(dim_sum):
-                g = dim_sum[d]
-                verdier = [d, g["pakker"], g["plank"], round(g["kubikk"], 3)]
-                for j, v in enumerate(verdier, start=1):
-                    c = ws.cell(rad_nr, j, v); c.fill = SUBTOTAL_FILL
-                    c.font = Font(name=FONT_NAVN, size=9)
-                    c.alignment = Alignment(horizontal="center")
-                    if j == 4: c.number_format = "0.000"
-                rad_nr += 1
-            rad_nr += 1  # luft før hovedtabellen
-
-        header_rad = rad_nr
+        # Hovedtabell starter tidlig; dimensjonsoversikt til høyre (ikke over filter)
+        header_rad = 4
         skriv_header(ws, 1, header_rad, felter)
         forrige_dim = None
         skygge = False
@@ -657,135 +644,387 @@ def eksporter_xlsx(csv_sti, xlsx_sti):
 
         ws.freeze_panes = f"A{header_rad + 1}"
         siste_kol = get_column_letter(n)
-        ws.auto_filter.ref = f"A{header_rad}:{siste_kol}{header_rad + len(rader)}"
+        if rader:
+            ws.auto_filter.ref = f"A{header_rad}:{siste_kol}{header_rad + len(rader)}"
 
-    def skriv_sammendrag(ws):
-        """Egen 'Sammendrag'-fane øverst i arbeidsboka: totaler per år, måned,
-        uke og dag — så ekspeditøren slipper å regne sammen selv."""
-        per_ar, per_mnd, per_uke, per_dag = _tid_aggreger(csv_sti)
-        ws.sheet_view.showGridLines = False
-        BREDDE = 6
-        for j, b in enumerate([16, 13, 13, 15, 15, 20], start=1):
-            ws.column_dimensions[get_column_letter(j)].width = b
+        if vis_dimensjonsoversikt and rader:
+            dim_sum = {}
+            for r in rader:
+                d = r.get("dimensjon") or "ukjent"
+                g = dim_sum.setdefault(d, {"pakker": 0, "plank": 0, "kubikk": 0.0})
+                g["pakker"] += 1
+                g["plank"] += som_tall(r.get("antall_plank")) or 0
+                try: g["kubikk"] += float(str(r.get("kubikk_m3", "")).replace(",", "."))
+                except ValueError: pass
+            høyre = n + 2
+            c = ws.cell(header_rad, høyre, "Per dimensjon i denne fanen")
+            c.font = SUBTOTAL_FONT
+            overskrift = ["Dimensjon", "Pakker", "Plank", "Kubikk (m³)"]
+            for j, h in enumerate(overskrift):
+                cell = ws.cell(header_rad + 1, høyre + j, h)
+                cell.font = SUBTOTAL_FONT; cell.fill = SUBTOTAL_FILL
+                cell.alignment = Alignment(horizontal="center")
+                ws.column_dimensions[get_column_letter(høyre + j)].width = 14
+            for i, d in enumerate(sorted(dim_sum)):
+                g = dim_sum[d]
+                verdier = [d, g["pakker"], g["plank"], round(g["kubikk"], 3)]
+                for j, v in enumerate(verdier):
+                    cell = ws.cell(header_rad + 2 + i, høyre + j, v)
+                    cell.fill = SUBTOTAL_FILL
+                    cell.font = Font(name=FONT_NAVN, size=9)
+                    cell.alignment = Alignment(horizontal="center")
+                    if j == 1: cell.number_format = "#,##0"
+                    if j == 2: cell.number_format = "#,##0"
+                    if j == 3: cell.number_format = "#,##0.000"
 
-        # Tittelbånd
-        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=BREDDE)
-        c0 = ws.cell(1, 1, "Pakkelapper — sammendrag"); c0.font = TITTEL_FONT; c0.fill = TITTEL_FILL
-        c0.alignment = Alignment(horizontal="left", vertical="center", indent=1)
-        ws.row_dimensions[1].height = 26
-        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=BREDDE)
-        c0 = ws.cell(2, 1, f"Generert {datetime.datetime.now():%d.%m.%Y %H:%M}  ·  alt regnet ut automatisk")
-        c0.font = UNDERTITTEL_FONT; c0.fill = TITTEL_FILL
-        c0.alignment = Alignment(horizontal="left", vertical="center", indent=1)
+    def sett_serie_farger(chart, n_serier):
+        for i, ser in enumerate(chart.series):
+            farge = GRAF_FARGER[i % len(GRAF_FARGER)]
+            ser.graphicalProperties.solidFill = farge
 
-        rad = [4]  # muterbar teller så indre funksjon kan øke den
-
-        def blokk(tittel, data_dict, nyeste_forst=True, maks=None):
-            r = rad[0]
-            ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=BREDDE)
-            ct = ws.cell(r, 1, tittel); ct.font = Font(name=FONT_NAVN, size=11, bold=True, color="FFFFFF")
-            ct.fill = HEADER_FILL; ct.alignment = Alignment(horizontal="left", indent=1)
-            r += 1
-            overskrifter = ["Periode", "Pakker", "Plank", "Kubikk (m³)", "Løpemeter", "Sesong (rå/tørr)"]
-            for j, h in enumerate(overskrifter, start=1):
-                c = ws.cell(r, j, h); c.font = SUBTOTAL_FONT; c.fill = SUBTOTAL_FILL
-                c.alignment = Alignment(horizontal="center")
-            r += 1
-            nøkler = sorted(data_dict.keys(), reverse=nyeste_forst)
-            if maks:
-                nøkler = nøkler[:maks]
-            for nøkkel in nøkler:
-                g = data_dict[nøkkel]
-                verdier = [nøkkel, g["pakker"], g["plank"], round(g["kubikk"], 3),
-                           round(g["lm"], 1), f'{g["rå"]} / {g["tørr"]}']
-                for j, v in enumerate(verdier, start=1):
-                    c = ws.cell(r, j, v)
-                    c.font = DATA_FONT
-                    c.border = RAMME
-                    if j == 1:   c.alignment = Alignment(horizontal="center")
-                    if j == 4:   c.number_format = "0.000"
-                    if j == 5:   c.number_format = "#,##0.0"
-                    if j == 6:   c.alignment = Alignment(horizontal="center")
-                r += 1
-            rad[0] = r + 1  # luft før neste blokk
-
-        if not per_ar:
-            ws.cell(4, 1, "Ingen pakker registrert ennå.").font = DATA_FONT
+    def sett_kake_farger(kake, n):
+        if not kake.series:
             return
-        blokk("PER ÅR", per_ar)
-        blokk("PER MÅNED", per_mnd)
-        blokk("PER UKE (siste 12)", per_uke, maks=12)
-        blokk("PER DAG (siste 21)", per_dag, maks=21)
-
-        # Nøkkeltall nederst
-        r = rad[0]
-        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=BREDDE)
-        ct = ws.cell(r, 1, "NØKKELTALL"); ct.font = Font(name=FONT_NAVN, size=11, bold=True, color="FFFFFF")
-        ct.fill = HEADER_FILL; ct.alignment = Alignment(horizontal="left", indent=1)
-        r += 1
-        i_ar = str(datetime.date.today().year)
-        dager_i_ar = [v for k, v in per_dag.items() if k.startswith(i_ar)]
-        snitt = round(sum(d["pakker"] for d in dager_i_ar) / len(dager_i_ar), 1) if dager_i_ar else 0
-        beste = max(dager_i_ar, key=lambda d: d["pakker"], default=None)
-        beste_dag = max((k for k in per_dag if k.startswith(i_ar)),
-                        key=lambda k: per_dag[k]["pakker"], default="—")
-        nøkkeltall = [
-            (f"Snitt pakker per produksjonsdag ({i_ar})", snitt),
-            ("Beste enkeltdag i år", f'{beste_dag}: {beste["pakker"]} pakker' if beste else "—"),
-            ("Antall produksjonsdager i år", len(dager_i_ar)),
-        ]
-        for tittel, verdi in nøkkeltall:
-            ws.cell(r, 1, tittel).font = DATA_FONT
-            ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=3)
-            c = ws.cell(r, 4, verdi); c.font = SUBTOTAL_FONT
-            r += 1
-        ws.freeze_panes = "A3"
+        pts = []
+        for i in range(n):
+            pt = DataPoint(idx=i)
+            pt.graphicalProperties.solidFill = GRAF_FARGER[i % len(GRAF_FARGER)]
+            pts.append(pt)
+        kake.series[0].data_points = pts
 
     wb = Workbook()
     with csv_sti.open(encoding="utf-8") as f:
         alle_rader = list(csv.DictReader(f))
 
+    # Kun bekreftede pakker i sort-faner og sammendrag — ukjent/duplikat holdes utenfor
+    gyldige = [r for r in alle_rader if r.get("status") in ("ok", "manuell")]
+
     fane_data = {navn: [] for navn in FANE_REKKEFØLGE}
-    for rad in alle_rader:
+    for rad in gyldige:
         fane = SORT_FANE.get(rad.get("sort"), "Uavklart")
         fane_data[fane].append(rad)
     for rader in fane_data.values():
         rader.sort(key=lambda r: (r.get("dimensjon") or "", r.get("dato") or "", som_tall(r.get("pakkenr")) or 0))
 
-    FELTER_KATEGORI = [f for f in KOLONNER if f not in ("sort", "sort_navn")]   # sort er gitt av fanen
-    FELTER_UAVKLART = KOLONNER                                                  # her trengs sort/sortnavn
+    FELTER_KATEGORI = [f for f in KOLONNER if f not in ("sort", "sort_navn")]
+    FELTER_UAVKLART = KOLONNER
 
-    # Sammendrag alltid først — det ekspeditøren ser når fila åpnes
-    sammendrag_ws = wb.active
-    sammendrag_ws.title = "Sammendrag"
-    skriv_sammendrag(sammendrag_ws)
+    # Fjern default-ark midlertidig — Sammendrag settes inn først senere
+    default_ws = wb.active
+    default_ws.title = "_tmp"
 
     forste = True
     for fane in FANE_REKKEFØLGE:
         rader = fane_data[fane]
         if not rader: continue
-        ws = wb.create_sheet()
-        ws.title = fane
+        ws = wb.create_sheet(fane)
         forste = False
         felter = FELTER_UAVKLART if fane == "Uavklart" else FELTER_KATEGORI
         skriv_fane(ws, f"Pakkelapper — {fane}", felter, rader)
     if forste:
-        tom_ws = wb.create_sheet()
-        tom_ws.title = "5Sort"
-        skriv_fane(tom_ws, "Pakkelapper — 5Sort", FELTER_KATEGORI, [])
+        ws = wb.create_sheet("5Sort")
+        skriv_fane(ws, "Pakkelapper — 5Sort", FELTER_KATEGORI, [])
 
-    # Samlet oversikt: antall/plank/kubikk per dimensjon, på tvers av alle fanene
-    dim_grupper = _grupper_rader(csv_sti, ["sesong", "dimensjon"])
-    if dim_grupper:
+    # Dimensjonsoversikt kun fra gyldige rader (matcher Sammendrag/Rådata)
+    dim_sum = {}
+    for r in gyldige:
+        key = (r.get("sesong") or "", r.get("dimensjon") or "")
+        g = dim_sum.setdefault(key, {"pakker": 0, "plank": 0, "kubikk": 0.0})
+        g["pakker"] += 1
+        g["plank"] += som_tall(r.get("antall_plank")) or 0
+        try: g["kubikk"] += float(str(r.get("kubikk_m3", "")).replace(",", ".") or 0)
+        except ValueError: pass
+    if dim_sum:
         dim_felter = ["sesong", "dimensjon", "antall_pakker", "sum_plank", "sum_kubikk_m3"]
         dim_rader = [
             {"sesong": s, "dimensjon": d, "antall_pakker": g["pakker"],
              "sum_plank": g["plank"], "sum_kubikk_m3": round(g["kubikk"], 3)}
-            for (s, d), g in sorted(dim_grupper.items())
+            for (s, d), g in sorted(dim_sum.items())
         ]
         dim_ws = wb.create_sheet("Per dimensjon (alle)")
         skriv_fane(dim_ws, "Oversikt per dimensjon — alle sorter", dim_felter, dim_rader,
                    vis_dimensjonsoversikt=False)
+
+    # ── Rådata — grunnlaget Sammendrag-formlene regner på ────────────────────
+    ok_rader = []
+    for r in gyldige:
+        try:    d = datetime.date.fromisoformat(r.get("dato", ""))
+        except ValueError: continue
+        ok_rader.append({
+            "dato": d,
+            "kategori": SORT_FANE.get(r.get("sort"), "Uavklart"),
+            "sesong": r.get("sesong", ""),
+            "dimensjon": r.get("dimensjon", ""),
+            "plank": som_tall(r.get("antall_plank")) or 0,
+            "lm": float(str(r.get("sum_lengde_lm") or 0).replace(",", ".") or 0),
+            "kubikk": float(str(r.get("kubikk_m3") or 0).replace(",", ".") or 0),
+        })
+    ok_rader.sort(key=lambda r: r["dato"])
+
+    rd = wb.create_sheet("Rådata")
+    rd.sheet_view.showGridLines = False
+    rd.sheet_properties.tabColor = TAB_FARGER["Rådata"]
+    for j, (felt, tittel, br) in enumerate([
+            ("dato", "Dato", 12), ("kategori", "Sortkategori", 12),
+            ("sesong", "Sesong", 10), ("dimensjon", "Dimensjon", 12),
+            ("plank", "Plank", 10), ("lm", "Løpemeter (lm)", 15),
+            ("kubikk", "Kubikk (m³)", 13)], start=1):
+        c = rd.cell(1, j, tittel)
+        c.font = HEADER_FONT; c.fill = HEADER_FILL
+        c.alignment = Alignment(horizontal="center", vertical="center")
+        rd.column_dimensions[get_column_letter(j)].width = br
+    for i, r in enumerate(ok_rader, start=2):
+        rd.cell(i, 1, r["dato"]).number_format = "DD.MM.YYYY"
+        rd.cell(i, 2, r["kategori"])
+        rd.cell(i, 3, r["sesong"])
+        rd.cell(i, 4, r["dimensjon"])
+        rd.cell(i, 5, r["plank"]).number_format = "#,##0"
+        rd.cell(i, 6, round(r["lm"], 1)).number_format = "#,##0.0"
+        rd.cell(i, 7, round(r["kubikk"], 3)).number_format = "#,##0.000"
+        for j in range(1, 8):
+            rd.cell(i, j).font = DATA_FONT
+            rd.cell(i, j).border = RAMME
+    rd.freeze_panes = "A2"
+    if ok_rader:
+        rd.auto_filter.ref = f"A1:G{1 + len(ok_rader)}"
+
+    # ── Sammendrag — formler + grafer (matcher docs/no-skjermbilder) ─────────
+    sm = wb.create_sheet("Sammendrag", 0)
+    sm.sheet_view.showGridLines = False
+    sm.sheet_properties.tabColor = TAB_FARGER["Sammendrag"]
+    sm.page_setup.orientation = "landscape"
+    sm.page_setup.fitToPage = True
+    sm.page_setup.fitToWidth = 1
+    sm.page_setup.fitToHeight = 0
+    sm.print_title_rows = "1:3"
+    sm.oddFooter.center.text = f"Skjåk Trelast AS · Pakkemaskin Skriver · &D &T"
+
+    for j, br in enumerate([16, 10, 10, 15, 13, 12, 12, 12, 12, 12], start=1):
+        sm.column_dimensions[get_column_letter(j)].width = br
+
+    for i, h in enumerate([20, 20, 15], start=1):
+        sm.row_dimensions[i].height = h
+        fyll_banner_rad(sm, i, 11)
+
+    logo_sti = Path(__file__).parent / "skaak_logo_hvit.png"
+    if logo_sti.exists():
+        try:
+            from openpyxl.drawing.image import Image as XLImage
+            from PIL import Image as PILImage
+            with PILImage.open(logo_sti) as _im:
+                fw, fh = _im.size
+            vis_h = 42
+            logo = XLImage(str(logo_sti))
+            logo.height, logo.width = vis_h, max(1, int(vis_h * fw / fh))
+            sm.add_image(logo, "A1")
+        except Exception as e:
+            logg(f"Logo kunne ikke lastes ({e}) — fortsetter uten.")
+            sm.cell(1, 1, "SKJÅK TRELAST AS").font = Font(
+                name=FONT_NAVN, size=11, bold=True, color="FFFFFF")
+    else:
+        sm.cell(1, 1, "SKJÅK TRELAST AS").font = Font(
+            name=FONT_NAVN, size=11, bold=True, color="FFFFFF")
+
+    sm.merge_cells("D1:K2")
+    c = sm.cell(1, 4, "Produksjonskontroll — Halvårsrapport")
+    c.font = Font(name=FONT_NAVN, size=13, bold=True, color="FFFFFF")
+    c.alignment = Alignment(horizontal="right", vertical="center", indent=1)
+    sm.merge_cells("D3:K3")
+    c = sm.cell(3, 4, f"Generert {datetime.datetime.now():%d.%m.%Y %H:%M}  ·  "
+                      f"{len(ok_rader)} pakker  ·  formler mot Rådata-arket")
+    c.font = Font(name=FONT_NAVN, size=8, italic=True, color="D9E5E1")
+    c.alignment = Alignment(horizontal="right", vertical="center", indent=1)
+
+    if not ok_rader:
+        sm.cell(5, 1, "Ingen pakker registrert ennå.").font = DATA_FONT
+        sm.freeze_panes = "A4"
+        wb.remove(default_ws)
+        wb.active = 0
+        tmp = xlsx_sti.with_suffix(".tmp.xlsx")
+        wb.save(tmp); os.replace(tmp, xlsx_sti)
+        logg(f"Eksportert til {xlsx_sti}  (tom — ingen gyldige pakker)")
+        return
+
+    RD = "'Rådata'"
+    MND_NAVN = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "Mai", 6: "Jun",
+                7: "Jul", 8: "Aug", 9: "Sep", 10: "Okt", 11: "Nov", 12: "Des"}
+    kategorier = [k for k in FANE_REKKEFØLGE if any(r["kategori"] == k for r in ok_rader)]
+    år_liste = sorted({r["dato"].year for r in ok_rader})
+    mnd_liste = sorted({(r["dato"].year, r["dato"].month) for r in ok_rader})
+    dag_liste = sorted({r["dato"] for r in ok_rader})[-21:]
+
+    def sm_overskrift(rad, titler):
+        for j, t in enumerate(titler, start=1):
+            c = sm.cell(rad, j, t)
+            c.font = HEADER_FONT; c.fill = HEADER_FILL
+            c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        sm.row_dimensions[rad].height = 26
+
+    def sm_seksjon(rad, tekst):
+        c = sm.cell(rad, 1, tekst); c.font = SUBTOTAL_FONT
+
+    def sm_celle(rad, kol, verdi, fmt=None, fet=False):
+        c = sm.cell(rad, kol, verdi)
+        c.font = Font(name=FONT_NAVN, size=10, bold=fet,
+                      color="1B4D3E" if fet else "000000")
+        c.border = RAMME
+        if fmt: c.number_format = fmt
+        if fet: c.fill = SUBTOTAL_FILL
+        return c
+
+    def cnt(krit): return f"COUNTIFS({krit})"
+    def sums(kol, krit): return f"SUMIFS({RD}!${kol}:${kol},{krit})"
+    def k_kat(kat): return f"{RD}!$B:$B,\"{kat}\""
+    def k_år(y): return (f"{RD}!$A:$A,\">=\"&DATE({y},1,1),"
+                         f"{RD}!$A:$A,\"<\"&DATE({y + 1},1,1)")
+    def k_mnd(y, m):
+        y2, m2 = (y + 1, 1) if m == 12 else (y, m + 1)
+        return (f"{RD}!$A:$A,\">=\"&DATE({y},{m},1),"
+                f"{RD}!$A:$A,\"<\"&DATE({y2},{m2},1)")
+    def k_dag(d): return f"{RD}!$A:$A,DATE({d.year},{d.month},{d.day})"
+
+    STD = ["Pakker", "Plank", "Løpemeter (lm)", "Kubikk (m³)"]
+    STD_FMT = ["#,##0", "#,##0", "#,##0.0", "#,##0.000"]
+
+    def std_formler(krit):
+        return [f"={cnt(krit)}", f"={sums('E', krit)}",
+                f"={sums('F', krit)}", f"={sums('G', krit)}"]
+
+    rad = 5
+    sm_seksjon(rad, "Totalt per sortkategori"); rad += 1
+    kat_hode = rad
+    sm_overskrift(rad, ["Sortkategori"] + STD); rad += 1
+    kat_forste = rad
+    for kat in kategorier:
+        sm_celle(rad, 1, kat)
+        for j, (f, fmt) in enumerate(zip(std_formler(k_kat(kat)), STD_FMT), start=2):
+            sm_celle(rad, j, f, fmt)
+        rad += 1
+    kat_siste = rad - 1
+    if kat_siste >= kat_forste:
+        sm_celle(rad, 1, "Totalt", fet=True)
+        for j, fmt in enumerate(STD_FMT, start=2):
+            kb = get_column_letter(j)
+            sm_celle(rad, j, f"=SUM({kb}{kat_forste}:{kb}{kat_siste})", fmt, fet=True)
+        rad += 2
+    else:
+        rad += 1
+
+    sm_seksjon(rad, "Per år"); rad += 1
+    sm_overskrift(rad, ["År"] + STD); rad += 1
+    for y in år_liste:
+        sm_celle(rad, 1, str(y))
+        for j, (f, fmt) in enumerate(zip(std_formler(k_år(y)), STD_FMT), start=2):
+            sm_celle(rad, j, f, fmt)
+        rad += 1
+    rad += 1
+
+    sm_seksjon(rad, "Per måned"); rad += 1
+    mnd_hode = rad
+    sm_overskrift(rad, ["Måned"] + STD + [f"{k} (m³)" for k in kategorier]); rad += 1
+    mnd_forste = rad
+    for (y, m) in mnd_liste:
+        sm_celle(rad, 1, f"{MND_NAVN[m]} {y}")
+        for j, (f, fmt) in enumerate(zip(std_formler(k_mnd(y, m)), STD_FMT), start=2):
+            sm_celle(rad, j, f, fmt)
+        for j, kat in enumerate(kategorier, start=6):
+            sm_celle(rad, j, f"={sums('G', k_mnd(y, m) + ',' + k_kat(kat))}", "#,##0.000")
+        rad += 1
+    mnd_siste = rad - 1
+    rad += 1
+
+    sm_seksjon(rad, f"Per dag (siste {len(dag_liste)} produksjonsdager)"); rad += 1
+    dag_hode = rad
+    sm_overskrift(rad, ["Dato"] + STD); rad += 1
+    dag_forste = rad
+    for d in dag_liste:
+        sm_celle(rad, 1, d, "DD.MM.YYYY")
+        for j, (f, fmt) in enumerate(zip(std_formler(k_dag(d)), STD_FMT), start=2):
+            sm_celle(rad, j, f, fmt)
+        rad += 1
+    dag_siste = rad - 1
+    rad += 2
+
+    # Nøkkeltall (statiske — vanskelig som rene formler, men nyttig på gulvet)
+    per_dag_map = {}
+    for r in ok_rader:
+        g = per_dag_map.setdefault(r["dato"], {"pakker": 0, "kubikk": 0.0})
+        g["pakker"] += 1
+        g["kubikk"] += r["kubikk"]
+    i_ar = datetime.date.today().year
+    dager_i_ar = {d: v for d, v in per_dag_map.items() if d.year == i_ar}
+    if not dager_i_ar and per_dag_map:
+        # Fall tilbake til siste år i dataene
+        siste_ar = max(d.year for d in per_dag_map)
+        dager_i_ar = {d: v for d, v in per_dag_map.items() if d.year == siste_ar}
+        i_ar = siste_ar
+    sm_seksjon(rad, "Nøkkeltall"); rad += 1
+    if dager_i_ar:
+        snitt = round(sum(v["pakker"] for v in dager_i_ar.values()) / len(dager_i_ar), 1)
+        beste_dag = max(dager_i_ar, key=lambda d: dager_i_ar[d]["pakker"])
+        beste = dager_i_ar[beste_dag]
+        nøkkeltall = [
+            (f"Snitt pakker per produksjonsdag ({i_ar})", snitt),
+            ("Beste enkeltdag", f"{beste_dag:%d.%m.%Y}: {beste['pakker']} pakker"),
+            ("Antall produksjonsdager", len(dager_i_ar)),
+        ]
+        for tittel, verdi in nøkkeltall:
+            sm.cell(rad, 1, tittel).font = DATA_FONT
+            sm.merge_cells(start_row=rad, start_column=1, end_row=rad, end_column=3)
+            c = sm.cell(rad, 4, verdi); c.font = SUBTOTAL_FONT
+            rad += 1
+
+    sm.freeze_panes = "A4"
+
+    # Grafer til høyre for tabellene
+    def stil(ch, tittel, h=8.0, b=14.5):
+        ch.title = tittel
+        ch.height = h
+        ch.width = b
+        ch.style = 10
+        return ch
+
+    if kategorier and kat_siste >= kat_forste:
+        kake = stil(PieChart(), "Kubikkfordeling per sort", h=7.4, b=11.0)
+        kake.add_data(Reference(sm, min_col=5, min_row=kat_forste, max_row=kat_siste))
+        kake.set_categories(Reference(sm, min_col=1, min_row=kat_forste, max_row=kat_siste))
+        kake.dataLabels = DataLabelList()
+        kake.dataLabels.showPercent = True
+        kake.dataLabels.showVal = False
+        kake.dataLabels.showCatName = False
+        sett_kake_farger(kake, len(kategorier))
+        sm.add_chart(kake, "L4")
+
+    if mnd_liste and kategorier and mnd_siste >= mnd_forste:
+        stab = stil(BarChart(), "Kubikk per måned, per sort")
+        stab.type = "col"; stab.grouping = "stacked"; stab.overlap = 100
+        stab.add_data(Reference(sm, min_col=6, max_col=5 + len(kategorier),
+                                min_row=mnd_hode, max_row=mnd_siste), titles_from_data=True)
+        stab.set_categories(Reference(sm, min_col=1, min_row=mnd_forste, max_row=mnd_siste))
+        stab.y_axis.title = "m³"
+        sett_serie_farger(stab, len(kategorier))
+        sm.add_chart(stab, "L20")
+
+        meter = stil(BarChart(), "Løpemeter per måned")
+        meter.type = "col"
+        meter.add_data(Reference(sm, min_col=4, min_row=mnd_hode, max_row=mnd_siste),
+                       titles_from_data=True)
+        meter.set_categories(Reference(sm, min_col=1, min_row=mnd_forste, max_row=mnd_siste))
+        meter.y_axis.title = "lm"; meter.legend = None
+        sett_serie_farger(meter, 1)
+        sm.add_chart(meter, "L37")
+
+    if dag_liste and dag_siste >= dag_forste:
+        linje_ch = stil(LineChart(), f"Kubikk per dag (siste {len(dag_liste)} dager)")
+        linje_ch.add_data(Reference(sm, min_col=5, min_row=dag_hode, max_row=dag_siste),
+                          titles_from_data=True)
+        linje_ch.set_categories(Reference(sm, min_col=1, min_row=dag_forste, max_row=dag_siste))
+        linje_ch.y_axis.title = "m³"; linje_ch.legend = None
+        sett_serie_farger(linje_ch, 1)
+        sm.add_chart(linje_ch, "L53")
+
+    wb.remove(default_ws)
+    wb.active = 0
 
     tmp = xlsx_sti.with_suffix(".tmp.xlsx")
     wb.save(tmp); os.replace(tmp, xlsx_sti)

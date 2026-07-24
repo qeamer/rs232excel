@@ -96,7 +96,22 @@ Merkeprofilert Excel-arbeidsbok, generert på kommando fra live CSV:
 <tr><td>Lapp aldri skrevet ut</td><td><code>--registrer N</code> legger inn manuelt</td></tr>
 </table>
 
-<h2 style="font-size: 1.5em">Kommandoer (norsk)</h2>
+<h2 style="font-size: 1.5em">Kommandoer på Pi</h2>
+
+<p style="font-size: 16px">Etter install — fra hvor som helst, uten <code>cd</code>:</p>
+
+<table style="font-size: 16px">
+<tr><th>Kommando</th><th>Formål</th></tr>
+<tr><td><code>pakkemaskin start</code></td><td>Start fangst</td></tr>
+<tr><td><code>pakkemaskin restart</code></td><td>Restart ved kræsj / kabelbytte</td></tr>
+<tr><td><code>pakkemaskin status</code></td><td>Status + USB-adapter</td></tr>
+<tr><td><code>pakkemaskin logg</code></td><td>Live logg</td></tr>
+<tr><td><code>pakkemaskin test</code></td><td>Bare-fangst (lagrer ikke)</td></tr>
+<tr><td><code>pakkemaskin excel</code></td><td>Generer Excel</td></tr>
+<tr><td><code>pakkemaskin porter</code></td><td>List serieporter</td></tr>
+</table>
+
+<p style="font-size: 16px">Avanserte flag (valgfritt, i <code>python/no/</code>):</p>
 
 <table style="font-size: 16px">
 <tr><th>Flag</th><th>Formål</th></tr>

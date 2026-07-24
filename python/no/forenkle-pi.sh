@@ -45,12 +45,14 @@ else
 fi
 echo 'kernel.printk = 3 4 1 3' | sudo tee /etc/sysctl.d/20-pakkemaskin-quiet.conf >/dev/null
 
-# 2) HDMI tty1 = meny DIREKTE (ingen login/getty) — det er fiksen mot hengende login
-echo "2/5  HDMI-meny uten login …"
+# 2) HDMI via agetty → meny (riktig TTY = tastatur virker)
+echo "2/5  HDMI-meny med agetty …"
 sudo cp "$KATALOG/meny" /usr/local/bin/meny
 sudo chmod +x /usr/local/bin/meny
+sudo cp "$KATALOG/pakkemaskin-autologin.sh" /usr/local/sbin/pakkemaskin-autologin.sh
+sudo chmod +x /usr/local/sbin/pakkemaskin-autologin.sh
 
-# cloud-init skriver «Completed socket interaction…» oppå login og ødelegger prompten
+# cloud-init skriver «Completed socket interaction…» og ødelegger konsollen
 echo "  Skrur av cloud-init …"
 sudo mkdir -p /etc/cloud
 sudo touch /etc/cloud/cloud-init.disabled
@@ -60,52 +62,27 @@ for svc in cloud-init cloud-init-local cloud-config cloud-final \
   sudo systemctl disable --now "$svc" 2>/dev/null || true
 done
 
-# Fjern gammel autologin/frisk-konsoll om den finnes
-sudo rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf
+# Fjern gamle forsøk (egen TTY-service uten tastatur-init)
+sudo systemctl disable --now pakkemaskin-konsoll.service 2>/dev/null || true
+sudo rm -f /etc/systemd/system/pakkemaskin-konsoll.service
 sudo rm -f /etc/systemd/system/pakkemaskin-frisk-konsoll.service
 sudo systemctl disable pakkemaskin-frisk-konsoll.service 2>/dev/null || true
+sudo rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf
+sudo rm -f /etc/profile.d/pakkemaskin-meny.sh
+sudo systemctl unmask getty@tty1.service 2>/dev/null || true
 
-# Egen konsoll-tjeneste som eier tty1 — bypasser getty helt
-sudo tee /etc/systemd/system/pakkemaskin-konsoll.service >/dev/null <<EOF
-[Unit]
-Description=Pakkemaskin HDMI-meny (ingen login)
-After=multi-user.target
-Conflicts=getty@tty1.service
-ConditionPathExists=/dev/tty1
-
+sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
+sudo tee /etc/systemd/system/getty@tty1.service.d/pakkemaskin.conf >/dev/null <<'EOF'
 [Service]
+ExecStart=
+ExecStart=-/sbin/agetty --noclear -n -l /usr/local/sbin/pakkemaskin-autologin.sh tty1 linux
 Type=idle
-User=${BRUKER}
-Group=${BRUKER}
-WorkingDirectory=${HJEM}
-Environment=PAKKEMASKIN_MENY_KJORT=1
-Environment=TERM=linux
-ExecStartPre=/bin/sleep 3
-ExecStart=/usr/local/bin/meny
 Restart=always
-RestartSec=1
-StandardInput=tty
-StandardOutput=tty
-StandardError=tty
-TTYPath=/dev/tty1
-TTYReset=yes
-TTYVHangup=yes
-TTYVTDisallocate=yes
-
-[Install]
-WantedBy=multi-user.target
 EOF
 
-# MASKER getty på tty1 (disable er ikke nok — getty.target kan starte den igjen)
-sudo systemctl stop getty@tty1.service 2>/dev/null || true
-sudo systemctl disable getty@tty1.service 2>/dev/null || true
-sudo systemctl mask getty@tty1.service
-sudo systemctl enable getty@tty2.service 2>/dev/null || true
 sudo systemctl daemon-reload
-sudo systemctl enable pakkemaskin-konsoll.service
-
-# profile.d trengs ikke lenger for tty1
-sudo rm -f /etc/profile.d/pakkemaskin-meny.sh
+sudo systemctl enable getty@tty1.service
+sudo systemctl enable getty@tty2.service 2>/dev/null || true
 
 sudo tee /etc/motd >/dev/null <<'EOF'
 

@@ -68,7 +68,7 @@ Eller skriv ett ord: `usb` `sjekk` `logg` `status` `start` `stopp` `restart` `ex
 
 Nød-login (hvis du trenger shell): **Alt+F2** · SSH: `ssh pi@pakkemaskin.local`
 
-📖 Full guide: **[docs/no/INSTALLATION.md](docs/no/INSTALLATION.md)** · English: [docs/en/INSTALLATION.md](docs/en/INSTALLATION.md)
+📖 Full guide: **[docs/no/INSTALLATION.md](docs/no/INSTALLATION.md)** · English: [docs/en/INSTALLATION.md](docs/en/INSTALLATION.md) · Endringslogg: [CHANGELOG.md](CHANGELOG.md)
 
 ---
 

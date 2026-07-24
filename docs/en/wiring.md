@@ -8,8 +8,9 @@
 |------|-----------|
 | PLC and OKI | **DB25** |
 | Extension (middle) | Often a **DB9** cable with **DB25 adapters** on each end |
-| Pi OTG | micro-USB **male** (into Pi) → USB-A **female** (hub male plugs in) |
-| Pi listen | StarTech ICUSB232DB25: USB-A **male** → DB9 **male** → separate adapter DB9 **female**→DB25 **male** → WAGO |
+| Pi OTG extension | micro-USB **male** into Pi DATA → USB-A **female** out |
+| USB hub | its USB-A **male** cable into the OTG female |
+| StarTech / DB9 cable | USB-A **male** into hub → other end DB9 **male** + attached **DB9→DB25 adapter** → DB25 **male** to WAGO |
 
 The signals to tap are still **DB25 pin 2 (TX)** and **pin 7 (GND)** at the PLC/printer.  
 In the DB9 middle section that maps to:
@@ -50,11 +51,20 @@ The extension’s **DB25** ends go only into the PLC and printer.
 The listen adapter is a separate branch:
 
 ```text
-Pi ── micro-USB MALE ── OTG ── USB-A FEMALE
-                                    ↑
-                              hub (USB-A FEMALE ports)
-                                    ↑
-  USB-A MALE ── StarTech ── DB9 MALE ── adapter (DB9 FEMALE→DB25 MALE) ── WAGO
+Pi DATA ── micro-USB MALE ── OTG extension ── USB-A FEMALE
+                                                    ↑
+                              hub USB-A MALE ───────┘
+                                    │
+                    ┌───────────────┴── hub ports ────────────────┐
+                    │                                             │
+               keyboard / USB stick          StarTech DB9 cable:
+                                             USB-A MALE into hub
+                                                   │
+                                             DB9 MALE
+                                                   │
+                                      DB9→DB25 adapter (separate)
+                                                   │
+                                             DB25 MALE → WAGO
 ```
 
 | From WAGO | To listen adapter (serial end) |

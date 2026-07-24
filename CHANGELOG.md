@@ -58,8 +58,9 @@ Tester: `cd python/no && python3 -m unittest test_register.py`
 
 ### USB-kjede og strøm
 
-- Pi Zero **data-port** → OTG (micro-USB **hann** → USB-A **hunn**) → hub → tastatur + minnepenn + StarTech
-- StarTech ICUSB232DB25: USB-A **hann** → DB9 **hann** → egen adapter → DB25 **hann** → WAGO
+- Pi DATA → OTG-skjøtekabel (USB-A **hunn**) ← hub (USB-A **hann**)
+- StarTech/DB9-kabel: USB-A **hann** inn i hub → DB9 **hann** → egen **DB9→DB25-adapter** → DB25 **hann** → WAGO
+- USB-diagram tegnet som skjema (ikke AI-illustrasjon) etter faktiske kabler
 - **PWR IN:** 5V / ≥2,5 A (helst 3 A) vegglader — ikke svak telefonlader
 - Auto-mount til `/media/usb0` (`fiks-usb.sh` + udev)
 - Hotplug: penn ut/inn synkes ved neste sjekk / pakke

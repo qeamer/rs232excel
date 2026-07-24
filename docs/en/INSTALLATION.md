@@ -103,10 +103,11 @@ Step by step:
 
 ### USB chain
 
-<img src="img/usb-chain-complete.png" width="100%" alt="USB chain: Pi DATA → OTG (USB-A female) → hub → StarTech DB9 male → DB25 male"/>
+<img src="img/usb-chain-complete.png" width="100%" alt="USB chain: Pi → OTG female ← hub male; StarTech USB male → DB9 → DB25 adapter"/>
 
-The OTG adapter **must** go in the middle **data** port on the Pi Zero — the corner port is power-only (**PWR IN**, ≥2.5 A wall supply).  
-From the photos: OTG is micro-USB **male** → USB-A **female**. StarTech ends in DB9 **male**; a separate adapter gives DB25 **male** to WAGO.
+The OTG extension **must** go in the middle **data** port on the Pi Zero — the corner port is power-only (**PWR IN**, ≥2.5 A wall supply).
+
+**How the cables are:** Pi DATA → micro-USB male → OTG extension ending in USB-A **female** ← hub USB-A **male**. StarTech/DB9 cable: USB-A **male** into hub → DB9 **male** → separate DB9→DB25 adapter → DB25 **male** to WAGO.
 
 ### OLED status display (optional)
 

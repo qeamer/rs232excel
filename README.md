@@ -40,8 +40,8 @@ Etter install styrer du alt med **`pakkemaskin`**. Ingen mapper. Ingen lange kom
 pakkemaskin start        # start fangst
 pakkemaskin restart      # ved kræsj eller kabelbytte
 pakkemaskin status       # går den? ser den USB-adapter?
-pakkemaskin logg         # live logg (Ctrl+C for å avslutte)
-pakkemaskin test         # første gang — viser lapper, lagrer ikke
+pakkemaskin logg         # live logg — stopp med Ctrl+C
+pakkemaskin test         # første gang — viser lapper, lagrer ikke (Ctrl+C)
 pakkemaskin excel        # lag Excel-fil
 pakkemaskin porter       # list USB-serieporter
 ```

@@ -8,8 +8,8 @@ Komplett gjennomgang — fra tom SD-kort til fangst i produksjon på høvleriet.
 pakkemaskin start        # start fangst
 pakkemaskin restart      # ved kræsj eller kabelbytte
 pakkemaskin status       # sjekk at alt går
-pakkemaskin logg         # live logg
-pakkemaskin test         # første test (lagrer ikke)
+pakkemaskin logg         # live logg — stopp med Ctrl+C
+pakkemaskin test         # første test (lagrer ikke) — stopp med Ctrl+C
 pakkemaskin excel        # lag Excel
 ```
 
@@ -84,9 +84,11 @@ sudo apt update && sudo apt upgrade -y
 git clone https://github.com/qeamer/rs232excel.git
 cd rs232excel/python/no
 
-# Avhengigheter og autostart
+# Avhengigheter og autostart (+ kommandoen «pakkemaskin»)
 bash installer.sh
 ```
+
+Etter dette fungerer `pakkemaskin start`, `pakkemaskin status`, osv. fra hvor som helst.
 
 Valgfri OLED-skjerm:
 

@@ -84,13 +84,32 @@ case "$cmd" in
     fi
     ;;
   logg|logs|log)
-    echo "Live logg — Ctrl+C for å avslutte"
-    exec journalctl -u "$TJENESTE" -f
+    echo
+    echo "========================================"
+    echo "  LIVE LOGG"
+    echo "  Stopp med:  Ctrl + C"
+    echo "========================================"
+    echo
+    trap 'echo; echo "Logg avsluttet."; exit 0' INT
+    journalctl -u "$TJENESTE" -f
     ;;
   test|bare-fangst)
-    echo "Bare-fangst (lagrer ikke). Ctrl+C for å stoppe."
+    echo
+    echo "========================================"
+    echo "  BARE-FANGST (lagrer ikke)"
+    echo "  Stopp med:  Ctrl + C"
+    echo "========================================"
+    echo
     echo "Tips: stopp tjenesten først om den kjører:  pakkemaskin stop"
-    kjør --bare-fangst --port /dev/ttyUSB0
+    echo
+    trap 'echo; echo "Test avsluttet."; exit 0' INT
+    # ikke exec — så trap rekker å vise «avsluttet»
+    if [[ ! -f "$PAKKEMASKIN_DIR/read_package.py" ]]; then
+      echo "Finner ikke read_package.py i $PAKKEMASKIN_DIR" >&2
+      exit 1
+    fi
+    cd "$PAKKEMASKIN_DIR"
+    python3 read_package.py --bare-fangst --port /dev/ttyUSB0
     ;;
   porter|ports)
     kjør --list-porter

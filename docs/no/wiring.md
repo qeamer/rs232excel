@@ -9,7 +9,7 @@
 | PLS og OKI | **DB25** |
 | Skjøtekabel (midt) | Ofte **DB9**-kabel med **DB25-adapter** i hver ende |
 | Pi OTG | micro-USB **hann** (inn i Pi) → USB-A **hunn** (hubens hann plugges inn) |
-| Pi-lytting | USB–RS232: USB-A **hann** (inn i hub) → DB9 **hunn** → DB25-adapter → WAGO |
+| Pi-lytting | StarTech ICUSB232DB25: USB-A **hann** → DB9 **hann** → egen adapter DB9 **hunn**→DB25 **hann** → WAGO |
 
 Signalet som skal tappes er fortsatt **DB25 pin 2 (TX)** og **pin 7 (GND)** på PLS/OKI-siden.  
 I DB9-midten tilsvarer det:
@@ -54,7 +54,7 @@ Pi ── micro-USB HANN ── OTG ── USB-A HUNN
                                     ↑
                               hub (USB-A HUNN-porter)
                                     ↑
-              USB-A HANN ── USB-RS232 ── DB9 HUNN ── DB25-adapter ── WAGO
+  USB-A HANN ── StarTech ── DB9 HANN ── adapter (DB9 HUNN→DB25 HANN) ── WAGO
 ```
 
 | Fra WAGO | Til lytteadapter (serie-ende) |

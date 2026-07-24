@@ -9,7 +9,7 @@
 | PLC and OKI | **DB25** |
 | Extension (middle) | Often a **DB9** cable with **DB25 adapters** on each end |
 | Pi OTG | micro-USB **male** (into Pi) → USB-A **female** (hub male plugs in) |
-| Pi listen | USB–RS232: USB-A **male** (into hub) → DB9 **female** → DB25 adapter → WAGO |
+| Pi listen | StarTech ICUSB232DB25: USB-A **male** → DB9 **male** → separate adapter DB9 **female**→DB25 **male** → WAGO |
 
 The signals to tap are still **DB25 pin 2 (TX)** and **pin 7 (GND)** at the PLC/printer.  
 In the DB9 middle section that maps to:
@@ -54,7 +54,7 @@ Pi ── micro-USB MALE ── OTG ── USB-A FEMALE
                                     ↑
                               hub (USB-A FEMALE ports)
                                     ↑
-              USB-A MALE ── USB-RS232 ── DB9 FEMALE ── DB25 adapter ── WAGO
+  USB-A MALE ── StarTech ── DB9 MALE ── adapter (DB9 FEMALE→DB25 MALE) ── WAGO
 ```
 
 | From WAGO | To listen adapter (serial end) |

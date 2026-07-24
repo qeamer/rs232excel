@@ -141,19 +141,22 @@ Steg for steg:
 
 ### USB-kjede
 
-<img src="img/usb-kjede-komplett.png" width="100%" alt="USB-kjede: WAGO-tapp → ICUSB232DB25 → hub"/>
+<img src="img/usb-kjede-komplett.png" width="100%" alt="USB-kjede: Pi DATA → OTG (USB-A hunn) → hub → StarTech DB9 hann → DB25 hann"/>
 
-OTG-adapteren **må** i **data**-porten midt på Pi Zero — hjørneporten er kun strøm (**PWR IN**).
+OTG-adapteren **må** i **data**-porten midt på Pi Zero — hjørneporten er kun strøm (**PWR IN**).  
+Fra bildene: OTG er micro-USB **hann** → USB-A **hunn**. StarTech ender i DB9 **hann**; egen adapter gir DB25 **hann** til WAGO.
 
 **Anbefalt produksjonsoppsett (tastatur + minnepenn + serieadapter samtidig):**
 
 ```text
 PWR IN (hjørne) ─── 5V / ≥2,5 A vegglader (helst 3 A)
 
-USB midt ─── OTG ─── USB-hub (gjerne med egen strøm)
+USB midt ─── OTG (USB-A hunn) ─── USB-hub (gjerne med egen strøm)
                          ├── USB-tastatur
                          ├── minnepenn      → /media/usb0 (CSV+Excel)
-                         └── RS-232-adapter → /dev/ttyUSB0
+                         └── StarTech ICUSB232DB25
+                               USB-A hann → DB9 hann → adapter → DB25 hann → WAGO
+                               → /dev/ttyUSB0
 ```
 
 - SD-kortet er alltid fasiten (fangst fortsetter uten minnepenn).

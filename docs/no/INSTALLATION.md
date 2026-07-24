@@ -2,6 +2,21 @@
 
 Komplett gjennomgang — fra tom SD-kort til fangst i produksjon på høvleriet. Ca. 45 minutter, ingen programmeringserfaring nødvendig.
 
+## Allerede installert? Bruk bare dette
+
+```bash
+pakkemaskin start        # start fangst
+pakkemaskin restart      # ved kræsj eller kabelbytte
+pakkemaskin status       # sjekk at alt går
+pakkemaskin logg         # live logg
+pakkemaskin test         # første test (lagrer ikke)
+pakkemaskin excel        # lag Excel
+```
+
+Resten av denne siden er **første gangs installasjon** (SD-kort → kabler → verifisering).
+
+---
+
 <img src="img/signal-flow.png" width="100%" alt="Systemarkitektur"/>
 
 Skriveren fortsetter å skrive fysiske pakkelapper **helt som før**. Tappen lytter bare — den sender aldri — så skriver og PLS oppfører seg likt uansett om Pi-en er påslått eller ikke.

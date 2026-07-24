@@ -30,7 +30,24 @@ The tap is **physically read-only**: only pin 2 (TX) and pin 7 (GND) are branche
 
 ---
 
-## Quick start
+## Daily use on the Pi (Norwegian production CLI)
+
+The production install exposes a single command — no `cd` needed:
+
+```bash
+pakkemaskin start        # start capture
+pakkemaskin restart      # after a crash or cable swap
+pakkemaskin status       # is it running? USB adapter seen?
+pakkemaskin logg         # live log
+pakkemaskin test         # first-time dry run (does not save)
+pakkemaskin excel        # build Excel workbook
+```
+
+Full Norwegian docs (primary): **[README.md](README.md)** · **[docs/no/INSTALLATION.md](docs/no/INSTALLATION.md)**
+
+---
+
+## Quick start (English mirror)
 
 ```bash
 git clone https://github.com/qeamer/rs232excel.git

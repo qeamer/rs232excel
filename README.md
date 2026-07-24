@@ -32,6 +32,45 @@
 
 ---
 
+## Daglig bruk på Pi — husk bare dette
+
+Etter install styrer du alt med **`pakkemaskin`**. Ingen mapper. Ingen lange kommandoer.
+
+```bash
+pakkemaskin start        # start fangst
+pakkemaskin restart      # ved kræsj eller kabelbytte
+pakkemaskin status       # går den? ser den USB-adapter?
+pakkemaskin logg         # live logg (Ctrl+C for å avslutte)
+pakkemaskin test         # første gang — viser lapper, lagrer ikke
+pakkemaskin excel        # lag Excel-fil
+pakkemaskin porter       # list USB-serieporter
+```
+
+| Situasjon | Kommando |
+|-----------|----------|
+| Oppstart / start fangst | `pakkemaskin start` |
+| Noe kræsjet / byttet kabel | `pakkemaskin restart` |
+| Sjekke at alt er OK | `pakkemaskin status` |
+| Se hva som skjer live | `pakkemaskin logg` |
+| Første test uten å lagre | `pakkemaskin test` |
+| Hente Excel til PC | `pakkemaskin excel` |
+
+📖 Full guide: **[docs/no/INSTALLATION.md](docs/no/INSTALLATION.md)** · English: [docs/en/INSTALLATION.md](docs/en/INSTALLATION.md)
+
+---
+
+## Første gangs installasjon
+
+```bash
+git clone https://github.com/qeamer/rs232excel.git
+cd rs232excel/python/no
+bash installer.sh          # installerer også kommandoen «pakkemaskin»
+```
+
+Deretter: `pakkemaskin test` → `pakkemaskin start`.
+
+---
+
 <p style="font-size: 17px; line-height: 1.55">
 En Raspberry Pi lytter <b>passivt</b> på RS-232-linja mellom en Telemecanique TSX PLS
 (1980-tall) og en OKI Microline 280 nåleskriver. Hver pakkelapp parses og lagres automatisk —
@@ -44,23 +83,6 @@ selv når skriveren er av.
 <p style="font-size: 16px; line-height: 1.5">
 Tappen er <b>fysisk skrivebeskyttet</b>: kun pinne 2 (TX) og pinne 7 (GND) grener av via WAGO
 midt på kabelen. Skriveren fortsetter helt som før — ingenting sendes tilbake mot PLS-en.
-</p>
-
----
-
-<h2 style="font-size: 1.5em">Hurtigstart (norsk produksjonsversjon)</h2>
-
-```bash
-git clone https://github.com/qeamer/rs232excel.git
-cd rs232excel/python/no
-pip install -r requirements.txt
-python3 read_package.py --port /dev/ttyUSB0 --usb-sti /media/usb0
-python3 read_package.py --eksporter-xlsx
-```
-
-<p style="font-size: 16px">
-📖 <b><a href="docs/no/INSTALLATION.md">Installasjonsguide med koblingsdiagram →</a></b><br>
-&nbsp;&nbsp;&nbsp; Engelsk guide: <a href="docs/en/INSTALLATION.md">docs/en/INSTALLATION.md</a>
 </p>
 
 ---
@@ -96,22 +118,12 @@ Merkeprofilert Excel-arbeidsbok, generert på kommando fra live CSV:
 <tr><td>Lapp aldri skrevet ut</td><td><code>--registrer N</code> legger inn manuelt</td></tr>
 </table>
 
-<h2 style="font-size: 1.5em">Kommandoer på Pi</h2>
+<h2 style="font-size: 1.5em">Avanserte flag (valgfritt)</h2>
 
-<p style="font-size: 16px">Etter install — fra hvor som helst, uten <code>cd</code>:</p>
-
-<table style="font-size: 16px">
-<tr><th>Kommando</th><th>Formål</th></tr>
-<tr><td><code>pakkemaskin start</code></td><td>Start fangst</td></tr>
-<tr><td><code>pakkemaskin restart</code></td><td>Restart ved kræsj / kabelbytte</td></tr>
-<tr><td><code>pakkemaskin status</code></td><td>Status + USB-adapter</td></tr>
-<tr><td><code>pakkemaskin logg</code></td><td>Live logg</td></tr>
-<tr><td><code>pakkemaskin test</code></td><td>Bare-fangst (lagrer ikke)</td></tr>
-<tr><td><code>pakkemaskin excel</code></td><td>Generer Excel</td></tr>
-<tr><td><code>pakkemaskin porter</code></td><td>List serieporter</td></tr>
-</table>
-
-<p style="font-size: 16px">Avanserte flag (valgfritt, i <code>python/no/</code>):</p>
+<p style="font-size: 16px">
+Daglig bruk: se <b>Daglig bruk på Pi</b> øverst. Under er flag for direkte kjøring av
+<code>python3 read_package.py …</code> om du trenger det.
+</p>
 
 <table style="font-size: 16px">
 <tr><th>Flag</th><th>Formål</th></tr>

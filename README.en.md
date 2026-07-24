@@ -107,8 +107,8 @@ A branded Excel workbook — in Norwegian production it is built **automatically
 | Flag | Purpose |
 |---|---|
 | `--port /dev/ttyUSB0` | Live capture (production) |
-| `--usb-mirror /media/usb0` | Mirror CSV to flash drive in real time |
 | `--raw-capture` | Raw capture, nothing saved — first-run verification |
+| *(USB mirror / `integritet`)* | Norwegian production: `--usb-sti` in [`python/no/`](python/no/) |
 | `--set-season raw` / `kiln-dried` | Match the physical season toggle on the machine |
 | `--export-xlsx` | Generate the Excel workbook |
 | `--summary` | Daily totals in the terminal |

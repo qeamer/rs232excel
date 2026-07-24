@@ -50,6 +50,16 @@ echo "2/5  HDMI-meny uten login …"
 sudo cp "$KATALOG/meny" /usr/local/bin/meny
 sudo chmod +x /usr/local/bin/meny
 
+# cloud-init skriver «Completed socket interaction…» oppå login og ødelegger prompten
+echo "  Skrur av cloud-init …"
+sudo mkdir -p /etc/cloud
+sudo touch /etc/cloud/cloud-init.disabled
+for svc in cloud-init cloud-init-local cloud-config cloud-final \
+           cloud-init.service cloud-init-local.service \
+           cloud-config.service cloud-final.service; do
+  sudo systemctl disable --now "$svc" 2>/dev/null || true
+done
+
 # Fjern gammel autologin/frisk-konsoll om den finnes
 sudo rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf
 sudo rm -f /etc/systemd/system/pakkemaskin-frisk-konsoll.service
@@ -70,7 +80,7 @@ Group=${BRUKER}
 WorkingDirectory=${HJEM}
 Environment=PAKKEMASKIN_MENY_KJORT=1
 Environment=TERM=linux
-ExecStartPre=/bin/sleep 2
+ExecStartPre=/bin/sleep 3
 ExecStart=/usr/local/bin/meny
 Restart=always
 RestartSec=1
@@ -86,14 +96,15 @@ TTYVTDisallocate=yes
 WantedBy=multi-user.target
 EOF
 
-# Skru AV getty på tty1 (det er den som henger), behold tty2 for nød-login
-sudo systemctl disable getty@tty1.service 2>/dev/null || true
+# MASKER getty på tty1 (disable er ikke nok — getty.target kan starte den igjen)
 sudo systemctl stop getty@tty1.service 2>/dev/null || true
+sudo systemctl disable getty@tty1.service 2>/dev/null || true
+sudo systemctl mask getty@tty1.service
 sudo systemctl enable getty@tty2.service 2>/dev/null || true
 sudo systemctl daemon-reload
 sudo systemctl enable pakkemaskin-konsoll.service
 
-# profile.d trengs ikke lenger for tty1, men lar «meny» fungere fra shell
+# profile.d trengs ikke lenger for tty1
 sudo rm -f /etc/profile.d/pakkemaskin-meny.sh
 
 sudo tee /etc/motd >/dev/null <<'EOF'

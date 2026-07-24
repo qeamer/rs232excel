@@ -18,9 +18,10 @@ ssh pi@192.168.1.53
 cd ~/rs232excel
 git pull origin cursor/pakkemaskin-cli-ef03
 cd python/no
-bash forenkle-pi.sh
-sudo reboot
+bash fiks-login.sh
 ```
+
+(`fiks-login.sh` skrur av cloud-init, maskerer login, starter meny, rebooter.)
 
 Resten av denne siden er **første gangs installasjon** (SD-kort → kabler → verifisering).
 

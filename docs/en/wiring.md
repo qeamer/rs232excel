@@ -1,12 +1,14 @@
 # Wiring
 
+<img src="img/passive-rs232-tap.png" width="100%" alt="Passive RS-232 tap"/>
+
 Insert **40 cm DB25 M→F extension** between the existing PLC cable and the OKI printer port.
 
-Mid-cable, cut **only** the conductors for:
+**Slit the jacket** mid-extension — **do not cut the whole cable through**. Pull out and cut **only** these two conductors (leave all others intact):
 
 | Pin | |
 |:--|:--|
-| **2** | Data line (PLC → printer) |
+| **2** | Data / TX (PLC → printer) |
 | **7** | Ground |
 
 **WAGO 221** — three wires in each clamp:

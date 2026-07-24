@@ -89,29 +89,29 @@ python3 vis_status.py  # runs independently of capture
 
 See also: [wiring.md](wiring.md)
 
-<img src="img/wiring-tap.png" width="100%" alt="DB25 tap wiring"/>
+<img src="img/passive-rs232-tap.png" width="100%" alt="Passive RS-232 tap — two wires only"/>
 
 Step by step:
 
 1. **Insert the 40 cm extension** between the printer's DB25 port and the existing cable from the sorting plant. Take a photo of the original connection first.
-2. **Mid-cable, open the jacket** and identify the wires for **pin 2 (TX)** and **pin 7 (GND)**. Photograph the colour coding before cutting.
-3. **Cut only those two wires** — never the whole cable.
-4. **WAGO-join three ends per clamp**: PLC side + printer side (signal continues unbroken) + one new thin wire out to the USB-serial adapter.
-5. **Secure the splice** with cable ties in the same cable tray — never leave a WAGO hanging free; vibration works connections loose over time. Mark the active cable with tape.
+2. **Mid-cable, slit the jacket** (do **not** cut the whole cable through). Identify **pin 2 (TX)** and **pin 7 (GND)**. Photograph colour coding before cutting.
+3. **Cut only those two conductors** — all other wires stay intact so the printer still gets the full signal.
+4. **WAGO-join three ends per clamp**: PLC side + printer side + one new thin wire to the USB-serial adapter.
+5. **Secure the splice** with cable ties in the cable tray. Mark the active cable with tape.
 
-> ⚠ **Direction matters:** the printer-side pin 2 is **TX** (the signal source). It connects to the adapter's **RX**. TX→TX captures nothing.
+> ⚠ **Direction matters:** pin 2 is **TX** (signal source). It connects to the adapter's **RX**. TX→TX captures nothing. Signal goes to `/dev/ttyUSB0` — **not** GPIO.
 
 ### USB chain
 
-<img src="img/usb-chain.png" width="100%" alt="USB chain"/>
+<img src="img/usb-chain-complete.png" width="100%" alt="USB chain with keyboard, stick, and adapter"/>
 
-The OTG adapter **must** go in the middle **data** port on the Pi Zero — the corner port is power-only and detects nothing.
+The OTG adapter **must** go in the middle **data** port on the Pi Zero — the corner port is power-only (**PWR IN**, ≥2.5 A wall supply).
 
 ### OLED status display (optional)
 
-<img src="img/oled-gpio.png" width="80%" alt="OLED GPIO wiring"/>
+<img src="img/oled-i2c-correct.png" width="80%" alt="OLED I2C four wires"/>
 
-Four jumper wires, completely independent of the USB chain. Runs as its own program — if it ever crashes, capture is unaffected.
+Four I2C jumpers (SSD1306 0.96"), independent of the USB chain. Own process (`vis_status.py`) — if it crashes, capture is unaffected. **Not** a 40-pin LCD HAT.
 
 ---
 

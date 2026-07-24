@@ -114,9 +114,10 @@ Nye norske diagrammer i `docs/no/img/` (erstatter misvisende AI-bilder):
 
 | Fil | Innhold |
 |-----|---------|
-| `passiv-rs232-tapp.png` | Kun pin 2/7, WAGO, TX→RX, **ikke** GPIO |
+| `passiv-rs232-tapp.png` | Åpne kappen — **kun** leder 2/7 (ikke klipp hele kabelen), WAGO, TX→RX |
 | `usb-kjede-komplett.png` | PWR IN ≥2,5 A, OTG-hub, tastatur+penn+adapter |
 | `oled-i2c-korrekt.png` | 0,96" SSD1306 I2C — **ikke** 40-pinners LCD-HAT |
+| `docs/en/img/passive-rs232-tap.png` m.fl. | Engelske speilversjoner av samme diagrammer |
 
 ---
 

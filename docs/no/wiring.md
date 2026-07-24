@@ -4,11 +4,11 @@
 
 Sett inn **40 cm DB25 hann→hunn skjøtekabel** mellom eksisterende PLS-kabel og OKI-skriverens port.
 
-Midt på kabelen klippes **kun** lederne for:
+**Åpne kappen** midt på skjøten — **klipp ikke hele kabelen over**. Trekk ut og klipp **kun** disse to lederne (andre ledere urørt):
 
 | Pinne | |
 |:--|:--|
-| **2** | Datalinja (PLS → skriver) |
+| **2** | Datalinja / TX (PLS → skriver) |
 | **7** | Jord (GND) |
 
 **WAGO 221** — tre ledninger i hver klemme:

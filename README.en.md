@@ -136,8 +136,8 @@ Full parts list in the [installation guide](docs/en/INSTALLATION.md).
 <p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passive tap</b> — slit the jacket; cut <b>only</b> pin 2 (TX) and pin 7 (GND) conductors. Not the whole cable. WAGO, TX→RX. Not GPIO.</p>
 <img src="docs/en/img/passive-rs232-tap.png" width="100%" alt="Passive RS-232 tap"/>
 
-<p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB chain</b> — PWR IN = power (≥2.5 A). Data port → OTG → hub → keyboard, stick, adapter.</p>
-<img src="docs/en/img/usb-chain-complete.png" width="100%" alt="USB chain"/>
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB chain</b> — WAGO tap → <b>ICUSB232DB25</b> → hub (with keyboard + stick). PWR IN = power (≥2.5 A); data port → OTG → hub.</p>
+<img src="docs/en/img/usb-chain-complete.png" width="100%" alt="USB chain with WAGO and ICUSB232DB25"/>
 
 <p style="font-size: 15px; margin-bottom: 0.4em"><b>3 · OLED (optional)</b> — 0.96" SSD1306 I2C, four wires. Rotates day/year, last package, sort mix.</p>
 <img src="docs/en/img/oled-i2c-correct.png" width="72%" alt="OLED I2C"/>

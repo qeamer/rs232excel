@@ -103,7 +103,7 @@ Step by step:
 
 ### USB chain
 
-<img src="img/usb-chain-complete.png" width="100%" alt="USB chain with keyboard, stick, and adapter"/>
+<img src="img/usb-chain-complete.png" width="100%" alt="USB chain: WAGO tap → ICUSB232DB25 → hub"/>
 
 The OTG adapter **must** go in the middle **data** port on the Pi Zero — the corner port is power-only (**PWR IN**, ≥2.5 A wall supply).
 

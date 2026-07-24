@@ -164,8 +164,8 @@ Full delerliste i <a href="docs/no/INSTALLATION.md">installasjonsguiden</a>.
 <p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passiv tapp</b> — åpne kappen, klipp <b>kun</b> leder pin 2 (TX) og 7 (GND). Ikke hele kabelen. WAGO, TX→RX. Ikke GPIO.</p>
 <img src="docs/no/img/passiv-rs232-tapp.png" width="100%" alt="Passiv RS-232-tapp"/>
 
-<p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB-kjede</b> — PWR IN = strøm (≥2,5 A). Data-port → OTG → hub → tastatur, penn, adapter.</p>
-<img src="docs/no/img/usb-kjede-komplett.png" width="100%" alt="USB-kjede"/>
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB-kjede</b> — WAGO-tapp → <b>ICUSB232DB25</b> → hub (med tastatur + penn). PWR IN = strøm (≥2,5 A); data-port → OTG → hub.</p>
+<img src="docs/no/img/usb-kjede-komplett.png" width="100%" alt="USB-kjede med WAGO og ICUSB232DB25"/>
 
 <p style="font-size: 15px; margin-bottom: 0.4em"><b>3 · OLED (valgfritt)</b> — 0,96" SSD1306 I2C, fire ledninger. Roterer dag/år, siste pakke, sort.</p>
 <img src="docs/no/img/oled-i2c-korrekt.png" width="72%" alt="OLED I2C"/>

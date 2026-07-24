@@ -141,7 +141,7 @@ Steg for steg:
 
 ### USB-kjede
 
-<img src="img/usb-kjede-komplett.png" width="100%" alt="USB-kjede med tastatur, penn og adapter"/>
+<img src="img/usb-kjede-komplett.png" width="100%" alt="USB-kjede: WAGO-tapp → ICUSB232DB25 → hub"/>
 
 OTG-adapteren **må** i **data**-porten midt på Pi Zero — hjørneporten er kun strøm (**PWR IN**).
 

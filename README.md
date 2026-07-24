@@ -122,7 +122,7 @@ Merkeprofilert Excel-arbeidsbok, generert på kommando fra live CSV:
 <tr><th>Situasjon på gulvet</th><th>Hva programmet gjør</th></tr>
 <tr><td>Operatør trykker kvittering to ganger</td><td><b>Dedup</b> — pakke lagres én gang, råkopi i <code>utskrift.txt</code></td></tr>
 <tr><td>Pakke aldri kvittert</td><td><b>Hull-deteksjon</b> — manglende numre i <code>mangler.csv</code></td></tr>
-<tr><td>Teller nullstiller 9999 → 0</td><td><b>Runde</b> — oppdages automatisk</td></tr>
+<tr><td>Teller nullstiller 9999 → 0</td><td><b>Runde</b> — kun når maks &gt; 9000 og nytt nr er lavt (reprint midt i serien starter ikke ny runde)</td></tr>
 <tr><td>Skriver av / tom for papir</td><td>Data ligger på kabelen uansett</td></tr>
 <tr><td>Minnepenn trukket ut</td><td>SD-kort er fasit; minnepenn synkes ved ny tilkobling</td></tr>
 <tr><td>Lapp aldri skrevet ut</td><td><code>--registrer N</code> legger inn manuelt</td></tr>

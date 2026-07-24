@@ -1114,7 +1114,7 @@ def main():
     p.add_argument("--timeout", type=float, default=1.0)
     p.add_argument("--flush", type=float, default=3.0)
     p.add_argument("--reset-terskel", type=int, default=100,
-                   help="hvor stort hopp bakover som regnes som nullstilling")
+                   help="nytt pakkenr må være ≤ denne (og maks > 9000) for 9999→0-nullstilling")
     filer = aarsfiler()
     p.add_argument("--csv", default=None,
                    help=f"CSV-fil (standard: {filer['csv']} — nytt navn hvert år)")

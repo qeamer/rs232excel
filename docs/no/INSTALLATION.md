@@ -50,7 +50,11 @@ Skriveren fortsetter å skrive fysiske pakkelapper **helt som før**. Tappen lyt
 | 11 | SSD1306 0,96" OLED, I2C, 4-pin | AliExpress | Statusskjerm (valgfritt) |
 | 12 | Dupont hopperledninger F-F | AliExpress | 4 av 40 brukes (OLED) |
 
-I tillegg: 5V/2A+ micro-USB strømforsyning, tynn ledning til WAGO-grenen.
+I tillegg: **5V / minst 2,5 A** micro-USB strømforsyning (helst 3 A), tynn ledning til WAGO-grenen.
+
+> **Strøm er kritisk på Pi Zero.** For lite ampere → «mystiske» feil: tastatur som ikke svarer,
+> USB-enheter som forsvinner, hengende konsoll. Bruk godkjent vegglader (**5,0–5,1 V, ≥ 2,5 A**),
+> ikke svak telefonlader. HDMI + hub + tastatur + minnepenn trekker mer enn Pi-en alene.
 
 ---
 

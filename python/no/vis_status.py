@@ -2,13 +2,14 @@
 """
 vis_status.py — Pakkemaskin Skriver (Skjåk Trelast)
 
-Liten OLED-skjerm (0,96" SSD1306, I2C) som roterer mellom to
+Liten OLED-skjerm (0,96" SSD1306, I2C) som roterer mellom tre
 statusvisninger, hver 10. sekund. Kjører som EGET, uavhengig program
 — leser bare årets pakkelapperYYYY.csv utenfra og rører aldri fangst-koden.
 
 Skjermer (roterer i denne rekkefølgen):
   1. Dagens og årets oppsummering (antall pakker + kubikk)
-  2. Sortfordeling i dag — mini stolpediagram med ANTALL pakker per sort
+  2. Siste pakke — pakkenr, dimensjon, sort, m³ (etter nedslipp / «hva var sist?»)
+  3. Sortfordeling i dag — mini stolpediagram med ANTALL pakker per sort
      (ikke prosent — Kent tenker i faktiske pakketall på gulvet)
 
 Avhengigheter (på selve Pi-en):
@@ -78,6 +79,15 @@ def sortfordeling_i_dag(rader):
     return tellere
 
 
+def siste_pakke(rader):
+    """Siste fangede pakke — nyeste tid_fanget, ellers siste rad i filen."""
+    if not rader:
+        return None
+    def nokkel(r):
+        return (r.get("tid_fanget") or "", r.get("pakkenr") or "")
+    return max(rader, key=nokkel)
+
+
 # ── Skjerm-innhold (returnerer liste med tekstlinjer) ────────────────
 
 def skjerm_dag_og_ar(rader):
@@ -85,6 +95,27 @@ def skjerm_dag_og_ar(rader):
     ar_antall, ar_kubikk = arets_oppsummering(rader)
     return ["I DAG:", f"{dag_antall} pakker  {dag_kubikk}m3",
             "I ÅR:", f"{ar_antall} pakker  {ar_kubikk}m3"]
+
+
+def skjerm_siste_pakke(rader):
+    """Etter nedslipp: hva var den siste pakken som ble fanget?"""
+    p = siste_pakke(rader)
+    if not p:
+        return ["SISTE PAKKE:", "(ingen ennå)"]
+    nr = p.get("pakkenr") or "?"
+    dim = p.get("dimensjon") or "?"
+    sort = (p.get("sort_navn") or p.get("sort") or "?").strip()
+    try:
+        kubikk_txt = f"{float(str(p.get('kubikk_m3', '')).replace(',', '.')):.3f} m3"
+    except ValueError:
+        kubikk_txt = f"{p.get('kubikk_m3') or '?'} m3"
+    # 128×64 / font 13 ≈ 4 korte linjer — lesbart etter nedslipp
+    return [
+        "SISTE PAKKE:",
+        f"nr {nr}",
+        f"{dim}  {sort}"[:21],
+        kubikk_txt,
+    ]
 
 
 def skjerm_sortfordeling(rader):
@@ -104,6 +135,7 @@ def skjerm_sortfordeling(rader):
 
 SKJERMER = [
     skjerm_dag_og_ar,
+    skjerm_siste_pakke,   # etter nedslipp: «hva var sist?»
     skjerm_sortfordeling,
 ]
 

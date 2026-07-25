@@ -170,7 +170,10 @@ Hovedbildene ligger også inne i §2. Her er full liste med filsti:
 
 ### Fasit (2026-07-25) — foto-realistisk stil
 
-Claude/Gemini-innhold (breakout, **2→3 / 7→7**) tegnet om med nesten-ekte komponentfoto.
+**Handlekurv (faktiske deler):** USB→DB25 hann *null modem*, DuPont F–F, DB25 **hunn**-breakout, DB25 hunn-pigtail.
+Se `img/tapp-dine-deler.png` og `img/passiv-rs232-tapp.png`.
+Hunn-breakout er **ikke** M↔F — mangler fortsatt vei til OKI (M↔F-breakout eller hann-ut).
+Null modem: prøv først breakout 2→ adapter **2**, ellers 2→**3**; GND 7→7.
 
 **passiv-rs232-tapp.png** — hovedplakat breakout + systemarkitektur  
 

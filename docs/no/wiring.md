@@ -1,80 +1,65 @@
 # Kobling
 
-<img src="img/passiv-rs232-tapp.png" width="100%" alt="PLS DB25 hann → breakout → skriver; skrue 2+7 → USB–DB25 → Pi"/>
+<img src="img/tapp-dine-deler.png" width="100%" alt="Handlekurv: USB–DB25 nullmodem, DuPont, hunn-breakout, pigtail"/>
 
-## Enkel kjede (anbefalt)
+<img src="img/passiv-rs232-tapp.png" width="100%" alt="Passiv tapp med dine deler"/>
 
-1. **PLS DB25 hann** går rett inn i **breakout** (hunn-siden).
-2. Fra breakout **hann** → skjøtekabel → **OKI**.
-3. Fra breakout **skrue 2 (TX)** og **skrue 7 (GND)** → ny **USB–DB25**-adapter (**RX** + **GND**).
-4. USB–DB25 → **USB-hub** → Pi DATA (via OTG-skjøtekabel).
+## Det du kjøper (handlekurv)
 
-Ingen kniv i kabel. Ikke GPIO. Signal → `/dev/ttyUSB0`.
+| # | Del | Rolle |
+|---|-----|--------|
+| 1 | **USB→DB25 hann** (FTDI, **null modem** / krysset) | Lytteadapter på huben → `/dev/ttyUSB0` |
+| 2 | **DuPont F–F** 10 cm | Midlertidig/kort kobling mellom skruer / hoder |
+| 3 | **DB25 hunn-breakout** m/skruer | PLS DB25 **hann** plugges rett inn; tapp på skrue 2 og 7 |
+| 4 | **DB25 hunn-pigtail** → nakne ledere | Alternativ vei til å finne/feste ledere (pin 2/3/7) |
 
-### Pinner — hva som er hva
+## Viktig: det som fortsatt mangler for skriveren
 
-På **anleggs-breakouten** (PLS↔skriver) er skruenummer = DB25-pinne:
+Breakouten i kurven er **bare hunn** — den er **ikke** M↔F pass-through.  
+PLS hann → breakout gir deg skruer, men **signalet går ikke videre til OKI av seg selv**.
 
-| Breakout-skrue | Signal på linja | Betydning |
-|----------------|-----------------|-----------|
-| **2** | TX | Data PLS → skriver (tapp her) |
-| **7** | GND | Signaljord (tapp her) |
-| 3 | RX | Skriver→PLS — **rør ikke** til lytting |
-| øvrige | — | går bare 1:1 gjennom |
+Du trenger fortsatt én av:
 
-På **lytteadapteren** (USB–DB25, typisk DTE som PC-port):
+- eksisterende skjøtekabel / Y som lar skriveren få signal **og** at du tapper, **eller**
+- **DB25 M↔F breakout** (hann+hunn på samme board), **eller**
+- DB25 **hann**-utgang (hann-pigtail / skjøt) fra skruene 1:1 til OKI (alle pinner, ikke bare 2 og 7)
 
-| Adapter-pinne | Signal | Kobles fra breakout |
-|---------------|--------|---------------------|
-| **3** | **RX** (lytter inn) | ← breakout skrue **2** (TX) |
-| **7** | **GND** | ← breakout skrue **7** |
-| 2 | TX ut fra adapter | **koble ikke** (la stå åpen) |
+## Lyttekobling (med null modem)
 
-```text
-ANLEGG (breakout)              LYTTEADAPTER (USB–DB25)
-─────────────────              ───────────────────────
-skrue 2  TX  ────────────────→  pin 3  RX
-skrue 7  GND ───────────────→  pin 7  GND
-```
+På anleggs-breakout (PLS-linja):
 
-**Hvordan inn i lytteadapteren (velg én):**
+| Skrue | Signal |
+|-------|--------|
+| **2** | TX (data PLS→skriver) — tapp |
+| **7** | GND — tapp |
+| 3 | RX andre veien — **ikke** tapp til Pi |
 
-1. **Best:** egen DB25-hunn breakout med skruer. USB–DB25 **hann** plugges inn. Ledning fra anlegg-skrue 2 → lytte-skrue **3**, anlegg-skrue 7 → lytte-skrue **7**.
-2. **DuPont DB25-hunn** på adapter-hannen: bruk ledning merket **3** og **7** mot anlegg 2 og 7.
-3. Ikke GPIO. Ikke lodde i hubben.
+USB–DB25 er merket **null modem** (TX/RX krysset inne i kabelen). Derfor:
 
-TX → RX — aldri TX til TX. Får du null data: prøv å bytte 2↔3 **bare på lytteenden** (noen adaptere er DCE).
+| Prøv | Breakout | → | USB–DB25 hann |
+|------|----------|---|----------------|
+| **A (først)** | skrue **2** (TX) | → | pin **2** |
+| | skrue **7** (GND) | → | pin **7** |
+| **B (hvis null data)** | skrue **2** (TX) | → | pin **3** |
+| | skrue **7** (GND) | → | pin **7** |
 
-## Deler
-
-| Del | Rolle |
-|-----|--------|
-| **DB25 M↔F breakout** m/skruer | Pass-through PLS↔skriver + tapppunkt |
-| **USB–DB25** (ny, til Pi) | RS-232-nivå → USB på huben |
-| Skjøtekabel DB25 | Breakout → OKI |
-| Pi OTG | micro-USB **hann** → USB-A **hunn** |
-| USB-hub | hann inn i OTG; tastatur + penn + USB–DB25 |
-
-Har du allerede StarTech ICUSB232DB25 (DB9 + DB25-adapter), kan den brukes som USB–DB25 — samme rolle.
+Bruk DuPont F–F eller pigtail-ledere inn i skruene. **Ikke GPIO.**
 
 ## USB til Pi
-
-<img src="img/usb-kjede-komplett.png" width="100%" alt="USB-kjede"/>
 
 ```text
 Pi DATA ── OTG (USB-A HUNN) ← hub (USB-A HANN)
                               ├── tastatur
                               ├── minnepenn → /media/usb0
-                              └── USB–DB25 → /dev/ttyUSB0
-                                    ↑
-                         breakout skrue 2+7 (TX→RX, GND)
+                              └── USB→DB25 (null modem) → /dev/ttyUSB0
 ```
 
-PWR IN (hjørne): 5V / ≥2,5 A. Ikke DATA-porten.
+PWR IN (hjørne): 5V / ≥2,5 A.
 
-## Mer detalj
+Test:
 
-- Steg A/B (breakout vs WAGO): [tapp-steg-for-steg.png](img/tapp-steg-for-steg.png)
-- Breakout-fokus: [tapp-anbefalt-breakout.png](img/tapp-anbefalt-breakout.png)
+```bash
+python3 read_package.py --raw-capture --port /dev/ttyUSB0
+```
 
 *English: [docs/en/wiring.md](../en/wiring.md)*

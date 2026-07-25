@@ -168,7 +168,9 @@ Viktige filer:
 
 Hovedbildene ligger også inne i §2. Her er full liste med filsti:
 
-### Fasit (2026-07-24)
+### Fasit (2026-07-25) — foto-realistisk stil
+
+Claude/Gemini-innhold (breakout, **2→3 / 7→7**) tegnet om med nesten-ekte komponentfoto.
 
 **passiv-rs232-tapp.png** — hovedplakat breakout + systemarkitektur  
 

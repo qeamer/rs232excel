@@ -1,6 +1,8 @@
 # Kobling — bruksanvisning A–G
 
-<img src="img/passiv-rs232-tapp.png" width="100%" alt="Bruksanvisning: kun E1+E2, Pi PWR til høyre"/>
+<img src="img/bruksanvisning-tapp-foto.png" width="100%" alt="AI-foto bruksanvisning A–G"/>
+
+<img src="img/passiv-rs232-tapp.png" width="100%" alt="Skjema bruksanvisning A–G"/>
 
 ## Gjenstander
 

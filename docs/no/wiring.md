@@ -1,65 +1,55 @@
 # Kobling
 
-<img src="img/tapp-dine-deler.png" width="100%" alt="Handlekurv: USB–DB25 nullmodem, DuPont, hunn-breakout, pigtail"/>
+<img src="img/tapp-alle-metoder.png" width="100%" alt="Én plakat: alle metoder, kontakter i inngrep, tellbare skruer 2 og 7"/>
 
-<img src="img/passiv-rs232-tapp.png" width="100%" alt="Passiv tapp med dine deler"/>
+<img src="img/tapp-i-inngrep.png" width="100%" alt="Foto-stil: M↔F i inngrep, skrue 2+7, null modem"/>
 
-## Det du kjøper (handlekurv)
+## Deler
 
-| # | Del | Rolle |
-|---|-----|--------|
-| 1 | **USB→DB25 hann** (FTDI, **null modem** / krysset) | Lytteadapter på huben → `/dev/ttyUSB0` |
-| 2 | **DuPont F–F** 10 cm | Midlertidig/kort kobling mellom skruer / hoder |
-| 3 | **DB25 hunn-breakout** m/skruer | PLS DB25 **hann** plugges rett inn; tapp på skrue 2 og 7 |
-| 4 | **DB25 hunn-pigtail** → nakne ledere | Alternativ vei til å finne/feste ledere (pin 2/3/7) |
+| Del | Status |
+|-----|--------|
+| **DB25 M↔F adapter** | **Har allerede** — pass-through PLS→OKI |
+| USB→DB25 **hann**, **null modem** | Handlekurv — lytteadapter |
+| DB25 **hunn**-breakout m/skruer | Handlekurv — tellbare pinner 2 og 7 |
+| DuPont F–F 10 cm | Handlekurv |
+| DB25 hunn-pigtail | Handlekurv — alternativ avgrening |
 
-## Viktig: det som fortsatt mangler for skriveren
+**Ingen** TTL/MAX232-«ELLER»-kort. USB–DB25 gjør nivåomformingen.
 
-Breakouten i kurven er **bare hunn** — den er **ikke** M↔F pass-through.  
-PLS hann → breakout gir deg skruer, men **signalet går ikke videre til OKI av seg selv**.
+## Anbefalt (kontakter i inngrep)
 
-Du trenger fortsatt én av:
+1. **PLS DB25 hann** plugget **i inngrep** i M↔F **hunn**.
+2. M↔F **hann** videre til **OKI** (1:1 pass-through).
+3. Fra linja: ledninger i **skrue 2 (TX)** og **skrue 7 (GND)** på hunn-breakout (tell 1→2 og 1→7).
+4. USB→DB25 **hann** plugget **i inngrep** i hunn-breakout (eller ledninger festet i skruene).
+5. USB-A → hub → Pi DATA (OTG hunn ← hub hann).
 
-- eksisterende skjøtekabel / Y som lar skriveren få signal **og** at du tapper, **eller**
-- **DB25 M↔F breakout** (hann+hunn på samme board), **eller**
-- DB25 **hann**-utgang (hann-pigtail / skjøt) fra skruene 1:1 til OKI (alle pinner, ikke bare 2 og 7)
+### Null modem (overstyrer gammel 2→3-fasit)
 
-## Lyttekobling (med null modem)
+| | Breakout | → | USB–DB25 |
+|--|----------|---|----------|
+| **A først** | skrue **2** TX | → | pin **2** |
+| | skrue **7** GND | → | pin **7** |
+| **B hvis null data** | skrue **2** TX | → | pin **3** |
+| | skrue **7** GND | → | pin **7** |
 
-På anleggs-breakout (PLS-linja):
+Ikke bruk skrue **3** til lytting. Ikke GPIO.
 
-| Skrue | Signal |
-|-------|--------|
-| **2** | TX (data PLS→skriver) — tapp |
-| **7** | GND — tapp |
-| 3 | RX andre veien — **ikke** tapp til Pi |
+## Tre metoder (se plakat)
 
-USB–DB25 er merket **null modem** (TX/RX krysset inne i kabelen). Derfor:
+- **A** — M↔F i serie + tapp 2/7 (anbefalt; du har M↔F)
+- **B** — hunn-pigtail på PLS, gren 2/7, resten til OKI
+- **C** — hunn-breakout kun på lytteenden; egen pass-through til OKI
 
-| Prøv | Breakout | → | USB–DB25 hann |
-|------|----------|---|----------------|
-| **A (først)** | skrue **2** (TX) | → | pin **2** |
-| | skrue **7** (GND) | → | pin **7** |
-| **B (hvis null data)** | skrue **2** (TX) | → | pin **3** |
-| | skrue **7** (GND) | → | pin **7** |
-
-Bruk DuPont F–F eller pigtail-ledere inn i skruene. **Ikke GPIO.**
-
-## USB til Pi
+## USB
 
 ```text
 Pi DATA ── OTG (USB-A HUNN) ← hub (USB-A HANN)
                               ├── tastatur
                               ├── minnepenn → /media/usb0
-                              └── USB→DB25 (null modem) → /dev/ttyUSB0
+                              └── USB→DB25 null modem → /dev/ttyUSB0
 ```
 
-PWR IN (hjørne): 5V / ≥2,5 A.
-
-Test:
-
-```bash
-python3 read_package.py --raw-capture --port /dev/ttyUSB0
-```
+Test: `python3 read_package.py --raw-capture --port /dev/ttyUSB0`
 
 *English: [docs/en/wiring.md](../en/wiring.md)*

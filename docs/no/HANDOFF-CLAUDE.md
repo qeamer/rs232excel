@@ -8,7 +8,11 @@
 **Produksjonskode:** `python/no/`  
 **Kunde/sted:** Skjåk Trelast — pakkelinje (PLS Telemecanique TSX → OKI Microline)
 
-Dette dokumentet er fasit for videre arbeid. **Stol på tabellene og bildene her** — tidligere AI-tegninger hadde feil USB-/DB-kjønn og foreslo GPIO/parallellport.
+Dette dokumentet er fasit for videre arbeid.
+
+**Oppdatert 2026-07-25:** Eier har allerede **DB25 M↔F adapter**. Handlekurv: USB→DB25 **null modem**, hunn-breakout, DuPont, pigtail.
+Hovedplakat: [`img/tapp-alle-metoder.png`](img/tapp-alle-metoder.png) + [`img/tapp-i-inngrep.png`](img/tapp-i-inngrep.png).
+Null modem: prøv **2→2** først, deretter **2→3**. Ingen «ELLER»/TTL-kort. Kontakter tegnes **i inngrep**. **Stol på tabellene og bildene her** — tidligere AI-tegninger hadde feil USB-/DB-kjønn og foreslo GPIO/parallellport.
 
 ---
 

@@ -10,7 +10,7 @@
 
 | | Installasjon | Kobling |
 |---|---|---|
-| **🇳🇴 Norsk (anbefalt)** | **[docs/no/INSTALLATION.md](no/INSTALLATION.md)** | [docs/no/wiring.md](no/wiring.md) |
+| **🇳🇴 Norsk (anbefalt)** | **[docs/no/INSTALLATION.md](no/INSTALLATION.md)** | [docs/no/wiring.md](no/wiring.md) · [HANDOFF-CLAUDE.md](no/HANDOFF-CLAUDE.md) |
 | **🇬🇧 English (translation)** | [docs/en/INSTALLATION.md](en/INSTALLATION.md) | [docs/en/wiring.md](en/wiring.md) |
 
 Programvare: [`python/no/`](../python/no/) (produksjon) · [`python/en/`](../python/en/) (engelsk speil)

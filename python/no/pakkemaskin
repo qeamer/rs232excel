@@ -1,0 +1,228 @@
+#!/usr/bin/env bash
+# pakkemaskin — styring av pakkelapp-fangst
+#
+# Korte kommandoer (anbefalt):   start  stopp  restart  status  logg  sjekk  excel
+# Full form:                     pakkemaskin start | stopp | …
+#
+set -euo pipefail
+
+TJENESTE="pakkemaskin-skriver"
+
+# Finn installasjonsmappe: env → /etc-konfig → script-mappe → standard sti
+if [[ -z "${PAKKEMASKIN_DIR:-}" && -f /etc/pakkemaskin.conf ]]; then
+  # shellcheck disable=SC1091
+  source /etc/pakkemaskin.conf
+fi
+if [[ -z "${PAKKEMASKIN_DIR:-}" ]]; then
+  _her="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || true)"
+  if [[ -n "$_her" && -f "$_her/read_package.py" ]]; then
+    PAKKEMASKIN_DIR="$_her"
+  else
+    PAKKEMASKIN_DIR="${HOME}/rs232excel/python/no"
+  fi
+fi
+
+# Når scriptet heter «start», «logg», osv. (korte kommandoer i PATH)
+_meg="$(basename "${BASH_SOURCE[0]}")"
+if [[ "$_meg" != "pakkemaskin" && "$#" -eq 0 ]]; then
+  set -- "$_meg"
+fi
+# «sjekk» er kortnavn for bare-fangst (unngår konflikt med systemets «test»)
+if [[ "${1:-}" == "sjekk" ]]; then
+  set -- test
+fi
+
+kjør() {
+  if [[ ! -f "$PAKKEMASKIN_DIR/read_package.py" ]]; then
+    echo "Finner ikke read_package.py i $PAKKEMASKIN_DIR" >&2
+    echo "Sett PAKKEMASKIN_DIR eller kjør installer.sh på nytt." >&2
+    exit 1
+  fi
+  cd "$PAKKEMASKIN_DIR"
+  exec python3 read_package.py "$@"
+}
+
+list_usb() {
+  echo "========================================"
+  echo "  USB-ENHETER (live)"
+  echo "========================================"
+  echo
+  echo "— lsusb (alt på bussen) —"
+  if command -v lsusb >/dev/null 2>&1; then
+    lsusb || true
+  else
+    echo "(installer usbutils: sudo apt install usbutils)"
+    ls -1 /sys/bus/usb/devices/ 2>/dev/null | head -n 40 || true
+  fi
+  echo
+  echo "— disker / minnepenn —"
+  lsblk -o NAME,SIZE,TYPE,TRAN,FSTYPE,MOUNTPOINT,MODEL 2>/dev/null || lsblk
+  echo
+  echo "— serieadapter —"
+  if compgen -G '/dev/ttyUSB*' >/dev/null || compgen -G '/dev/ttyACM*' >/dev/null; then
+    ls -l /dev/ttyUSB* /dev/ttyACM* 2>/dev/null || true
+  else
+    echo "Ingen /dev/ttyUSB* eller /dev/ttyACM* (adapter ikke funnet)"
+  fi
+  echo
+  echo "— minnepenn /media/usb0 —"
+  # Prøv montere hvis penn finnes men ikke er montert (hotplug / glemt mount)
+  if ! mountpoint -q /media/usb0 2>/dev/null; then
+    if [[ -x /usr/local/sbin/pakkemaskin-usb-mount.sh ]]; then
+      for part in /dev/sd[a-z][0-9]; do
+        [[ -b "$part" ]] || continue
+        echo "Prøver montere $part …"
+        sudo /usr/local/sbin/pakkemaskin-usb-mount.sh "$part" 2>/dev/null && break || true
+      done
+    fi
+  fi
+  if mountpoint -q /media/usb0 2>/dev/null; then
+    echo "Montert: JA"
+    df -h /media/usb0 | tail -n 1
+    echo "Innhold (første filer):"
+    ls -la /media/usb0 2>/dev/null | head -n 12 || true
+  else
+    echo "Montert: NEI"
+    echo "Tips: sett inn pennen, vent 2 sek, velg USB (1) igjen."
+    echo "Første gangs oppsett:  cd ~/rs232excel/python/no && bash fiks-usb.sh"
+  fi
+  echo
+  echo "— integritet (SD ↔ penn) —"
+  if mountpoint -q /media/usb0 2>/dev/null; then
+    # Ikke bruk kjør/exec — vi skal fortsette utskriften
+    if [[ -f "$PAKKEMASKIN_DIR/read_package.py" ]]; then
+      (cd "$PAKKEMASKIN_DIR" && python3 read_package.py --sjekk-usb) || true
+    fi
+  else
+    echo "Hopper over — penn ikke montert"
+  fi
+  echo
+  echo "Hotplug: penn ut/inn oppdages automatisk (udev)."
+  echo "Oppdater listen: velg 1 USB på nytt (eller skriv: usb)"
+  echo "Bare integritet:  integritet"
+}
+
+hjelp() {
+  cat <<EOF
+Pakkemaskin Skriver — korte kommandoer (skriv bare ordet):
+
+  usb         List ALLE USB + minnepenn (hotplug OK)
+  integritet  Sjekk/helbred at pennen speiler SD (trygt etter hard yank)
+  start       Start fangst
+  stopp       Stopp fangst
+  restart     Restart (ved kræsj / kabelbytte)
+  status      Status + USB-sammendrag
+  logg        Live logg  (stopp med Ctrl+C)
+  sjekk       Bare-fangst — viser lapper, lagrer ikke  (Ctrl+C)
+  excel       Oppdater årets Excel nå (ellers automatisk på SD + minnepenn)
+  porter      List bare serieporter
+
+Samme ting med prefiks:  pakkemaskin start | stopp | logg | …
+
+Mappe: $PAKKEMASKIN_DIR
+EOF
+}
+
+cmd="${1:-hjelp}"
+case "$cmd" in
+  start)
+    sudo systemctl start "$TJENESTE"
+    systemctl --no-pager --full status "$TJENESTE" | head -n 12
+    echo
+    echo "Live logg:  logg"
+    echo "Stopp:      stopp"
+    ;;
+  stop|stopp)
+    sudo systemctl stop "$TJENESTE"
+    echo "Stoppet."
+    ;;
+  restart)
+    sudo systemctl restart "$TJENESTE"
+    sleep 1
+    systemctl --no-pager --full status "$TJENESTE" | head -n 12
+    echo
+    echo "Live logg:  logg"
+    ;;
+  status)
+    systemctl --no-pager --full status "$TJENESTE" | head -n 16
+    echo
+    if [[ -e /dev/ttyUSB0 || -e /dev/ttyACM0 ]]; then
+      echo "Serieadapter: funnet"
+      ls -1 /dev/ttyUSB* /dev/ttyACM* 2>/dev/null || true
+    else
+      echo "Serieadapter: ikke funnet (sjekk USB-kjede / data-port)"
+    fi
+    echo
+    # Minnepenn / USB-lagring
+    if mountpoint -q /media/usb0 2>/dev/null; then
+      echo "Minnepenn: montert på /media/usb0"
+      df -h /media/usb0 2>/dev/null | tail -n 1 || true
+      ls -la /media/usb0 2>/dev/null | head -n 8 || true
+    else
+      echo "Minnepenn: IKKE montert på /media/usb0"
+      if lsblk -o NAME,SIZE,TYPE,TRAN,MOUNTPOINT 2>/dev/null | grep -qi usb \
+         || ls /dev/sd[a-z] /dev/sd[a-z][0-9] 2>/dev/null | grep -q .; then
+        echo "  (USB-disk sett av systemet — mangler mount. Kjør: bash fiks-usb.sh)"
+        lsblk -o NAME,SIZE,TYPE,TRAN,MOUNTPOINT 2>/dev/null | grep -E 'NAME|sd|usb' || true
+      else
+        echo "  (ingen USB-lagring funnet — sjekk hub/strøm/at pennen er i)"
+      fi
+    fi
+    ;;
+  logg|logs|log)
+    echo
+    echo "========================================"
+    echo "  LIVE LOGG"
+    echo "  Stopp med:  Ctrl + C"
+    echo "========================================"
+    echo
+    trap 'echo; echo "Logg avsluttet."; exit 0' INT
+    journalctl -u "$TJENESTE" -f
+    ;;
+  test|bare-fangst)
+    echo
+    echo "========================================"
+    echo "  BARE-FANGST (lagrer ikke)"
+    echo "  Stopp med:  Ctrl + C"
+    echo "========================================"
+    echo
+    echo "Tips: stopp tjenesten først om den kjører:  stopp"
+    echo
+    trap 'echo; echo "Test avsluttet."; exit 0' INT
+    if [[ ! -f "$PAKKEMASKIN_DIR/read_package.py" ]]; then
+      echo "Finner ikke read_package.py i $PAKKEMASKIN_DIR" >&2
+      exit 1
+    fi
+    cd "$PAKKEMASKIN_DIR"
+    python3 read_package.py --bare-fangst --port /dev/ttyUSB0
+    ;;
+  usb|usb-liste|devices)
+    list_usb
+    ;;
+  integritet|helbred|usb-sjekk)
+    kjør --sjekk-usb
+    ;;
+  porter|ports)
+    kjør --list-porter
+    ;;
+  excel|xlsx)
+    kjør --eksporter-xlsx
+    aar="$(date +%Y)"
+    echo "Fil: $PAKKEMASKIN_DIR/pakkelapper${aar}.xlsx"
+    if mountpoint -q /media/usb0 2>/dev/null && [[ -f "/media/usb0/pakkelapper${aar}.xlsx" ]]; then
+      echo "Speilet: /media/usb0/pakkelapper${aar}.xlsx"
+    fi
+    ;;
+  simuler|simulate)
+    kjør --simuler eksempel.txt
+    ;;
+  hjelp|help|-h|--help|"")
+    hjelp
+    ;;
+  *)
+    echo "Ukjent kommando: $cmd" >&2
+    echo >&2
+    hjelp >&2
+    exit 1
+    ;;
+esac

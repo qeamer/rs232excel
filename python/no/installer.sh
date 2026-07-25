@@ -1,12 +1,70 @@
 #!/usr/bin/env bash
-# Installer Pakkemaskin Skriver som tjeneste på Raspberry Pi.  Kjør:  bash installer.sh
-set -e
-echo "1/3  Avhengigheter …"; pip3 install --break-system-packages pyserial openpyxl
-echo "2/3  systemd-tjeneste …"
-sudo cp pakkemaskin-skriver.service /etc/systemd/system/
+# Installer Pakkemaskin Skriver som tjeneste på Raspberry Pi.
+# Kjør fra denne mappen:  bash installer.sh
+set -euo pipefail
+
+KATALOG="$(cd "$(dirname "$0")" && pwd)"
+BRUKER="${SUDO_USER:-${USER}}"
+if [[ "$BRUKER" == "root" ]]; then
+  echo "Kjør som vanlig bruker (f.eks. pi), ikke som root." >&2
+  exit 1
+fi
+
+cd "$KATALOG"
+
+echo "1/5  Avhengigheter …"
+pip3 install --break-system-packages pyserial openpyxl pillow 2>/dev/null \
+  || pip3 install --break-system-packages pyserial openpyxl
+if ! id -nG "$BRUKER" | grep -qw dialout; then
+  sudo usermod -aG dialout "$BRUKER" || true
+  echo "  Lagt $BRUKER i dialout (logg ut/inn eller reboot for full effekt)."
+fi
+sudo mkdir -p /media/usb0
+sudo chown "$BRUKER:$BRUKER" /media/usb0 2>/dev/null || true
+# Auto-monter minnepenn på /media/usb0
+if [[ -f "$KATALOG/pakkemaskin-usb-mount.sh" ]]; then
+  sudo cp "$KATALOG/pakkemaskin-usb-mount.sh" /usr/local/sbin/pakkemaskin-usb-mount.sh
+  sudo cp "$KATALOG/pakkemaskin-usb-umount.sh" /usr/local/sbin/pakkemaskin-usb-umount.sh
+  sudo chmod +x /usr/local/sbin/pakkemaskin-usb-mount.sh /usr/local/sbin/pakkemaskin-usb-umount.sh
+  sudo cp "$KATALOG/99-pakkemaskin-usb.rules" /etc/udev/rules.d/99-pakkemaskin-usb.rules
+  sudo udevadm control --reload-rules 2>/dev/null || true
+fi
+
+echo "2/5  systemd-tjeneste …"
+sudo tee /etc/systemd/system/pakkemaskin-skriver.service >/dev/null <<EOF
+[Unit]
+Description=Pakkemaskin Skriver - pakkelapp-fangst
+After=multi-user.target
+
+[Service]
+Type=simple
+User=${BRUKER}
+WorkingDirectory=${KATALOG}
+ExecStart=/usr/bin/python3 ${KATALOG}/read_package.py --port /dev/ttyUSB0 --baud 9600 --usb-sti /media/usb0
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
 sudo systemctl daemon-reload
-sudo systemctl enable --now pakkemaskin-skriver.service
-echo "3/3  Ferdig."
-echo "  Status:  systemctl status pakkemaskin-skriver"
-echo "  Logg:    journalctl -u pakkemaskin-skriver -f"
-echo "  Excel:   python3 read_package.py --eksporter-xlsx"
+sudo systemctl enable pakkemaskin-skriver.service
+
+echo "3/5  Korte kommandoer (start, stopp, logg, …) …"
+echo "PAKKEMASKIN_DIR=${KATALOG}" | sudo tee /etc/pakkemaskin.conf >/dev/null
+sudo cp "$KATALOG/pakkemaskin" /usr/local/bin/pakkemaskin
+sudo chmod +x /usr/local/bin/pakkemaskin
+for navn in start stopp restart status logg sjekk excel porter usb integritet; do
+  sudo ln -sf /usr/local/bin/pakkemaskin "/usr/local/bin/$navn"
+done
+
+echo "4/5  Forenkler Pi til apparat (autologin + meny) …"
+bash "$KATALOG/forenkle-pi.sh"
+
+echo "5/5  Ferdig."
+echo
+echo "  På HDMI etter reboot: MENY UTEN LOGIN"
+echo "    1 porter  2 sjekk  3 logg  4 status"
+echo "    5 start   6 stopp  7 restart  8 excel"
+echo
+echo "  Reboot:  sudo reboot"

@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# meny — HDMI-apparatmeny for pakkemaskin (ingen login nødvendig)
+set -euo pipefail
+
+kjør() {
+  if command -v pakkemaskin >/dev/null 2>&1; then
+    pakkemaskin "$@"
+  elif [[ -x /usr/local/bin/pakkemaskin ]]; then
+    /usr/local/bin/pakkemaskin "$@"
+  else
+    echo "pakkemaskin er ikke installert. Kjør: bash installer.sh" >&2
+    return 1
+  fi
+}
+
+pause() {
+  echo
+  read -r -p "Enter for meny …" _
+}
+
+usb_sammendrag() {
+  local serie="—" penn="—"
+  if [[ -e /dev/ttyUSB0 ]]; then serie="/dev/ttyUSB0"
+  elif [[ -e /dev/ttyACM0 ]]; then serie="/dev/ttyACM0"
+  fi
+  if mountpoint -q /media/usb0 2>/dev/null; then
+    penn="OK /media/usb0"
+  else
+    penn="ikke montert"
+  fi
+  echo "  USB nå:  serie=${serie}   minnepenn=${penn}"
+  echo "  (sett inn/ut penn → velg 1 USB for oppdatert liste)"
+}
+
+tegn_meny() {
+  clear 2>/dev/null || true
+  cat <<EOF
+
+========================================
+         PAKKEMASKIN
+========================================
+EOF
+  usb_sammendrag
+  cat <<EOF
+========================================
+  OPPKOPLING / TEST
+  1   USB        — list USB + sjekk at pennen speiler SD
+  2   Sjekk      — bare-fangst (lagrer IKKE)
+  3   Logg       — live logg (Ctrl+C = tilbake)
+  4   Status     — tjeneste + kort USB-sjekk
+
+  DRIFT
+  5   Start      — start fangst
+  6   Stopp      — stopp fangst
+  7   Restart    — ved kræsj / kabelbytte
+  8   Excel      — oppdater årets .xlsx nå (skjer også automatisk)
+
+  ANNET
+  9   Simuler    — test uten PLS/USB
+  0   Ledetekst  — avansert shell
+  q   Oppdater meny
+========================================
+EOF
+}
+
+while true; do
+  tegn_meny
+  printf "Velg (1-9, 0, q): "
+  read -r valg || exit 0
+  case "$valg" in
+    1) kjør usb; pause ;;
+    2) kjør sjekk || true ;;
+    3) kjør logg || true ;;
+    4) kjør status; pause ;;
+    5) kjør start; pause ;;
+    6) kjør stopp; pause ;;
+    7) kjør restart; pause ;;
+    8) kjør excel; pause ;;
+    9) kjør simuler; pause ;;
+    0)
+      export PAKKEMASKIN_MENY_KJORT=1
+      echo
+      echo "Ledetekst. Skriv «meny» for å komme tilbake."
+      echo "Korte kommandoer: usb integritet sjekk logg status start stopp restart excel"
+      echo
+      exec bash --login
+      ;;
+    q|Q)
+      continue
+      ;;
+    *)
+      echo "Ugyldig valg — bruk 1-9, 0 eller q."
+      sleep 1
+      ;;
+  esac
+done

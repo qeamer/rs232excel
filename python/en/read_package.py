@@ -254,8 +254,12 @@ class Register:
         n = as_int(pakkenr_tekst)
         if n is None:
             return "ukjent", None, False
-        if self.maks is not None and (self.maks - n) > self.terskel:
-            return "ok", n, True                      # stort hopp bakover = nullstilling
+        # Real rollover only near end-of-counter (Bug D: reprint 805→650 must NOT reset)
+        if (self.maks is not None
+                and self.maks > 9000
+                and n <= self.terskel
+                and (self.maks - n) > self.terskel):
+            return "ok", n, True
         if n in self.sett:
             return "duplikat", n, False
         return "ok", n, False

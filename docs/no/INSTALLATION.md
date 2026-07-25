@@ -2,7 +2,32 @@
 
 Komplett gjennomgang — fra tom SD-kort til fangst i produksjon på høvleriet. Ca. 45 minutter, ingen programmeringserfaring nødvendig.
 
-<img src="img/signal-flow.png" width="100%" alt="Systemarkitektur"/>
+## Allerede installert? Bruk bare dette
+
+På HDMI: **ingen login** — tallmeny direkte.
+
+```text
+1  Porter     2  Sjekk     3  Logg     4  Status
+5  Start      6  Stopp     7  Restart   8  Excel
+```
+
+Oppdater / fiks hengende login (kjør via **SSH** — HDMI-login kan henge):
+
+```bash
+ssh pi@192.168.1.53
+cd ~/rs232excel
+git pull origin cursor/pakkemaskin-cli-ef03
+cd python/no
+bash fiks-login.sh
+```
+
+(`fiks-login.sh` skrur av cloud-init, maskerer login, starter meny, rebooter.)
+
+Resten av denne siden er **første gangs installasjon** (SD-kort → kabler → verifisering).
+
+---
+
+<img src="img/steg-for-steg-passiv-rs232-tapp.png" width="100%" alt="Steg for steg: passiv RS-232-tapp, StarTech straight"/>
 
 Skriveren fortsetter å skrive fysiske pakkelapper **helt som før**. Tappen lytter bare — den sender aldri — så skriver og PLS oppfører seg likt uansett om Pi-en er påslått eller ikke.
 
@@ -16,16 +41,22 @@ Skriveren fortsetter å skrive fysiske pakkelapper **helt som før**. Tappen lyt
 | 2 | StarTech ICUSB232DB25 | RS 1238049 | USB → RS-232 DB25 adapter |
 | 3 | RS PRO 4-port USB-hub | RS 2206492 | Serieadapter + minnepenn samtidig |
 | 4 | Lexar 32GB Industrial microSDHC | RS 2676402 | Systemdisk — fasiten |
-| 5 | 2× Kingston 64GB USB-minnepenn | RS 0622158 | Sanntidsspeiling av CSV |
+| 5 | 2× Kingston 64GB USB-minnepenn | RS 0622158 | Sanntidsspeiling av CSV + Excel |
 | 6 | RS PRO IP54 kapsling 60×190×110 | RS 1959122 | Støvbeskyttelse |
-| 7 | WAGO 221-412 klemmer, 10-pk | RS 8837544 | Verktøyfri avgrening |
-| 8 | DB25 hann→hunn skjøtekabel 40 cm | AliExpress | **AKTIV** tapp-kabel |
-| 9 | DB25 hann→hunn skjøtekabel 50 cm | AliExpress | Reserve — merk med tape |
-| 10 | Micro-USB OTG adapter | AliExpress | Pi Zero → hub |
-| 11 | SSD1306 0,96" OLED, I2C, 4-pin | AliExpress | Statusskjerm (valgfritt) |
-| 12 | Dupont hopperledninger F-F | AliExpress | 4 av 40 brukes (OLED) |
+| 7 | **DB25-MG** hunn+hann + skrueterminaler (A) | AliExpress | **Tapp** — ingen kniv/WAGO |
+| 8 | **DB25 hunn** solder-free terminal (C) | AliExpress | Lytte-hunn for StarTech-hann |
+| 9 | DB25 M↔F båndkabel 1:1 (B) | AliExpress / har | A → OKI |
+| 10 | Micro-USB OTG (hann→USB-A hunn) | AliExpress / har | Pi Zero DATA → hub |
+| 11 | OLED JMD0.96D-1 / SSD1306 I2C | AliExpress / har | Statusskjerm (valgfritt) |
+| 12 | Dupont F–F | AliExpress / har | OLED (4 ledninger) |
 
-I tillegg: 5V/2A+ micro-USB strømforsyning, tynn ledning til WAGO-grenen.
+I tillegg: **5V / ≥2,5 A** micro-USB (PWR IN høyre), to ledninger A-skrue 2/7 → C-skrue 3/7 (StarTech).
+
+Se [wiring.md](wiring.md) og [HANDOFF-CLAUDE.md](HANDOFF-CLAUDE.md). **WAGO/klipping er utdatert** når A brukes.
+
+> **Strøm er kritisk på Pi Zero.** For lite ampere → «mystiske» feil: tastatur som ikke svarer,
+> USB-enheter som forsvinner, hengende konsoll. Bruk godkjent vegglader (**5,0–5,1 V, ≥ 2,5 A**),
+> ikke svak telefonlader. HDMI + hub + tastatur + minnepenn trekker mer enn Pi-en alene.
 
 ---
 
@@ -55,6 +86,11 @@ ssh pi@192.168.1.42
 
 Windows uten ssh? [PuTTY](https://putty.org) eller WSL.
 
+> **Login på HDMI henger / tastaturet «virker ikke» ved `login:`?**  
+> Det er ofte en sen boot-melding som ødelegger prompten — ikke dødt tastatur.  
+> Trykk **Alt+F2** for en ny, ren login på tty2. (Tilbake til første skjerm: **Alt+F1**.)  
+> Eller SSH: `ssh pi@192.168.x.x` (IP vises ofte over login-linjen).
+
 ---
 
 ## 4 · Installer programvaren
@@ -69,9 +105,11 @@ sudo apt update && sudo apt upgrade -y
 git clone https://github.com/qeamer/rs232excel.git
 cd rs232excel/python/no
 
-# Avhengigheter og autostart
+# Avhengigheter og autostart (+ kommandoen «pakkemaskin»)
 bash installer.sh
 ```
+
+Etter dette fungerer `start`, `stopp`, `logg`, `sjekk`, osv. fra hvor som helst.
 
 Valgfri OLED-skjerm:
 
@@ -83,35 +121,62 @@ python3 vis_status.py  # kjører uavhengig av fangst
 
 ---
 
-## 5 · Fysisk tapping
+## 5 · Fysisk tapping (A–G — ingen kniv)
 
-**Stopp maskinen før du rører kabler.** Originalkabelen endres aldri — 40 cm skjøtekabelen settes **i serie** ved skriveren og kan fjernes på sekunder.
+**Stopp maskinen før du rører kabler.** Original anleggskabel endres aldri.
 
-Se også: [wiring.md](wiring.md)
+Fasit: [wiring.md](wiring.md) · [HANDOFF-CLAUDE.md](HANDOFF-CLAUDE.md)
 
-<img src="img/wiring-tap.png" width="100%" alt="DB25 tapping"/>
+<img src="img/steg-for-steg-passiv-rs232-tapp.png" width="100%" alt="Steg for steg passiv RS-232-tapp"/>
+<img src="img/db25-rette-pinner.png" width="100%" alt="DB25 rette pinner: 2=TX, 7=GND, StarTech RX=3"/>
+<img src="img/passiv-rs232-tapp.png" width="100%" alt="Skjema A–G"/>
 
-Steg for steg:
+> Ignorer gamle tekster/bilder med **WAGO**, «klipp pin 2/7», GPIO eller parallellport. Signal → **USB–RS232 → `/dev/ttyUSB0`**.
 
-1. **Sett inn 40 cm skjøtekabel** mellom skriverens DB25 og eksisterende kabel fra sorteringsanlegget. Ta bilde av originaltilkoblingen først.
-2. **Midt på kabelen**, finn trådene for **pinne 2 (TX)** og **pinne 7 (GND)**. Fotografer fargekoding før klipping.
-3. **Klipp kun disse to trådene** — aldri hele kabelen.
-4. **WAGO: tre ender per klemme** — PLS-side + skriver-side (signalet går ubrutt) + ny tynn ledning til USB-serieadapter.
-5. **Fest skjøten** med strips i kabelrenna — la aldri WAGO henge løst. Merk aktiv kabel med tape.
+**Steg for steg:**
 
-> ⚠ **Retning teller:** pinne 2 fra skriversiden er **TX** (signalkilden). Den kobles til adapterens **RX**. TX→TX fanger ingenting.
+1. Sett **A (DB25-MG)** i serie: PLS DB25 hann → A hunn; A hann → **B** (bånd) → OKI.  
+2. Ledning **E1** i A-skrue **2** (TX); **E2** i A-skrue **7** (GND).  
+3. E1 → **C** (DB25 hunn-terminal) skrue **C3** (= StarTech pin 3 RX); E2 → **C7**. Ingen data? Prøv **C2**.  
+4. **D (StarTech)** DB25 hann rett inn i C hunn.  
+5. D USB → hub → OTG → Pi **DATA** (midt). 5V → Pi **PWR IN** (høyre).
+
+> ⚠ **Retning:** TX fra PLS → StarTech **RX**. TX→TX fanger ingenting.
 
 ### USB-kjede
 
-<img src="img/usb-chain.png" width="100%" alt="USB-kjede"/>
+<img src="img/usb-kjede-komplett.png" width="100%" alt="USB-kjede: Pi → OTG-hunn ← hub-hann; StarTech DB25-hann → C"/>
 
-OTG-adapteren **må** i **data**-porten midt på Pi Zero — hjørneporten er kun strøm.
+OTG-skjøtekabelen **må** i **data**-porten midt på Pi Zero — hjørneporten er kun strøm (**PWR IN**).
+
+**Slik kablene er:**
+
+```text
+PWR IN (hjørne) ─── 5V / ≥2,5 A vegglader (helst 3 A)
+
+Pi DATA ── micro-USB HANN ── OTG-skjøtekabel ── USB-A HUNN
+                                                    ↑
+                              hubens USB-A HANN ────┘
+                                    │
+                         ├── USB-tastatur
+                         ├── minnepenn      → /media/usb0 (CSV+Excel)
+                         └── StarTech (D): USB-A → … → DB25 HANN
+                               → C (hunn-terminal) ← E1/E2 fra A
+                               → /dev/ttyUSB0
+```
+
+- SD-kortet er alltid fasiten (fangst fortsetter uten minnepenn).
+- Minnepennen speiler **CSV + Excel** automatisk som **årets** filer, f.eks. `pakkelapper2026.csv` + `pakkelapper2026.xlsx` på `/media/usb0`. Samme filer oppdateres på stedet (ikke nye kopier hver gang). Ved årsskifte startes nye `…2027…`-filer.
+- USB-skriving bruker **fsync** og ved korrupt/avvik **atomisk omskriving** fra SD. Kommando `integritet` (eller meny **1 USB**) sjekker/helbreder pennen etter hard yank uten trygg utløsing.
+- Menyvalg **8 Excel** / kommando `excel` er valgfri «oppdater nå»; Wi‑Fi-henting kan komme senere.
+- Passiv hub uten ekstra strøm fungerer ofte med 2,5–3 A vegglader; ved ustabilitet: **hub med egen PSU**.
+- Tastatur med innebygd hub: OK — sett minnepenn/serieadapter i den, eller bruk separat hub.
 
 ### OLED statusskjerm (valgfritt)
 
-<img src="img/oled-gpio.png" width="80%" alt="OLED GPIO"/>
+<img src="img/oled-i2c-korrekt.png" width="80%" alt="OLED I2C fire ledninger"/>
 
-Fire hopperledninger, helt uavhengig av USB-kjeden. Eget program — krasjer den, påvirkes ikke fangsten.
+Fire hopperledninger (I2C), helt uavhengig av USB-kjeden. Eget program (`vis_status.py`) — krasjer den, påvirkes ikke fangsten. **Ikke** 40-pinners LCD-HAT.
 
 ---
 
@@ -140,14 +205,17 @@ python3 read_package.py --port /dev/ttyUSB0 --usb-sti /media/usb0
 
 <img src="img/terminal-capture.png" width="100%" alt="Sanntidsfangst"/>
 
-Kjør 2–3 pakker, sjekk `pakkelapper.csv` mot papirlappene, trekk ut minnepennen midt i kjøring (fangst fortsetter), sett den inn igjen (manglende rader synkes).
+Kjør 2–3 pakker, sjekk `pakkelapperYYYY.csv` mot papirlappene, trekk ut minnepennen midt i kjøring (fangst fortsetter), sett den inn igjen (manglende rader synkes).
 
 **Produksjon.** Tjenesten fra steg 4 starter automatisk ved boot:
 
 ```bash
-sudo systemctl start pakkemaskin-skriver
-journalctl -u pakkemaskin-skriver -f     # live logg
+start
+logg     # live logg
 ```
+
+> Etter install skriver du bare `start`, `stopp`, `restart`, `status`, `logg`, `sjekk`, `excel`.
+> Ved kræsj eller etter kabelbytte: `restart`
 
 ---
 
@@ -160,15 +228,15 @@ journalctl -u pakkemaskin-skriver -f     # live logg
 <img src="img/excel-charts.png" width="42%" alt="Excel grafer"/>
 </p>
 
-Trekk ut minnepennen når som helst — Excel og CSV ligger klare på PC.
+Trekk ut minnepennen når som helst — årets `pakkelapperYYYY.csv` og `pakkelapperYYYY.xlsx` ligger klare på pennen (samme filer oppdateres under fangst; nytt år = nye filnavn).
 
 ---
 
 ## 8 · Sjekkliste
 
 - [ ] Alle deler mottatt (SD-kort sendes separat!)
-- [ ] 40 cm kabel merket AKTIV, 50 cm merket RESERVE
-- [ ] Tap skjøtet: pin 2+7 WAGO, festet med strips
+- [ ] A (DB25-MG) i serie PLS↔OKI via B
+- [ ] C + StarTech (D); E1/E2 på skrue 2/7→3/7; festet trygt
 - [ ] USB-kjede: Pi **data-port** → OTG → hub → adapter + minnepenn
 - [ ] OLED på GPIO 1/3/5/6, I2C aktivert (hvis brukt)
 - [ ] `--bare-fangst` viser lesbar lappetekst

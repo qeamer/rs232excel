@@ -2,9 +2,9 @@
 
 Complete walkthrough — from empty SD card to a live passive tap running on the sawmill floor. Roughly 45 minutes, no programming experience required.
 
-<img src="img/signal-flow.png" width="100%" alt="System architecture"/>
+<img src="img/tap-mated.png" width="100%" alt="Step-by-step passive RS-232 tap, StarTech straight"/>
 
-The printer keeps printing physical labels **exactly as before**. The tap only listens — it never transmits — so the printer and PLC behave identically whether the Pi is powered or not.
+The printer keeps printing physical labels **exactly as before**. The tap only listens — it never transmits — so the printer and PLC behave identically whether the Pi is powered or not. **No knife / no WAGO** when using DB25-MG.
 
 ---
 
@@ -18,14 +18,16 @@ The printer keeps printing physical labels **exactly as before**. The tap only l
 | 4 | Lexar 32GB Industrial microSDHC | RS 2676402 | System drive — the master copy |
 | 5 | 2× Kingston 64GB USB flash | RS 0622158 | Live CSV mirror, pull anytime |
 | 6 | RS PRO IP54 enclosure 60×190×110 | RS 1959122 | Sawdust protection |
-| 7 | WAGO 221-412 clamps, 10-pack | RS 8837544 | Tool-free wire tap |
-| 8 | DB25 M-F extension 40 cm | AliExpress | **ACTIVE** tap cable |
-| 9 | DB25 M-F extension 50 cm | AliExpress | Spare — mark with tape |
-| 10 | Micro-USB OTG adapter | AliExpress | Pi Zero → hub |
-| 11 | SSD1306 0.96" OLED, I2C, 4-pin | AliExpress | Status screen (optional) |
-| 12 | Dupont jumper wires F-F | AliExpress | 4 of 40 used (OLED) |
+| 7 | **DB25-MG** female+male + screws (A) | AliExpress | **Tap** — no knife/WAGO |
+| 8 | **DB25 female** solder-free terminal (C) | AliExpress | Listen female for StarTech male |
+| 9 | DB25 M↔F ribbon 1:1 (B) | AliExpress / have | A → OKI |
+| 10 | Micro-USB OTG (male→USB-A female) | AliExpress / have | Pi Zero DATA → hub |
+| 11 | OLED JMD0.96D-1 / SSD1306 I2C | AliExpress / have | Status (optional) |
+| 12 | Dupont F–F | AliExpress / have | OLED (4 wires) |
 
-Also needed: 5V/2A+ micro-USB power supply, thin hookup wire for the WAGO branch.
+Also needed: 5V / ≥2.5 A micro-USB (PWR IN right), two wires A screws 2/7 → C screws 3/7 (StarTech).
+
+See [wiring.md](wiring.md) and [../no/HANDOFF-CLAUDE.md](../no/HANDOFF-CLAUDE.md). **WAGO/cutting is outdated** when using A.
 
 ---
 
@@ -83,35 +85,41 @@ python3 vis_status.py  # runs independently of capture
 
 ---
 
-## 5 · The physical tap
+## 5 · The physical tap (A–G — no knife)
 
-**Stop the machine before touching any cable.** The original cable is never modified — the 40 cm extension goes **in series** at the printer end and can be removed in seconds.
+**Stop the machine before touching any cable.** The original plant cable is never modified.
 
-See also: [wiring.md](wiring.md)
+Fasit: [wiring.md](wiring.md) · [../no/HANDOFF-CLAUDE.md](../no/HANDOFF-CLAUDE.md)
 
-<img src="img/wiring-tap.png" width="100%" alt="DB25 tap wiring"/>
+<img src="img/tap-mated.png" width="100%" alt="Step-by-step passive RS-232 tap"/>
+<img src="img/db25-correct-pins.png" width="100%" alt="DB25 correct pins: 2=TX, 7=GND, StarTech RX=3"/>
+<img src="img/passive-rs232-tap.png" width="100%" alt="A–G schematic"/>
 
-Step by step:
+> Ignore old text/images with **WAGO**, “cut pins 2/7”, GPIO, or parallel port. Signal → **USB–RS232 → `/dev/ttyUSB0`**.
 
-1. **Insert the 40 cm extension** between the printer's DB25 port and the existing cable from the sorting plant. Take a photo of the original connection first.
-2. **Mid-cable, open the jacket** and identify the wires for **pin 2 (TX)** and **pin 7 (GND)**. Photograph the colour coding before cutting.
-3. **Cut only those two wires** — never the whole cable.
-4. **WAGO-join three ends per clamp**: PLC side + printer side (signal continues unbroken) + one new thin wire out to the USB-serial adapter.
-5. **Secure the splice** with cable ties in the same cable tray — never leave a WAGO hanging free; vibration works connections loose over time. Mark the active cable with tape.
+**Steps:**
 
-> ⚠ **Direction matters:** the printer-side pin 2 is **TX** (the signal source). It connects to the adapter's **RX**. TX→TX captures nothing.
+1. Insert **A (DB25-MG)** in series: PLC DB25 male → A female; A male → **B** (ribbon) → OKI.  
+2. Wire **E1** on A screw **2** (TX); **E2** on A screw **7** (GND).  
+3. E1 → **C** (DB25 female terminal) screw **C3** (= StarTech pin 3 RX); E2 → **C7**. No data? Try **C2**.  
+4. **D (StarTech)** DB25 male straight into C female.  
+5. D USB → hub → OTG → Pi **DATA** (middle). 5V → Pi **PWR IN** (right).
+
+> ⚠ **Direction:** PLC TX → StarTech **RX**. TX→TX captures nothing.
 
 ### USB chain
 
-<img src="img/usb-chain.png" width="100%" alt="USB chain"/>
+<img src="img/usb-chain-complete.png" width="100%" alt="USB chain OTG/hub/StarTech"/>
 
-The OTG adapter **must** go in the middle **data** port on the Pi Zero — the corner port is power-only and detects nothing.
+OTG must go in the middle **DATA** port — corner is **PWR IN** only (≥2.5 A).
+
+**Chain:** Pi DATA → OTG USB-A female ← hub male. StarTech DB25 male → C female ← wires from A.
 
 ### OLED status display (optional)
 
-<img src="img/oled-gpio.png" width="80%" alt="OLED GPIO wiring"/>
+<img src="img/oled-i2c-correct.png" width="80%" alt="OLED I2C four wires"/>
 
-Four jumper wires, completely independent of the USB chain. Runs as its own program — if it ever crashes, capture is unaffected.
+Four I2C jumpers (SSD1306 0.96"), independent of the USB chain. Own process (`vis_status.py`) — if it crashes, capture is unaffected. **Not** a 40-pin LCD HAT.
 
 ---
 
@@ -168,8 +176,8 @@ Pull the flash drive at any time — the Excel file and CSV are on it, ready to 
 ## 8 · Final checklist
 
 - [ ] All parts received (SD card shipped separately!)
-- [ ] 40 cm cable marked ACTIVE, 50 cm marked SPARE
-- [ ] Tap spliced: pins 2+7 WAGO-joined, splice secured with ties
+- [ ] A (DB25-MG) in series PLC↔OKI via B
+- [ ] C + StarTech (D); E1/E2 on screws 2/7→3/7; secured
 - [ ] USB chain: Pi **data port** → OTG → hub → adapter + flash drive
 - [ ] OLED on GPIO 1/3/5/6, I2C enabled in raspi-config (if used)
 - [ ] `--raw-capture` shows readable label text

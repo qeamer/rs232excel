@@ -1,9 +1,11 @@
 ﻿<p align="center">
-  <img src="skaak_logo_vektor.png" height="80" alt="Skjåk Trelast AS"/>
+  <a href="https://www.skjak-trelast.no">
+    <img src="skaak_logo_vektor.png" height="80" alt="Skjåk Trelast AS"/>
+  </a>
 </p>
 
 <p align="center">
-  <a href="README.en.md"><b>English Readme Here</b></a>
+  <a href="README.en.md" style="font-size: 1.45em; font-weight: 700">English Readme Here →</a>
 </p>
 
 <h1 align="center">rs232excel</h1>
@@ -30,38 +32,74 @@
   </big>
 </p>
 
----
-
 <p style="font-size: 17px; line-height: 1.55">
 En Raspberry Pi lytter <b>passivt</b> på RS-232-linja mellom en Telemecanique TSX PLS
-(1980-tall) og en OKI Microline 280 nåleskriver. Hver pakkelapp parses og lagres automatisk —
-dimensjon, treslag, sort, antall plank, kubikk. Ingen manuell registrering. Ingen datatap,
-selv når skriveren er av.
+og en OKI Microline 280. Hver pakkelapp parses til CSV/Excel — ingen manuell registrering.
+<b>Ingen kniv, ingen WAGO.</b> StarTech straight: skrue <b>2 → VARE2 C3 → pin 3 (RX)</b>
+(ingen data? prøv C2).
 </p>
 
-<img src="docs/no/img/signal-flow.png" width="100%" alt="Systemarkitektur"/>
+<img src="docs/no/img/steg-for-steg-passiv-rs232-tapp.png" width="100%" alt="Steg for steg: passiv RS-232-tapp, StarTech straight 2→3"/>
+
+<img src="docs/no/img/db25-rette-pinner.png" width="100%" alt="DB25 rette pinner: pin 2=TX, pin 7=GND, StarTech RX=pin 3"/>
 
 <p style="font-size: 16px; line-height: 1.5">
-Tappen er <b>fysisk skrivebeskyttet</b>: kun pinne 2 (TX) og pinne 7 (GND) grener av via WAGO
-midt på kabelen. Skriveren fortsetter helt som før — ingenting sendes tilbake mot PLS-en.
+Tappen er <b>fysisk skrivebeskyttet</b>: kun TX+GND fra DIN-rail breakout (skrue 2/7)
+til loddefri hunn <b>C3</b> → StarTech <b>ICUSB232DB25</b> pin 3 RX (straight; fallback C2).
+På DB25: <b>pin 2 = TX</b>, <b>pin 7 = GND</b> (anlegg); StarTech <b>pin 3 = RX</b>.
+Signal til <code>/dev/ttyUSB0</code>, ikke GPIO. Skriveren fortsetter som før.
+Steg for steg: <a href="docs/no/wiring.md">docs/no/wiring.md</a> ·
+<a href="docs/no/HANDOFF-CLAUDE.md">HANDOFF-CLAUDE.md</a>.
 </p>
 
 ---
 
-<h2 style="font-size: 1.5em">Hurtigstart (norsk produksjonsversjon)</h2>
+## Daglig bruk på Pi — husk bare dette
+
+Etter install er Pi-en et **apparat**: HDMI viser tallmeny med en gang (ingen `login:`).
+
+**Første gang / etter kabelbytte** — sjekk at utstyret lever, før du lagrer noe:
+
+1. **USB** — ser du hub, tastatur, minnepenn og serieadapter? Er pennen montert?
+2. **Sjekk** — kjør én pakke gjennom anlegget. Lappen vises på skjermen, men lagres **ikke**.
+3. **Logg** — når fangsten kjører: se live meldinger (**Ctrl+C** = tilbake til meny).
+
+**Vanlig skift** — tjenesten skal bare gå:
+
+5. **Start** — begynn å lagre pakker (SD + speil til penn)  
+6. **Stopp** — når skiftet er over, eller før du feilsøker  
+7. **Restart** — hvis tjenesten henger, eller du har byttet USB-kabel/adapter  
+8. **Excel** — valgfri «oppdater nå» (Excel speiles også automatisk)
+
+```text
+1  USB          5  Start
+2  Sjekk        6  Stopp
+3  Logg         7  Restart
+4  Status       8  Excel
+```
+
+Før du kopierer fra minnepennen til PC: skriv `integritet` (eller velg **1**).  
+Filer på penn/SD: `pakkelapperYYYY.csv` + `.xlsx` (samme fil hele året).  
+Endringslogg: **[CHANGELOG.md](CHANGELOG.md)**.
+
+Samme ting som ett ord (SSH/skall): `usb` `integritet` `sjekk` `logg` `status` `start` `stopp` `restart` `excel`
+
+Nød-login (hvis du trenger shell): **Alt+F2** · SSH: `ssh pi@pakkemaskin.local`
+
+📖 Full guide: **[docs/no/INSTALLATION.md](docs/no/INSTALLATION.md)** · English: [docs/en/INSTALLATION.md](docs/en/INSTALLATION.md) · Endringslogg: [CHANGELOG.md](CHANGELOG.md) · Claude-handoff: [docs/no/HANDOFF-CLAUDE.md](docs/no/HANDOFF-CLAUDE.md)
+
+---
+
+## Første gangs installasjon
 
 ```bash
 git clone https://github.com/qeamer/rs232excel.git
 cd rs232excel/python/no
-pip install -r requirements.txt
-python3 read_package.py --port /dev/ttyUSB0 --usb-sti /media/usb0
-python3 read_package.py --eksporter-xlsx
+bash installer.sh          # PATH-kommandoer + tjeneste
+bash fiks-usb.sh           # auto-mount minnepenn → /media/usb0
 ```
 
-<p style="font-size: 16px">
-📖 <b><a href="docs/no/INSTALLATION.md">Installasjonsguide med koblingsdiagram →</a></b><br>
-&nbsp;&nbsp;&nbsp; Engelsk guide: <a href="docs/en/INSTALLATION.md">docs/en/INSTALLATION.md</a>
-</p>
+Deretter: `sjekk` → `start`. Før kopi til PC: `integritet`.
 
 ---
 
@@ -73,7 +111,8 @@ python3 read_package.py --eksporter-xlsx
 </p>
 
 <p style="font-size: 16px; line-height: 1.55">
-Merkeprofilert Excel-arbeidsbok, generert på kommando fra live CSV:
+Merkeprofilert Excel-arbeidsbok — bygges <b>automatisk</b> under fangst og speiles til
+minnepennen (<code>pakkelapperYYYY.xlsx</code>). Meny <b>8</b> / <code>excel</code> er valgfri «oppdater nå»:
 </p>
 
 <ul style="font-size: 16px; line-height: 1.6">
@@ -89,22 +128,28 @@ Merkeprofilert Excel-arbeidsbok, generert på kommando fra live CSV:
 <table style="font-size: 16px">
 <tr><th>Situasjon på gulvet</th><th>Hva programmet gjør</th></tr>
 <tr><td>Operatør trykker kvittering to ganger</td><td><b>Dedup</b> — pakke lagres én gang, råkopi i <code>utskrift.txt</code></td></tr>
-<tr><td>Pakke aldri kvittert</td><td><b>Hull-deteksjon</b> — manglende numre i <code>mangler.csv</code></td></tr>
-<tr><td>Teller nullstiller 9999 → 0</td><td><b>Runde</b> — oppdages automatisk</td></tr>
+<tr><td>Pakke aldri kvittert</td><td><b>Hull-deteksjon</b> — manglende numre i <code>manglerYYYY.csv</code> (friskmeldes når pakken kommer)</td></tr>
+<tr><td>Teller nullstiller 9999 → 0</td><td><b>Runde</b> — kun når maks &gt; 9000 og nytt nr er lavt (reprint midt i serien starter ikke ny runde)</td></tr>
 <tr><td>Skriver av / tom for papir</td><td>Data ligger på kabelen uansett</td></tr>
-<tr><td>Minnepenn trukket ut</td><td>SD-kort er fasit; minnepenn synkes ved ny tilkobling</td></tr>
-<tr><td>Lapp aldri skrevet ut</td><td><code>--registrer N</code> legger inn manuelt</td></tr>
+<tr><td>Minnepenn trukket ut</td><td>SD er fasit; penn synkes/helbredes ved ny tilkobling (<code>integritet</code>)</td></tr>
+<tr><td>Lapp aldri skrevet ut</td><td><code>--registrer N</code> — ekte lapp senere oppgraderer tom manuell rad</td></tr>
 </table>
 
-<h2 style="font-size: 1.5em">Kommandoer (norsk)</h2>
+<h2 style="font-size: 1.5em">Avanserte flag (valgfritt)</h2>
+
+<p style="font-size: 16px">
+Daglig bruk: se <b>Daglig bruk på Pi</b> øverst. Under er flag for direkte kjøring av
+<code>python3 read_package.py …</code> om du trenger det.
+</p>
 
 <table style="font-size: 16px">
 <tr><th>Flag</th><th>Formål</th></tr>
 <tr><td><code>--port /dev/ttyUSB0</code></td><td>Live fangst (produksjon)</td></tr>
-<tr><td><code>--usb-sti /media/usb0</code></td><td>Speil CSV til minnepenn i sanntid</td></tr>
+<tr><td><code>--usb-sti /media/usb0</code></td><td>Speil årets CSV + Excel til minnepenn</td></tr>
+<tr><td><code>--sjekk-usb</code></td><td>Sjekk/helbred penn mot SD (samme som <code>integritet</code>)</td></tr>
 <tr><td><code>--bare-fangst</code></td><td>Bare vis rådata — verifiser første gang</td></tr>
 <tr><td><code>--sett-sesong rå</code> / <code>tørr</code></td><td>Match sesongbryter på maskinen</td></tr>
-<tr><td><code>--eksporter-xlsx</code></td><td>Generer Excel-arbeidsbok</td></tr>
+<tr><td><code>--eksporter-xlsx</code></td><td>Generer Excel nå (ellers automatisk)</td></tr>
 <tr><td><code>--oppsummering</code></td><td>Daglige totaler i terminalen</td></tr>
 <tr><td><code>--registrer 1234</code></td><td>Manuell pakke</td></tr>
 <tr><td><code>--simuler eksempel.txt</code></td><td>Offline test — uten PLS</td></tr>
@@ -112,13 +157,19 @@ Merkeprofilert Excel-arbeidsbok, generert på kommando fra live CSV:
 
 <h2 style="font-size: 1.5em">Hardware</h2>
 
-<img src="docs/no/img/wiring-tap.png" width="100%" alt="Kobling"/>
-
 <p style="font-size: 16px">
-Raspberry Pi Zero WH · StarTech ICUSB232DB25 · WAGO 221-412 · 40 cm DB25 skjøtekabel i serie ·
-IP54 kapsling · valgfri SSD1306 OLED. Full delerliste i
-<a href="docs/no/INSTALLATION.md">installasjonsguiden</a>.
+Raspberry Pi Zero WH · StarTech ICUSB232DB25 · <b>DB25-MG</b> + DB25 hunn-terminal · båndkabel ·
+USB-hub + OTG + tastatur + minnepenn · valgfri OLED JMD0.96D-1.
+Full delerliste i <a href="docs/no/INSTALLATION.md">installasjonsguiden</a>.
 </p>
+
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passiv tapp</b> — A–G bruksanvisning (bilde over). Ingen kniv/WAGO.</p>
+
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB-kjede</b> — OTG: micro-USB <b>hann</b> → USB-A <b>hunn</b> (hub plugges inn). StarTech DB25 <b>hann</b> i lytte-hunn (C). Hub + tastatur + penn. PWR IN (høyre) ≥2,5 A · DATA (midt).</p>
+<img src="docs/no/img/usb-kjede-komplett.png" width="100%" alt="USB-kjede OTG/hub/StarTech"/>
+
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>3 · OLED (valgfritt)</b> — JMD0.96D-1 / SSD1306 I2C, fire ledninger. Roterer dag/år, siste pakke, sort.</p>
+<img src="docs/no/img/oled-i2c-korrekt.png" width="72%" alt="OLED I2C"/>
 
 <h2 style="font-size: 1.5em">Mapper i repoet</h2>
 
@@ -133,5 +184,5 @@ IP54 kapsling · valgfri SSD1306 OLED. Full delerliste i
 ---
 
 <p align="center" style="font-size: 14px">
-<a href="https://www.skjaaktrelast.no">Skjåk Trelast AS</a> · Telemecanique TSX · OKI Microline · RS-232 9600 8N1
+<a href="https://www.skjak-trelast.no">Skjåk Trelast AS</a> · Telemecanique TSX · OKI Microline · RS-232 9600 8N1
 </p>

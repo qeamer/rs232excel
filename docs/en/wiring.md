@@ -1,31 +1,22 @@
 # Wiring
 
-<img src="img/passive-rs232-tap.png" width="100%" alt="Correct: DB25-MG center, null modem, Pi DATA"/>
+<img src="img/passive-rs232-tap.png" width="100%" alt="Listen: MG screws 2+7 → female breakout → FTDI null modem → Pi"/>
 
-## Center piece: DB25-MG (not a loose gender-changer block)
-
-You have **DB25-MG Ver 1.1**: green board with **FEMALE + MALE + screw terminals 1–25**.
-That is both pass-through and tap.
+## Your plan — yes
 
 ```text
-PLC DB25 MALE  --mated-->  DB25-MG FEMALE
-                                │
-                                ├── all pins 1:1 --> DB25-MG MALE --> extension --> OKI
-                                │
-                                └── screw 2 (TX) + screw 7 (GND) --wires--> listen end
+PLC DB25 MALE → DB25-MG (F+M+screws) → ribbon 1:1 → OKI
+                     screws 2 (TX) + 7 (GND)
+                              ↓
+              DB25 FEMALE terminal adapter (solder-free)
+                              ↓ mated
+              FTDI USB→DB25 MALE (null modem) → hub → Pi DATA
 ```
 
-## Listen end
+Prefer tapping from **MG screws 2 and 7** (same signals as in the ribbon — don’t cut the ribbon).
 
-USB→DB25 **male** **null modem** plugs into a **DB25 female**. Wires from MG screws 2 and 7 into that female (pins per table). USB-A → hub → OTG female → Pi **DATA** (middle micro-USB).
+Null modem: try MG 2 → listen screw **2**, 7→7 first; if no data use listen screw **3** for TX. Leave other listen screws empty.
 
-| | MG screw | → | USB–DB25 |
-|--|----------|---|----------|
-| **A first** | 2 TX | → | pin **2** |
-| | 7 GND | → | pin **7** |
-| **B if no data** | 2 TX | → | pin **3** |
-| | 7 GND | → | pin **7** |
-
-PWR IN = power only. Never GPIO. No fantasy side-jab wires into connector shells.
+PWR IN = power only. DATA = OTG → hub. Not GPIO.
 
 *Norwegian: [docs/no/wiring.md](../no/wiring.md)*

@@ -1,6 +1,6 @@
 # Wiring — parts A–G
 
-Source of truth (Norwegian lettered guide): [docs/no/wiring.md](../no/wiring.md) · images: [bruksanvisning-tapp-foto.png](../no/img/bruksanvisning-tapp-foto.png) · [passiv-rs232-tapp.png](../no/img/passiv-rs232-tapp.png)
+Source of truth (Norwegian lettered guide): [docs/no/wiring.md](../no/wiring.md) · images: [steg-for-steg-passiv-rs232-tapp.png](../no/img/steg-for-steg-passiv-rs232-tapp.png) · [passiv-rs232-tapp.png](../no/img/passiv-rs232-tapp.png)
 
 | | Part | Role |
 |--|------|------|

@@ -92,6 +92,7 @@ python3 vis_status.py  # runs independently of capture
 Fasit: [wiring.md](wiring.md) · [../no/HANDOFF-CLAUDE.md](../no/HANDOFF-CLAUDE.md)
 
 <img src="img/tap-mated.png" width="100%" alt="Step-by-step passive RS-232 tap"/>
+<img src="img/db25-correct-pins.png" width="100%" alt="DB25 correct pins: 2=TX, 7=GND, StarTech RX=3"/>
 <img src="img/passive-rs232-tap.png" width="100%" alt="A–G schematic"/>
 
 > Ignore old text/images with **WAGO**, “cut pins 2/7”, GPIO, or parallel port. Signal → **USB–RS232 → `/dev/ttyUSB0`**.

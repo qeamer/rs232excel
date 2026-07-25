@@ -2,7 +2,21 @@
 
 <img src="img/steg-for-steg-passiv-rs232-tapp.png" width="100%" alt="Steg for steg passiv RS-232-tapp — StarTech straight"/>
 
+<img src="img/db25-rette-pinner.png" width="100%" alt="DB25 rette pinner: 2=TX, 7=GND, StarTech RX=pin 3"/>
+
 <img src="img/passiv-rs232-tapp.png" width="100%" alt="Skjema bruksanvisning A–G"/>
+
+## DB25 — rette pinner
+
+Ser du inn i **hunn** (eller bakfra på **hann**), standard RS-232-nummerering:
+
+| Pin | Signal | Rolle her |
+|-----|--------|-----------|
+| **2** | **TX** | Data ut fra PLS — tappes på anlegget |
+| **7** | **GND** | Jord — tappes på anlegget |
+| **3** | **RX** | StarTech-lytting (straight) — derfor **C3** |
+
+Skrue **N** på breakout = DB25-pin **N** (1:1).
 
 ## Gjenstander
 

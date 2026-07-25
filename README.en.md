@@ -34,7 +34,9 @@ A Raspberry Pi listens silently on the RS-232 line between a Telemecanique TSX P
 
 <img src="docs/en/img/tap-mated.png" width="100%" alt="Step-by-step passive RS-232 tap, StarTech straight 2→3"/>
 
-The tap is **physically read-only**: only TX+GND from DIN-rail breakout screws 2/7 to solder-free female **C3**/C7 → StarTech **ICUSB232DB25** pin 3 RX (straight; fallback C2). Signal to `/dev/ttyUSB0`, not GPIO. The printer keeps printing as before. Guide: [docs/en/wiring.md](docs/en/wiring.md) · [HANDOFF-CLAUDE.md](docs/no/HANDOFF-CLAUDE.md).
+<img src="docs/en/img/db25-correct-pins.png" width="100%" alt="DB25 correct pins: pin 2=TX, pin 7=GND, StarTech RX=pin 3"/>
+
+The tap is **physically read-only**: only TX+GND from DIN-rail breakout screws 2/7 to solder-free female **C3**/C7 → StarTech **ICUSB232DB25** pin 3 RX (straight; fallback C2). On the DB25: **pin 2 = TX**, **pin 7 = GND** (plant); StarTech **pin 3 = RX**. Signal to `/dev/ttyUSB0`, not GPIO. The printer keeps printing as before. Guide: [docs/en/wiring.md](docs/en/wiring.md) · [HANDOFF-CLAUDE.md](docs/no/HANDOFF-CLAUDE.md).
 
 ---
 

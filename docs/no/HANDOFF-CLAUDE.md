@@ -82,12 +82,22 @@ Ingen kniv/WAGO når A brukes.
 2. **DATA / OTG** (midt) ← hub  
 3. **PWR IN** (helt **høyre**) ← kun 5V  
 
+### DB25 — rette pinner (anlegg)
+
+<img src="img/db25-rette-pinner.png" width="100%" alt="DB25 pin 2=TX, pin 7=GND"/>
+
+| DB25-pin | Signal | Hvor |
+|----------|--------|------|
+| **2** | **TX** | Data ut fra PLS — tapp her (VARE1/A-skrue 2) |
+| **7** | **GND** | Jord — tapp her (VARE1/A-skrue 7) |
+| **3** | **RX** | StarTech-lytting (straight) — derfor **C3** |
+
 ### Pinner (StarTech = typisk straight / DTE)
 
 | Fra A (anlegg) | Signal | → | Til C (mot D / StarTech) |
 |----------------|--------|---|---------------------------|
-| skrue **2** | TX | → | skrue **3** (RX) — prøv først* |
-| skrue **7** | GND | → | skrue **7** |
+| skrue **2** (= DB25 pin 2 TX) | TX | → | skrue **3** (= StarTech pin 3 RX) |
+| skrue **7** (= DB25 pin 7 GND) | GND | → | skrue **7** |
 
 **StarTech = straight (ikke null modem):** primærvei **A2 → C3 → pin 3 (RX)**, **A7 → C7**.  
 VARE2/C er 1:1 (skrue N = DB25-pin N) — derfor må TX inn på **C3**, ikke C2.  
@@ -101,7 +111,8 @@ La C-skruer utenom 2/3 og 7 stå **tomme** (ikke koble StarTech TX ut tilbake ti
 
 | Fil | Bruk |
 |-----|------|
-| [`img/steg-for-steg-passiv-rs232-tapp.png`](img/steg-for-steg-passiv-rs232-tapp.png) | **Primær plakat** — StarTech STRAIGHT, 2→3 |
+| [`img/steg-for-steg-passiv-rs232-tapp.png`](img/steg-for-steg-passiv-rs232-tapp.png) | **Primær plakat** — StarTech STRAIGHT, 2→C3→3 |
+| [`img/db25-rette-pinner.png`](img/db25-rette-pinner.png) | DB25-ansikt: pin **2=TX**, **7=GND**, StarTech **3=RX** |
 | [`img/bruksanvisning-tapp-foto.png`](img/bruksanvisning-tapp-foto.png) | Samme plakat (alias) |
 | [`img/passiv-rs232-tapp.png`](img/passiv-rs232-tapp.png) | Skjema A–G (tekst/steg) |
 | [`img/usb-kjede-komplett.png`](img/usb-kjede-komplett.png) | USB-kjønn OTG/hub |

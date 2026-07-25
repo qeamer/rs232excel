@@ -128,6 +128,7 @@ python3 vis_status.py  # kjører uavhengig av fangst
 Fasit: [wiring.md](wiring.md) · [HANDOFF-CLAUDE.md](HANDOFF-CLAUDE.md)
 
 <img src="img/steg-for-steg-passiv-rs232-tapp.png" width="100%" alt="Steg for steg passiv RS-232-tapp"/>
+<img src="img/db25-rette-pinner.png" width="100%" alt="DB25 rette pinner: 2=TX, 7=GND, StarTech RX=3"/>
 <img src="img/passiv-rs232-tapp.png" width="100%" alt="Skjema A–G"/>
 
 > Ignorer gamle tekster/bilder med **WAGO**, «klipp pin 2/7», GPIO eller parallellport. Signal → **USB–RS232 → `/dev/ttyUSB0`**.

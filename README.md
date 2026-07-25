@@ -41,9 +41,12 @@ og en OKI Microline 280. Hver pakkelapp parses til CSV/Excel — ingen manuell r
 
 <img src="docs/no/img/steg-for-steg-passiv-rs232-tapp.png" width="100%" alt="Steg for steg: passiv RS-232-tapp, StarTech straight 2→3"/>
 
+<img src="docs/no/img/db25-rette-pinner.png" width="100%" alt="DB25 rette pinner: pin 2=TX, pin 7=GND, StarTech RX=pin 3"/>
+
 <p style="font-size: 16px; line-height: 1.5">
 Tappen er <b>fysisk skrivebeskyttet</b>: kun TX+GND fra DIN-rail breakout (skrue 2/7)
 til loddefri hunn <b>C3</b> → StarTech <b>ICUSB232DB25</b> pin 3 RX (straight; fallback C2).
+På DB25: <b>pin 2 = TX</b>, <b>pin 7 = GND</b> (anlegg); StarTech <b>pin 3 = RX</b>.
 Signal til <code>/dev/ttyUSB0</code>, ikke GPIO. Skriveren fortsetter som før.
 Steg for steg: <a href="docs/no/wiring.md">docs/no/wiring.md</a> ·
 <a href="docs/no/HANDOFF-CLAUDE.md">HANDOFF-CLAUDE.md</a>.

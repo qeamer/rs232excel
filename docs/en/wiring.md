@@ -1,6 +1,18 @@
 # Wiring — parts A–G
 
-Source of truth (Norwegian lettered guide): [docs/no/wiring.md](../no/wiring.md) · images: [steg-for-steg-passiv-rs232-tapp.png](../no/img/steg-for-steg-passiv-rs232-tapp.png) · [passiv-rs232-tapp.png](../no/img/passiv-rs232-tapp.png)
+Source of truth (Norwegian lettered guide): [docs/no/wiring.md](../no/wiring.md) · images: [steg-for-steg-passiv-rs232-tapp.png](../no/img/steg-for-steg-passiv-rs232-tapp.png) · [db25-rette-pinner.png](../no/img/db25-rette-pinner.png) · [passiv-rs232-tapp.png](../no/img/passiv-rs232-tapp.png)
+
+## DB25 — correct pins
+
+Looking into the **female** (or from the rear of the **male**), standard RS-232 numbering:
+
+| Pin | Signal | Role here |
+|-----|--------|-----------|
+| **2** | **TX** | Data out from PLC — tapped on the plant side |
+| **7** | **GND** | Ground — tapped on the plant side |
+| **3** | **RX** | StarTech listen (straight) — hence **C3** |
+
+Screw **N** on the breakout = DB25 pin **N** (1:1).
 
 | | Part | Role |
 |--|------|------|

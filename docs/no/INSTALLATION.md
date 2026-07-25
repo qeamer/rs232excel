@@ -136,7 +136,7 @@ Fasit: [wiring.md](wiring.md) · [HANDOFF-CLAUDE.md](HANDOFF-CLAUDE.md)
 
 1. Sett **A (DB25-MG)** i serie: PLS DB25 hann → A hunn; A hann → **B** (bånd) → OKI.  
 2. Ledning **E1** i A-skrue **2** (TX); **E2** i A-skrue **7** (GND).  
-3. E1 → **C** (DB25 hunn-terminal) skrue **3** (RX; prøv 2 hvis null data); E2 → C-skrue **7**.  
+3. E1 → **C** (DB25 hunn-terminal) skrue **C3** (= StarTech pin 3 RX); E2 → **C7**. Ingen data? Prøv **C2**.  
 4. **D (StarTech)** DB25 hann rett inn i C hunn.  
 5. D USB → hub → OTG → Pi **DATA** (midt). 5V → Pi **PWR IN** (høyre).
 

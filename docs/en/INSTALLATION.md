@@ -100,7 +100,7 @@ Fasit: [wiring.md](wiring.md) · [../no/HANDOFF-CLAUDE.md](../no/HANDOFF-CLAUDE.
 
 1. Insert **A (DB25-MG)** in series: PLC DB25 male → A female; A male → **B** (ribbon) → OKI.  
 2. Wire **E1** on A screw **2** (TX); **E2** on A screw **7** (GND).  
-3. E1 → **C** (DB25 female terminal) screw **3** (RX; try 2 if no data); E2 → C screw **7**.  
+3. E1 → **C** (DB25 female terminal) screw **C3** (= StarTech pin 3 RX); E2 → **C7**. No data? Try **C2**.  
 4. **D (StarTech)** DB25 male straight into C female.  
 5. D USB → hub → OTG → Pi **DATA** (middle). 5V → Pi **PWR IN** (right).
 

@@ -62,7 +62,7 @@ Tester: `cd python/no && python3 -m unittest test_register.py`
 - StarTech DB25 **hann** → C (hunn-terminal) ← ledninger fra A (DB25-MG)
 - **Anbefalt tapp:** DB25-MG + hunn-terminal (A–G); WAGO/klipping **utdatert**
 - Utdaterte bilder `signal-flow.png` / `wiring-tap.png` erstattet med A–G-bruksanvisning
-- Primær plakat: `steg-for-steg-passiv-rs232-tapp.png` (StarTech **straight**, skrue 2→pin 3)
+- Primær plakat: `steg-for-steg-passiv-rs232-tapp.png` (StarTech **straight**, **A2→C3→pin 3**; fallback C2)
 - Steg-bilder + Claude-PDF: `docs/no/rs232excel-2026-07-24-for-claude.pdf`
 - Markdown-handoff til Claude (fasit + alle bilder): `docs/no/HANDOFF-CLAUDE.md`
 - **PWR IN:** 5V / ≥2,5 A (helst 3 A) vegglader — ikke svak telefonlader

@@ -29,11 +29,11 @@ Fra **venstre → høyre**:
 
 ## Steg
 
-1. PLS-hann → **A**-hunn. **A**-hann → **B** → OKI.  
-2. **E1** i **A**-skrue **2**. **E2** i **A**-skrue **7**.  
-3. **E1** → **C**-skrue **2**. **E2** → **C**-skrue **7**. Stopp.  
-4. **D**-hann rett i **C**-hunn.  
-5. 5V → **G PWR IN** (høyre). **F** OTG → **G DATA** (midt). **D** USB → hub.
+1. **Anlegg:** PLS-hann → **A** (DB25-MG)-hunn. **A**-hann → **B** (bånd) → OKI.  
+2. **Tapp på A = DB25-MG:** **E1** i skrue **2**, **E2** i skrue **7**.  
+3. **Inn på C = DB25 hunn-terminal (lytte):** **E1** → skrue **2**, **E2** → skrue **7**.  
+4. **D = FTDI** DB25-hann rett inn i **C** sin hunn-front (ledningene blir sittende i C-skrue 2 og 7).  
+5. **Pi G:** 5V → **PWR IN** (høyre). **F** OTG → **DATA** (midt). **D** USB → hub.
 
 Null data? Flytt **E1** på **C** fra 2 til **3**.
 

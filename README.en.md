@@ -30,9 +30,9 @@
 A Raspberry Pi listens silently on the RS-232 line between a 1980s Telemecanique TSX PLC and an OKI Microline 280 dot-matrix printer at a Norwegian sawmill. Every timber package label is parsed and stored automatically — dimension, species, grade, board count, volume. No manual entry. No data loss, even when the printer is off.
 </p>
 
-<img src="docs/en/img/tap-mated.png" width="100%" alt="A–G guide: DB25-MG breakout, no cutting/WAGO"/>
+<img src="docs/en/img/tap-mated.png" width="100%" alt="Step-by-step passive RS-232 tap, StarTech straight 2→3"/>
 
-The tap is **physically read-only**: only TX+GND from breakout screws to StarTech **RX**/GND. Signal to `/dev/ttyUSB0`, not GPIO. The printer keeps printing as before. **No knife, no WAGO** when using DB25-MG.
+The tap is **physically read-only**: only TX+GND from DIN-rail breakout screws 2/7 to solder-free female → StarTech **ICUSB232DB25** (straight: screw 2 → pin 3 RX). Signal to `/dev/ttyUSB0`, not GPIO. The printer keeps printing as before. **No knife, no WAGO**.
 
 ---
 

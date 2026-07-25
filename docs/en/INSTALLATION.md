@@ -2,7 +2,7 @@
 
 Complete walkthrough — from empty SD card to a live passive tap running on the sawmill floor. Roughly 45 minutes, no programming experience required.
 
-<img src="img/tap-mated.png" width="100%" alt="A–G guide: DB25-MG, no cutting"/>
+<img src="img/tap-mated.png" width="100%" alt="Step-by-step passive RS-232 tap, StarTech straight"/>
 
 The printer keeps printing physical labels **exactly as before**. The tap only listens — it never transmits — so the printer and PLC behave identically whether the Pi is powered or not. **No knife / no WAGO** when using DB25-MG.
 
@@ -91,7 +91,7 @@ python3 vis_status.py  # runs independently of capture
 
 Fasit: [wiring.md](wiring.md) · [../no/HANDOFF-CLAUDE.md](../no/HANDOFF-CLAUDE.md)
 
-<img src="img/tap-mated.png" width="100%" alt="A–G guide"/>
+<img src="img/tap-mated.png" width="100%" alt="Step-by-step passive RS-232 tap"/>
 <img src="img/passive-rs232-tap.png" width="100%" alt="A–G schematic"/>
 
 > Ignore old text/images with **WAGO**, “cut pins 2/7”, GPIO, or parallel port. Signal → **USB–RS232 → `/dev/ttyUSB0`**.

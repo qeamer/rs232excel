@@ -1,6 +1,6 @@
 # Kobling — bruksanvisning A–G
 
-<img src="img/bruksanvisning-tapp-foto.png" width="100%" alt="AI-foto bruksanvisning A–G"/>
+<img src="img/steg-for-steg-passiv-rs232-tapp.png" width="100%" alt="Steg for steg passiv RS-232-tapp — StarTech straight"/>
 
 <img src="img/passiv-rs232-tapp.png" width="100%" alt="Skjema bruksanvisning A–G"/>
 

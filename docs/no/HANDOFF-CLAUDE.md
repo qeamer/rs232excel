@@ -101,27 +101,28 @@ La C-skruer utenom 2/3 og 7 stå **tomme** (ikke koble StarTech TX ut tilbake ti
 
 | Fil | Bruk |
 |-----|------|
-| [`img/bruksanvisning-tapp-foto.png`](img/bruksanvisning-tapp-foto.png) | **AI-foto bruksanvisning A–G** (primær) |
+| [`img/steg-for-steg-passiv-rs232-tapp.png`](img/steg-for-steg-passiv-rs232-tapp.png) | **Primær plakat** — StarTech STRAIGHT, 2→3 |
+| [`img/bruksanvisning-tapp-foto.png`](img/bruksanvisning-tapp-foto.png) | Samme plakat (alias) |
 | [`img/passiv-rs232-tapp.png`](img/passiv-rs232-tapp.png) | Skjema A–G (tekst/steg) |
 | [`img/usb-kjede-komplett.png`](img/usb-kjede-komplett.png) | USB-kjønn OTG/hub |
 | [`img/oled-i2c-korrekt.png`](img/oled-i2c-korrekt.png) | OLED I2C pin 1/3/5/6 |
 | [`docs/no/wiring.md`](wiring.md) | Kort fasit-tekst |
 
-<img src="img/bruksanvisning-tapp-foto.png" width="100%" alt="Bruksanvisning A-G AI-foto"/>
+<img src="img/steg-for-steg-passiv-rs232-tapp.png" width="100%" alt="Steg for steg passiv RS-232-tapp — StarTech straight"/>
 
 <img src="img/passiv-rs232-tapp.png" width="100%" alt="Bruksanvisning A-G skjema"/>
 
 ### Ikke bruk som fasit
 
-`tapp-i-inngrep.png`, `tapp-dine-deler.png`, `tapp-alle-metoder.png` (eldre), `oled-gpio.png`, og alt med WAGO-klipp, GPIO, parallellport, «ELLER»/TTL, eller hub i PWR IN.
+`tapp-i-inngrep.png`, `tapp-dine-deler.png`, `tapp-alle-metoder.png` (eldre), `oled-gpio.png`, og alt med WAGO-klipp, GPIO, parallellport, «ELLER»/TTL, null-modem-som-førstevalg, eller hub i PWR IN.
 
-**Legacy-filer overskrevet med A–G** (gamle raw-URL-er peker nå hit etter merge):  
-`signal-flow.png`, `wiring-tap.png` (= `bruksanvisning-tapp-foto.png` / `tap-mated.png`).
+**Legacy-filer overskrevet** (gamle raw-URL-er etter merge):  
+`signal-flow.png`, `wiring-tap.png` (= steg-for-steg-plakaten).
 
 Raw:
 
 - https://github.com/qeamer/rs232excel/raw/cursor/pakkemaskin-cli-ef03/docs/no/HANDOFF-CLAUDE.md  
-- https://github.com/qeamer/rs232excel/raw/cursor/pakkemaskin-cli-ef03/docs/no/img/bruksanvisning-tapp-foto.png  
+- https://github.com/qeamer/rs232excel/raw/cursor/pakkemaskin-cli-ef03/docs/no/img/steg-for-steg-passiv-rs232-tapp.png  
 - https://github.com/qeamer/rs232excel/blob/cursor/pakkemaskin-cli-ef03/docs/no/wiring.md  
 
 ---

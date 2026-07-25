@@ -90,12 +90,13 @@ dimensjon, treslag, sort, antall plank, kubikk. Ingen manuell registrering. Inge
 selv når skriveren er av.
 </p>
 
-<img src="docs/no/img/bruksanvisning-tapp-foto.png" width="100%" alt="Bruksanvisning A–G: DB25-MG breakout, ingen kniv/WAGO"/>
+<img src="docs/no/img/steg-for-steg-passiv-rs232-tapp.png" width="100%" alt="Steg for steg: passiv RS-232-tapp, StarTech straight 2→3"/>
 
 <p style="font-size: 16px; line-height: 1.5">
-Tappen er <b>fysisk skrivebeskyttet</b>: kun TX+GND fra breakout-skruer til StarTech-<b>RX</b>/GND.
+Tappen er <b>fysisk skrivebeskyttet</b>: kun TX+GND fra DIN-rail breakout (skrue 2/7)
+til loddefri hunn → StarTech <b>ICUSB232DB25</b> (straight: skrue 2 → pin 3 RX).
 Signal til <code>/dev/ttyUSB0</code>, ikke GPIO. Skriveren fortsetter som før.
-<b>Ingen kniv, ingen WAGO</b> når du bruker DB25-MG.
+<b>Ingen kniv, ingen WAGO</b>.
 </p>
 
 ---

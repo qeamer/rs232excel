@@ -27,7 +27,7 @@ Resten av denne siden er **første gangs installasjon** (SD-kort → kabler → 
 
 ---
 
-<img src="img/bruksanvisning-tapp-foto.png" width="100%" alt="Bruksanvisning A–G (DB25-MG, ingen kniv)"/>
+<img src="img/steg-for-steg-passiv-rs232-tapp.png" width="100%" alt="Steg for steg: passiv RS-232-tapp, StarTech straight"/>
 
 Skriveren fortsetter å skrive fysiske pakkelapper **helt som før**. Tappen lytter bare — den sender aldri — så skriver og PLS oppfører seg likt uansett om Pi-en er påslått eller ikke.
 
@@ -127,7 +127,7 @@ python3 vis_status.py  # kjører uavhengig av fangst
 
 Fasit: [wiring.md](wiring.md) · [HANDOFF-CLAUDE.md](HANDOFF-CLAUDE.md)
 
-<img src="img/bruksanvisning-tapp-foto.png" width="100%" alt="Bruksanvisning A–G"/>
+<img src="img/steg-for-steg-passiv-rs232-tapp.png" width="100%" alt="Steg for steg passiv RS-232-tapp"/>
 <img src="img/passiv-rs232-tapp.png" width="100%" alt="Skjema A–G"/>
 
 > Ignorer gamle tekster/bilder med **WAGO**, «klipp pin 2/7», GPIO eller parallellport. Signal → **USB–RS232 → `/dev/ttyUSB0`**.

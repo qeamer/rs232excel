@@ -27,7 +27,7 @@ Resten av denne siden er **første gangs installasjon** (SD-kort → kabler → 
 
 ---
 
-<img src="img/signal-flow.png" width="100%" alt="Systemarkitektur"/>
+<img src="img/bruksanvisning-tapp-foto.png" width="100%" alt="Bruksanvisning A–G (DB25-MG, ingen kniv)"/>
 
 Skriveren fortsetter å skrive fysiske pakkelapper **helt som før**. Tappen lytter bare — den sender aldri — så skriver og PLS oppfører seg likt uansett om Pi-en er påslått eller ikke.
 
@@ -43,17 +43,16 @@ Skriveren fortsetter å skrive fysiske pakkelapper **helt som før**. Tappen lyt
 | 4 | Lexar 32GB Industrial microSDHC | RS 2676402 | Systemdisk — fasiten |
 | 5 | 2× Kingston 64GB USB-minnepenn | RS 0622158 | Sanntidsspeiling av CSV + Excel |
 | 6 | RS PRO IP54 kapsling 60×190×110 | RS 1959122 | Støvbeskyttelse |
-| 7 | **DB25 hann↔hunn breakout** m/skrueterminaler | AliExpress / Amazon / Elfa | **Anbefalt tapp** — ingen klipping |
-| 8 | WAGO 221-412 klemmer, 10-pk | RS 8837544 | Alternativ B / midlertidig grein |
-| 9 | DB25 hann→hunn skjøtekabel 40 cm | AliExpress | Offer-skjøt hvis metode B |
-| 10 | DB25 hann→hunn skjøtekabel 50 cm | AliExpress | Reserve — merk med tape |
-| 11 | Micro-USB OTG (hann→USB-A hunn) | AliExpress | Pi Zero DATA → hub |
-| 12 | SSD1306 0,96" OLED, I2C, 4-pin | AliExpress | Statusskjerm (valgfritt) |
-| 13 | Dupont hopperledninger F-F | AliExpress | 4 av 40 brukes (OLED) |
+| 7 | **DB25-MG** hunn+hann + skrueterminaler (A) | AliExpress | **Tapp** — ingen kniv/WAGO |
+| 8 | **DB25 hunn** solder-free terminal (C) | AliExpress | Lytte-hunn for StarTech-hann |
+| 9 | DB25 M↔F båndkabel 1:1 (B) | AliExpress / har | A → OKI |
+| 10 | Micro-USB OTG (hann→USB-A hunn) | AliExpress / har | Pi Zero DATA → hub |
+| 11 | OLED JMD0.96D-1 / SSD1306 I2C | AliExpress / har | Statusskjerm (valgfritt) |
+| 12 | Dupont F–F | AliExpress / har | OLED (4 ledninger) |
 
-I tillegg: **5V / minst 2,5 A** micro-USB strømforsyning (helst 3 A), to ledninger fra breakout pin 2/7 til StarTech RX/GND.
+I tillegg: **5V / ≥2,5 A** micro-USB (PWR IN høyre), to ledninger A-skrue 2/7 → C-skrue 3/7 (StarTech).
 
-Søk breakout: `DB25 male female breakout screw terminal`. Se [wiring.md](wiring.md).
+Se [wiring.md](wiring.md) og [HANDOFF-CLAUDE.md](HANDOFF-CLAUDE.md). **WAGO/klipping er utdatert** når A brukes.
 
 > **Strøm er kritisk på Pi Zero.** For lite ampere → «mystiske» feil: tastatur som ikke svarer,
 > USB-enheter som forsvinner, hengende konsoll. Bruk godkjent vegglader (**5,0–5,1 V, ≥ 2,5 A**),
@@ -122,26 +121,30 @@ python3 vis_status.py  # kjører uavhengig av fangst
 
 ---
 
-## 5 · Fysisk tapping
+## 5 · Fysisk tapping (A–G — ingen kniv)
 
-**Stopp maskinen før du rører kabler.** Originalkabelen endres aldri.
+**Stopp maskinen før du rører kabler.** Original anleggskabel endres aldri.
 
-Se også: [wiring.md](wiring.md) — anbefalt: **DB25 breakout** (ingen klipping).
+Fasit: [wiring.md](wiring.md) · [HANDOFF-CLAUDE.md](HANDOFF-CLAUDE.md)
 
-<img src="img/tapp-anbefalt-breakout.png" width="100%" alt="Anbefalt tapp med DB25 breakout"/>
-<img src="img/tapp-steg-for-steg.png" width="100%" alt="Steg-for-steg metode A/B"/>
+<img src="img/bruksanvisning-tapp-foto.png" width="100%" alt="Bruksanvisning A–G"/>
+<img src="img/passiv-rs232-tapp.png" width="100%" alt="Skjema A–G"/>
 
-> Ignorer AI-illustrasjoner som viser GPIO, parallellport (D0–D7) eller 40-pinners LCD — signalet går til **USB–RS232 → `/dev/ttyUSB0`**.
+> Ignorer gamle tekster/bilder med **WAGO**, «klipp pin 2/7», GPIO eller parallellport. Signal → **USB–RS232 → `/dev/ttyUSB0`**.
 
-**Metode A (anbefalt):** Sett inn **DB25 hann↔hunn breakout** med skrueterminaler. Fra skrue **2 → RX**, skrue **7 → GND** på StarTech-lytteenden. Alt annet går 1:1 gjennom.
+**Steg for steg:**
 
-**Metode B:** Kort offer-skjøt → åpne kappe → pipetest pin 2/7 → klipp kun TX+GND → WAGO tre veier → fest i renne.
+1. Sett **A (DB25-MG)** i serie: PLS DB25 hann → A hunn; A hann → **B** (bånd) → OKI.  
+2. Ledning **E1** i A-skrue **2** (TX); **E2** i A-skrue **7** (GND).  
+3. E1 → **C** (DB25 hunn-terminal) skrue **3** (RX; prøv 2 hvis null data); E2 → C-skrue **7**.  
+4. **D (StarTech)** DB25 hann rett inn i C hunn.  
+5. D USB → hub → OTG → Pi **DATA** (midt). 5V → Pi **PWR IN** (høyre).
 
-> ⚠ **Retning teller:** TX fra PLS → adapterens **RX**. TX→TX fanger ingenting.
+> ⚠ **Retning:** TX fra PLS → StarTech **RX**. TX→TX fanger ingenting.
 
 ### USB-kjede
 
-<img src="img/usb-kjede-komplett.png" width="100%" alt="USB-kjede: Pi → OTG-hunn ← hub-hann; StarTech USB-hann → DB9 → DB25-adapter"/>
+<img src="img/usb-kjede-komplett.png" width="100%" alt="USB-kjede: Pi → OTG-hunn ← hub-hann; StarTech DB25-hann → C"/>
 
 OTG-skjøtekabelen **må** i **data**-porten midt på Pi Zero — hjørneporten er kun strøm (**PWR IN**).
 
@@ -156,11 +159,9 @@ Pi DATA ── micro-USB HANN ── OTG-skjøtekabel ── USB-A HUNN
                                     │
                          ├── USB-tastatur
                          ├── minnepenn      → /media/usb0 (CSV+Excel)
-                         └── StarTech / DB9-kabel:
-                               USB-A HANN inn i hub
-                               → DB9 HANN
-                               → DB9→DB25-adapter (egen del)
-                               → DB25 HANN → breakout/WAGO → /dev/ttyUSB0
+                         └── StarTech (D): USB-A → … → DB25 HANN
+                               → C (hunn-terminal) ← E1/E2 fra A
+                               → /dev/ttyUSB0
 ```
 
 - SD-kortet er alltid fasiten (fangst fortsetter uten minnepenn).
@@ -233,8 +234,8 @@ Trekk ut minnepennen når som helst — årets `pakkelapperYYYY.csv` og `pakkela
 ## 8 · Sjekkliste
 
 - [ ] Alle deler mottatt (SD-kort sendes separat!)
-- [ ] 40 cm kabel merket AKTIV, 50 cm merket RESERVE
-- [ ] Tapp: breakout (anbefalt) eller WAGO på pin 2+7, festet i renne
+- [ ] A (DB25-MG) i serie PLS↔OKI via B
+- [ ] C + StarTech (D); E1/E2 på skrue 2/7→3/7; festet trygt
 - [ ] USB-kjede: Pi **data-port** → OTG → hub → adapter + minnepenn
 - [ ] OLED på GPIO 1/3/5/6, I2C aktivert (hvis brukt)
 - [ ] `--bare-fangst` viser lesbar lappetekst

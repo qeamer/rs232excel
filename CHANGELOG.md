@@ -59,9 +59,9 @@ Tester: `cd python/no && python3 -m unittest test_register.py`
 ### USB-kjede og strøm
 
 - Pi DATA → OTG-skjøtekabel (USB-A **hunn**) ← hub (USB-A **hann**)
-- StarTech/DB9-kabel: USB-A **hann** inn i hub → DB9 **hann** → egen **DB9→DB25-adapter** → DB25 **hann** → WAGO
-- USB-diagram tegnet som skjema (ikke AI-illustrasjon) etter faktiske kabler
-- **Anbefalt tapp:** DB25 M↔F breakout (ingen klipping); WAGO er plan B
+- StarTech DB25 **hann** → C (hunn-terminal) ← ledninger fra A (DB25-MG)
+- **Anbefalt tapp:** DB25-MG + hunn-terminal (A–G); WAGO/klipping **utdatert**
+- Utdaterte bilder `signal-flow.png` / `wiring-tap.png` erstattet med A–G-bruksanvisning
 - Steg-bilder + Claude-PDF: `docs/no/rs232excel-2026-07-24-for-claude.pdf`
 - Markdown-handoff til Claude (fasit + alle bilder): `docs/no/HANDOFF-CLAUDE.md`
 - **PWR IN:** 5V / ≥2,5 A (helst 3 A) vegglader — ikke svak telefonlader
@@ -119,7 +119,7 @@ Nye norske diagrammer i `docs/no/img/` (erstatter misvisende AI-bilder):
 
 | Fil | Innhold |
 |-----|---------|
-| `passiv-rs232-tapp.png` | Åpne kappen — **kun** leder 2/7 (ikke klipp hele kabelen), WAGO, TX→RX |
+| `bruksanvisning-tapp-foto.png` / `passiv-rs232-tapp.png` | A–G breakout (DB25-MG); **ingen** kniv/WAGO |
 | `usb-kjede-komplett.png` | PWR IN ≥2,5 A, OTG-hub, tastatur+penn+adapter |
 | `oled-i2c-korrekt.png` | 0,96" SSD1306 I2C — **ikke** 40-pinners LCD-HAT |
 | `docs/en/img/passive-rs232-tap.png` m.fl. | Engelske speilversjoner av samme diagrammer |

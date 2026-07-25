@@ -1,9 +1,36 @@
 # Wiring — parts A–G
 
-Source of truth (Norwegian lettered guide): [docs/no/wiring.md](../no/wiring.md) · image: [passiv-rs232-tapp.png](../no/img/passiv-rs232-tapp.png)
+Source of truth (Norwegian lettered guide): [docs/no/wiring.md](../no/wiring.md) · images: [bruksanvisning-tapp-foto.png](../no/img/bruksanvisning-tapp-foto.png) · [passiv-rs232-tapp.png](../no/img/passiv-rs232-tapp.png)
 
-**A** DB25-MG · **B** ribbon · **C** female screw breakout · **D** FTDI USB–DB25 male null modem · **E1/E2** two DuPont only · **F** hub+OTG · **G** Pi Zero.
+| | Part | Role |
+|--|------|------|
+| **A** | DB25-MG (female+male+screws) | Plant pass-through + tap point |
+| **B** | DB25 M↔F ribbon 1:1 | A male → OKI |
+| **C** | DB25 female solder-free terminal | Listen female — StarTech male plugs here |
+| **D** | StarTech USB→serial + DB25 **male** | Into **C** → hub → Pi |
+| **E1** | Wire / DuPont | **A** screw **2** → **C** screw **3** (or 2) |
+| **E2** | Wire / DuPont | **A** screw **7** → **C** screw **7** |
+| **F** | Hub + OTG | To **G** DATA |
+| **G** | Pi Zero WH | Ports below |
 
-Listen branch = only E1 (A screw 2 → C screw 2) and E2 (A screw 7 → C screw 7), then D into C. No extra loop wires.
+**Do not:** cut the plant cable · WAGO · extra loop wires on C · GPIO.
 
-Pi Zero ports left→right: **HDMI** · **DATA** (hub/OTG) · **PWR IN** (right, 5V only).
+## Pi Zero ports (left → right)
+
+1. **HDMI** (far left)  
+2. **DATA / USB** (middle) ← OTG + hub  
+3. **PWR IN** (far **right**) ← 5V only  
+
+## Steps
+
+1. **Plant:** PLC male → **A** female. **A** male → **B** (ribbon) → OKI.  
+2. **Tap on A:** **E1** on screw **2**, **E2** on screw **7**.  
+3. **Into C:** **E1** → screw **3** (StarTech/RX; try 2 if no data), **E2** → screw **7**.  
+4. **D** DB25 male straight into **C** female.  
+5. **Pi G:** 5V → **PWR IN** (right). **F** OTG → **DATA** (middle). **D** USB → hub.
+
+With StarTech (straight/DTE): start **A2→C3**, **A7→C7**. No data? Swap data pin only (C2↔C3).
+
+OLED **JMD0.96D-1**: DuPont F–F to pins 1/3/5/6 (optional).
+
+Test: `python3 read_package.py --raw-capture --port /dev/ttyUSB0`

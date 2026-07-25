@@ -11,9 +11,9 @@
 | **A** | DB25-MG | Anlegg: hunn+hann+skruer |
 | **B** | Båndkabel M↔F | A → OKI |
 | **C** | DB25 hunn-terminal | Lytte — én hunn + skruer |
-| **D** | StarTech USB→serie + DB25-hann (har) | Plugges i **C** |
-| **E1** | Ledning / DuPont | **A**-skrue 2 → **C**-skrue **3** (eller 2) |
-| **E2** | Ledning / DuPont | **A**-skrue 7 → **C**-skrue 7 |
+| **D** | StarTech USB→serie + DB25-hann (har) | Rett inn i **C** |
+| **E1** | Ledning / DuPont | **A**-skrue **2** → **C**-skrue **3** (prøv 2 hvis null data) |
+| **E2** | Ledning / DuPont | **A**-skrue **7** → **C**-skrue **7** |
 | **F** | Hub + OTG | Til **G** DATA |
 | **G** | Pi Zero WH | Se porter under |
 

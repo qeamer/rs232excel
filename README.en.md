@@ -30,24 +30,17 @@
 A Raspberry Pi listens silently on the RS-232 line between a 1980s Telemecanique TSX PLC and an OKI Microline 280 dot-matrix printer at a Norwegian sawmill. Every timber package label is parsed and stored automatically — dimension, species, grade, board count, volume. No manual entry. No data loss, even when the printer is off.
 </p>
 
-<img src="docs/en/img/signal-flow.png" width="100%" alt="System architecture"/>
+<img src="docs/en/img/tap-mated.png" width="100%" alt="A–G guide: DB25-MG breakout, no cutting/WAGO"/>
 
-The tap is **physically read-only**: only TX+GND via WAGO; TX → ICUSB232DB25 **RX**. Signal to `/dev/ttyUSB0`, not GPIO. The printer keeps printing as before.
+The tap is **physically read-only**: only TX+GND from breakout screws to StarTech **RX**/GND. Signal to `/dev/ttyUSB0`, not GPIO. The printer keeps printing as before. **No knife, no WAGO** when using DB25-MG.
 
 ---
 
-## Choose your extension: DB25 or DB9
+## Wiring A–G (recommended)
 
-PLC and OKI use **DB25**. The jumper between them can be either:
+PLC and OKI use **DB25**. Insert a **DB25-MG** board (A: female+male+screws) in series. Take only screws **2** (TX) and **7** (GND) to listen female (C) → StarTech (D) → hub → Pi. Step-by-step: [docs/en/wiring.md](docs/en/wiring.md) · Norwegian fasit: [docs/no/wiring.md](docs/no/wiring.md) · [HANDOFF-CLAUDE.md](docs/no/HANDOFF-CLAUDE.md).
 
-| Extension you buy | Where you tap | TX | GND |
-|---|---|---|---|
-| **Full DB25** M→F | Open the jacket mid DB25 cable | pin **2** | pin **7** |
-| **DB9 cable** with a DB25 adapter on each end *(common purchase)* | Open the jacket on the **DB9** middle | DB9 pin **3**<br/>(= DB25 pin 2) | DB9 pin **5**<br/>(= DB25 pin 7) |
-
-Both are correct — same signals. **Do not cut the whole cable**, only those two conductors. **Wire colors are not standard**: find TX/GND with a continuity tester from the DB25 end (pins 2 and 7) before cutting. Then WAGO (three-way) → StarTech **ICUSB232DB25** (TX→RX). Details: [docs/en/wiring.md](docs/en/wiring.md).
-
-<img src="docs/en/img/passive-rs232-tap.png" width="100%" alt="Passive RS-232 tap — DB25 or DB9 extension"/>
+<img src="docs/en/img/passive-rs232-tap.png" width="100%" alt="Passive RS-232 tap — A–G guide"/>
 
 ---
 
@@ -144,16 +137,16 @@ Norwegian production flags (`--bare-fangst`, `--eksporter-xlsx`, …): see [`pyt
 
 ## Hardware
 
-Raspberry Pi Zero WH · StarTech ICUSB232DB25 · WAGO 221 · extension (DB25 *or* DB9+adapters) ·
-USB hub + keyboard + flash drive · optional SSD1306 OLED.
+Raspberry Pi Zero WH · StarTech ICUSB232DB25 · **DB25-MG** + DB25 female terminal · ribbon ·
+USB hub + OTG + keyboard + flash · optional OLED JMD0.96D-1.
 Full parts list in the [installation guide](docs/en/INSTALLATION.md).
 
-<p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passive tap</b> — see <a href="#choose-your-extension-db25-or-db9">Choose your extension</a> (image above).</p>
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passive tap</b> — A–G guide (image above). No knife/WAGO.</p>
 
-<p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB chain</b> — OTG: micro-USB <b>male</b> → USB-A <b>female</b> (hub plugs in). Listen adapter: USB-A <b>male</b> → DB9 <b>female</b> → DB25 → WAGO. Hub + keyboard + stick. PWR IN ≥2.5 A.</p>
-<img src="docs/en/img/usb-chain-complete.png" width="100%" alt="USB chain with WAGO and ICUSB232DB25"/>
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB chain</b> — OTG: micro-USB <b>male</b> → USB-A <b>female</b> (hub plugs in). StarTech DB25 <b>male</b> into listen female (C). Hub + keyboard + stick. PWR IN (right) ≥2.5 A · DATA (middle).</p>
+<img src="docs/en/img/usb-chain-complete.png" width="100%" alt="USB chain OTG/hub/StarTech"/>
 
-<p style="font-size: 15px; margin-bottom: 0.4em"><b>3 · OLED (optional)</b> — 0.96" SSD1306 I2C, four wires. Rotates day/year, last package, sort mix.</p>
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>3 · OLED (optional)</b> — JMD0.96D-1 / SSD1306 I2C, four wires. Rotates day/year, last package, sort mix.</p>
 <img src="docs/en/img/oled-i2c-correct.png" width="72%" alt="OLED I2C"/>
 
 ## Label format

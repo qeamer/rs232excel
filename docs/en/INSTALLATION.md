@@ -2,9 +2,9 @@
 
 Complete walkthrough — from empty SD card to a live passive tap running on the sawmill floor. Roughly 45 minutes, no programming experience required.
 
-<img src="img/signal-flow.png" width="100%" alt="System architecture"/>
+<img src="img/tap-mated.png" width="100%" alt="A–G guide: DB25-MG, no cutting"/>
 
-The printer keeps printing physical labels **exactly as before**. The tap only listens — it never transmits — so the printer and PLC behave identically whether the Pi is powered or not.
+The printer keeps printing physical labels **exactly as before**. The tap only listens — it never transmits — so the printer and PLC behave identically whether the Pi is powered or not. **No knife / no WAGO** when using DB25-MG.
 
 ---
 
@@ -18,17 +18,16 @@ The printer keeps printing physical labels **exactly as before**. The tap only l
 | 4 | Lexar 32GB Industrial microSDHC | RS 2676402 | System drive — the master copy |
 | 5 | 2× Kingston 64GB USB flash | RS 0622158 | Live CSV mirror, pull anytime |
 | 6 | RS PRO IP54 enclosure 60×190×110 | RS 1959122 | Sawdust protection |
-| 7 | **DB25 male↔female breakout** w/ screw terminals | AliExpress / Amazon / Elfa | **Recommended tap** — no cutting |
-| 8 | WAGO 221-412 clamps, 10-pack | RS 8837544 | Method B / temporary branch |
-| 9 | DB25 M-F extension 40 cm | AliExpress | Sacrificial splice if method B |
-| 10 | DB25 M-F extension 50 cm | AliExpress | Spare — mark with tape |
-| 11 | Micro-USB OTG (male→USB-A female) | AliExpress | Pi Zero DATA → hub |
-| 12 | SSD1306 0.96" OLED, I2C, 4-pin | AliExpress | Status screen (optional) |
-| 13 | Dupont jumper wires F-F | AliExpress | 4 of 40 used (OLED) |
+| 7 | **DB25-MG** female+male + screws (A) | AliExpress | **Tap** — no knife/WAGO |
+| 8 | **DB25 female** solder-free terminal (C) | AliExpress | Listen female for StarTech male |
+| 9 | DB25 M↔F ribbon 1:1 (B) | AliExpress / have | A → OKI |
+| 10 | Micro-USB OTG (male→USB-A female) | AliExpress / have | Pi Zero DATA → hub |
+| 11 | OLED JMD0.96D-1 / SSD1306 I2C | AliExpress / have | Status (optional) |
+| 12 | Dupont F–F | AliExpress / have | OLED (4 wires) |
 
-Also needed: 5V / ≥2.5 A micro-USB wall supply, two wires from breakout pins 2/7 to StarTech RX/GND.
+Also needed: 5V / ≥2.5 A micro-USB (PWR IN right), two wires A screws 2/7 → C screws 3/7 (StarTech).
 
-Search breakout: `DB25 male female breakout screw terminal`. See [wiring.md](wiring.md).
+See [wiring.md](wiring.md) and [../no/HANDOFF-CLAUDE.md](../no/HANDOFF-CLAUDE.md). **WAGO/cutting is outdated** when using A.
 
 ---
 
@@ -86,30 +85,34 @@ python3 vis_status.py  # runs independently of capture
 
 ---
 
-## 5 · The physical tap
+## 5 · The physical tap (A–G — no knife)
 
-**Stop the machine before touching any cable.** The original cable is never modified.
+**Stop the machine before touching any cable.** The original plant cable is never modified.
 
-See also: [wiring.md](wiring.md) — recommended: **DB25 breakout** (no cutting).
+Fasit: [wiring.md](wiring.md) · [../no/HANDOFF-CLAUDE.md](../no/HANDOFF-CLAUDE.md)
 
-<img src="img/tap-recommended-breakout.png" width="100%" alt="Recommended tap with DB25 breakout"/>
-<img src="img/tap-step-by-step.png" width="100%" alt="Step-by-step method A/B"/>
+<img src="img/tap-mated.png" width="100%" alt="A–G guide"/>
+<img src="img/passive-rs232-tap.png" width="100%" alt="A–G schematic"/>
 
-> Ignore drawings that show GPIO, parallel port (D0–D7), or a 40-pin LCD — signal goes to **USB–RS232 → `/dev/ttyUSB0`**.
+> Ignore old text/images with **WAGO**, “cut pins 2/7”, GPIO, or parallel port. Signal → **USB–RS232 → `/dev/ttyUSB0`**.
 
-**Method A (recommended):** Insert a **DB25 male↔female breakout** with screw terminals. From screw **2 → RX**, screw **7 → GND** on the StarTech listen end. Everything else passes 1:1.
+**Steps:**
 
-**Method B:** Short sacrificial extension → slit jacket → continuity on pins 2/7 → cut only TX+GND → WAGO three-way → secure in tray.
+1. Insert **A (DB25-MG)** in series: PLC DB25 male → A female; A male → **B** (ribbon) → OKI.  
+2. Wire **E1** on A screw **2** (TX); **E2** on A screw **7** (GND).  
+3. E1 → **C** (DB25 female terminal) screw **3** (RX; try 2 if no data); E2 → C screw **7**.  
+4. **D (StarTech)** DB25 male straight into C female.  
+5. D USB → hub → OTG → Pi **DATA** (middle). 5V → Pi **PWR IN** (right).
 
-> ⚠ **Direction matters:** PLC TX → adapter **RX**. TX→TX captures nothing.
+> ⚠ **Direction:** PLC TX → StarTech **RX**. TX→TX captures nothing.
 
 ### USB chain
 
-<img src="img/usb-chain-complete.png" width="100%" alt="USB chain: Pi → OTG female ← hub male; StarTech USB male → DB9 → DB25 adapter"/>
+<img src="img/usb-chain-complete.png" width="100%" alt="USB chain OTG/hub/StarTech"/>
 
-The OTG extension **must** go in the middle **data** port on the Pi Zero — the corner port is power-only (**PWR IN**, ≥2.5 A wall supply).
+OTG must go in the middle **DATA** port — corner is **PWR IN** only (≥2.5 A).
 
-**How the cables are:** Pi DATA → micro-USB male → OTG extension ending in USB-A **female** ← hub USB-A **male**. StarTech/DB9 cable: USB-A **male** into hub → DB9 **male** → separate DB9→DB25 adapter → DB25 **male** → breakout/WAGO listen.
+**Chain:** Pi DATA → OTG USB-A female ← hub male. StarTech DB25 male → C female ← wires from A.
 
 ### OLED status display (optional)
 
@@ -172,8 +175,8 @@ Pull the flash drive at any time — the Excel file and CSV are on it, ready to 
 ## 8 · Final checklist
 
 - [ ] All parts received (SD card shipped separately!)
-- [ ] 40 cm cable marked ACTIVE, 50 cm marked SPARE
-- [ ] Tap: breakout (recommended) or WAGO on pins 2+7, secured in tray
+- [ ] A (DB25-MG) in series PLC↔OKI via B
+- [ ] C + StarTech (D); E1/E2 on screws 2/7→3/7; secured
 - [ ] USB chain: Pi **data port** → OTG → hub → adapter + flash drive
 - [ ] OLED on GPIO 1/3/5/6, I2C enabled in raspi-config (if used)
 - [ ] `--raw-capture` shows readable label text

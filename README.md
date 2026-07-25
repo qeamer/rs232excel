@@ -90,45 +90,25 @@ dimensjon, treslag, sort, antall plank, kubikk. Ingen manuell registrering. Inge
 selv når skriveren er av.
 </p>
 
-<img src="docs/no/img/signal-flow.png" width="100%" alt="Systemarkitektur"/>
+<img src="docs/no/img/bruksanvisning-tapp-foto.png" width="100%" alt="Bruksanvisning A–G: DB25-MG breakout, ingen kniv/WAGO"/>
 
 <p style="font-size: 16px; line-height: 1.5">
-Tappen er <b>fysisk skrivebeskyttet</b>: kun TX+GND via WAGO, TX → ICUSB232DB25-<b>RX</b>.
+Tappen er <b>fysisk skrivebeskyttet</b>: kun TX+GND fra breakout-skruer til StarTech-<b>RX</b>/GND.
 Signal til <code>/dev/ttyUSB0</code>, ikke GPIO. Skriveren fortsetter som før.
+<b>Ingen kniv, ingen WAGO</b> når du bruker DB25-MG.
 </p>
 
 ---
 
-<h2 style="font-size: 1.5em">Velg skjøtekabel: DB25 eller DB9</h2>
+<h2 style="font-size: 1.5em">Kobling A–G (anbefalt)</h2>
 
 <p style="font-size: 16px; line-height: 1.55">
-PLS og OKI har <b>DB25</b>. Skjøten mellom dem kan være enten:
+PLS og OKI har <b>DB25</b>. Sett <b>DB25-MG</b> (A: hunn+hann+skruer) i serie.
+Ta kun skrue <b>2</b> (TX) og <b>7</b> (GND) til lytte-hunn (C) → StarTech (D) → hub → Pi.
+Steg for steg: <a href="docs/no/wiring.md">docs/no/wiring.md</a> · Claude-handoff: <a href="docs/no/HANDOFF-CLAUDE.md">docs/no/HANDOFF-CLAUDE.md</a>.
 </p>
 
-<table style="font-size: 16px">
-<tr><th>Skjøt du kjøper</th><th>Hvor du tapper</th><th>TX</th><th>GND</th></tr>
-<tr>
-  <td><b>Hel DB25</b> hann→hunn</td>
-  <td>Åpne kappen midt på DB25-kabelen</td>
-  <td>pin <b>2</b></td>
-  <td>pin <b>7</b></td>
-</tr>
-<tr>
-  <td><b>DB9-kabel</b> med DB25-adapter i hver ende<br/>(vanlig kjøp)</td>
-  <td>Åpne kappen midt på <b>DB9</b>-delen</td>
-  <td>DB9 pin <b>3</b><br/>(= DB25 pin 2)</td>
-  <td>DB9 pin <b>5</b><br/>(= DB25 pin 7)</td>
-</tr>
-</table>
-
-<p style="font-size: 16px; line-height: 1.55">
-Begge er riktig — samme signal. <b>Klipp ikke hele kabelen</b>, bare de to lederne.
-<b>Farger er ikke standard</b>: finn TX/GND med pipetest fra DB25-enden (pin 2 og 7)
-før du klipper. Deretter WAGO (tre veier) → StarTech <b>ICUSB232DB25</b> (TX→RX).
-Detaljer: <a href="docs/no/wiring.md">docs/no/wiring.md</a>.
-</p>
-
-<img src="docs/no/img/passiv-rs232-tapp.png" width="100%" alt="Passiv RS-232-tapp — DB25 eller DB9-skjøt"/>
+<img src="docs/no/img/passiv-rs232-tapp.png" width="100%" alt="Passiv RS-232-tapp — bruksanvisning A–G"/>
 
 ---
 
@@ -187,17 +167,17 @@ Daglig bruk: se <b>Daglig bruk på Pi</b> øverst. Under er flag for direkte kj�
 <h2 style="font-size: 1.5em">Hardware</h2>
 
 <p style="font-size: 16px">
-Raspberry Pi Zero WH · StarTech ICUSB232DB25 · WAGO 221 · skjøt (DB25 <i>eller</i> DB9+adaptere) ·
-USB-hub + tastatur + minnepenn · valgfri SSD1306 OLED.
+Raspberry Pi Zero WH · StarTech ICUSB232DB25 · <b>DB25-MG</b> + DB25 hunn-terminal · båndkabel ·
+USB-hub + OTG + tastatur + minnepenn · valgfri OLED JMD0.96D-1.
 Full delerliste i <a href="docs/no/INSTALLATION.md">installasjonsguiden</a>.
 </p>
 
-<p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passiv tapp</b> — se <a href="#velg-skjøtekabel-db25-eller-db9">Velg skjøtekabel</a> (bilde over).</p>
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>1 · Passiv tapp</b> — A–G bruksanvisning (bilde over). Ingen kniv/WAGO.</p>
 
-<p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB-kjede</b> — OTG: micro-USB <b>hann</b> → USB-A <b>hunn</b> (hub plugges inn). Lytteadapter: USB-A <b>hann</b> → DB9 <b>hunn</b> → DB25 → WAGO. Hub + tastatur + penn. PWR IN ≥2,5 A.</p>
-<img src="docs/no/img/usb-kjede-komplett.png" width="100%" alt="USB-kjede med WAGO og ICUSB232DB25"/>
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>2 · USB-kjede</b> — OTG: micro-USB <b>hann</b> → USB-A <b>hunn</b> (hub plugges inn). StarTech DB25 <b>hann</b> i lytte-hunn (C). Hub + tastatur + penn. PWR IN (høyre) ≥2,5 A · DATA (midt).</p>
+<img src="docs/no/img/usb-kjede-komplett.png" width="100%" alt="USB-kjede OTG/hub/StarTech"/>
 
-<p style="font-size: 15px; margin-bottom: 0.4em"><b>3 · OLED (valgfritt)</b> — 0,96" SSD1306 I2C, fire ledninger. Roterer dag/år, siste pakke, sort.</p>
+<p style="font-size: 15px; margin-bottom: 0.4em"><b>3 · OLED (valgfritt)</b> — JMD0.96D-1 / SSD1306 I2C, fire ledninger. Roterer dag/år, siste pakke, sort.</p>
 <img src="docs/no/img/oled-i2c-korrekt.png" width="72%" alt="OLED I2C"/>
 
 <h2 style="font-size: 1.5em">Mapper i repoet</h2>

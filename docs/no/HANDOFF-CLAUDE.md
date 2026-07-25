@@ -64,12 +64,12 @@ Ingen kniv/WAGO når A brukes.
             E2 i A-skrue 7 (GND)
 
 3) Inn på C = DB25 hunn-terminal (lytte):
-            E1 → C-skrue 2
+            E1 → C-skrue 3 (RX; prøv 2 hvis null data)
             E2 → C-skrue 7
             (ingen andre skruer på C)
 
 4) D = StarTech DB25 HANN rett inn i C HUNN
-            (E1/E2 sitter fortsatt i C-skrue 2 og 7)
+            (E1/E2 sitter fortsatt i C — typisk skrue 3 og 7)
 
 5) Pi G:  5V → PWR IN (HØYRE micro-USB)
           F OTG → DATA (MIDTRE micro-USB)
@@ -113,7 +113,10 @@ La C-skruer utenom 2/3 og 7 stå **tomme** (ikke koble StarTech TX ut tilbake ti
 
 ### Ikke bruk som fasit
 
-`tapp-i-inngrep.png`, `tapp-dine-deler.png`, `tapp-alle-metoder.png` (eldre), `wiring-tap.png`, `oled-gpio.png`, alt med WAGO-klipp, GPIO, parallellport, «ELLER»/TTL, eller hub i PWR IN.
+`tapp-i-inngrep.png`, `tapp-dine-deler.png`, `tapp-alle-metoder.png` (eldre), `oled-gpio.png`, og alt med WAGO-klipp, GPIO, parallellport, «ELLER»/TTL, eller hub i PWR IN.
+
+**Legacy-filer overskrevet med A–G** (gamle raw-URL-er peker nå hit etter merge):  
+`signal-flow.png`, `wiring-tap.png` (= `bruksanvisning-tapp-foto.png` / `tap-mated.png`).
 
 Raw:
 

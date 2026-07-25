@@ -1,6 +1,8 @@
 # Kobling
 
-<img src="img/passiv-rs232-tapp.png" width="100%" alt="Rett kobling: DB25-MG midtpunkt, null modem, riktig Pi DATA"/>
+<img src="img/passiv-rs232-tapp.png" width="100%" alt="AI-foto: DB25-MG — anlegg / lytting / Pi adskilt"/>
+
+<img src="img/tapp-deler-korrekt.png" width="100%" alt="Deler som skal se slik ut"/>
 
 ## Midtpunktet: DB25-MG (ikke en løs «M↔F-kloss»)
 

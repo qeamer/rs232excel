@@ -27,20 +27,13 @@
 </p>
 
 <p style="font-size: 1.05em">
-A Raspberry Pi listens silently on the RS-232 line between a 1980s Telemecanique TSX PLC and an OKI Microline 280 dot-matrix printer at a Norwegian sawmill. Every timber package label is parsed and stored automatically — dimension, species, grade, board count, volume. No manual entry. No data loss, even when the printer is off.
+A Raspberry Pi listens silently on the RS-232 line between a Telemecanique TSX PLC and an OKI Microline 280. Every timber package label is parsed to CSV/Excel — no manual entry.
+<strong>No knife, no WAGO.</strong> StarTech straight: screw <b>2 → pin 3 (RX)</b>.
 </p>
 
 <img src="docs/en/img/tap-mated.png" width="100%" alt="Step-by-step passive RS-232 tap, StarTech straight 2→3"/>
 
-The tap is **physically read-only**: only TX+GND from DIN-rail breakout screws 2/7 to solder-free female → StarTech **ICUSB232DB25** (straight: screw 2 → pin 3 RX). Signal to `/dev/ttyUSB0`, not GPIO. The printer keeps printing as before. **No knife, no WAGO**.
-
----
-
-## Wiring A–G (recommended)
-
-PLC and OKI use **DB25**. Insert a **DB25-MG** board (A: female+male+screws) in series. Take only screws **2** (TX) and **7** (GND) to listen female (C) → StarTech (D) → hub → Pi. Step-by-step: [docs/en/wiring.md](docs/en/wiring.md) · Norwegian fasit: [docs/no/wiring.md](docs/no/wiring.md) · [HANDOFF-CLAUDE.md](docs/no/HANDOFF-CLAUDE.md).
-
-<img src="docs/en/img/passive-rs232-tap.png" width="100%" alt="Passive RS-232 tap — A–G guide"/>
+The tap is **physically read-only**: only TX+GND from DIN-rail breakout screws 2/7 to solder-free female → StarTech **ICUSB232DB25** (straight: screw 2 → pin 3 RX). Signal to `/dev/ttyUSB0`, not GPIO. The printer keeps printing as before. Guide: [docs/en/wiring.md](docs/en/wiring.md) · [HANDOFF-CLAUDE.md](docs/no/HANDOFF-CLAUDE.md).
 
 ---
 

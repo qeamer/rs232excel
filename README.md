@@ -32,6 +32,22 @@
   </big>
 </p>
 
+<p style="font-size: 17px; line-height: 1.55">
+En Raspberry Pi lytter <b>passivt</b> på RS-232-linja mellom en Telemecanique TSX PLS
+og en OKI Microline 280. Hver pakkelapp parses til CSV/Excel — ingen manuell registrering.
+<b>Ingen kniv, ingen WAGO.</b> StarTech straight: skrue <b>2 → pin 3 (RX)</b>.
+</p>
+
+<img src="docs/no/img/steg-for-steg-passiv-rs232-tapp.png" width="100%" alt="Steg for steg: passiv RS-232-tapp, StarTech straight 2→3"/>
+
+<p style="font-size: 16px; line-height: 1.5">
+Tappen er <b>fysisk skrivebeskyttet</b>: kun TX+GND fra DIN-rail breakout (skrue 2/7)
+til loddefri hunn → StarTech <b>ICUSB232DB25</b> (straight: skrue 2 → pin 3 RX).
+Signal til <code>/dev/ttyUSB0</code>, ikke GPIO. Skriveren fortsetter som før.
+Steg for steg: <a href="docs/no/wiring.md">docs/no/wiring.md</a> ·
+<a href="docs/no/HANDOFF-CLAUDE.md">HANDOFF-CLAUDE.md</a>.
+</p>
+
 ---
 
 ## Daglig bruk på Pi — husk bare dette
@@ -80,36 +96,6 @@ bash fiks-usb.sh           # auto-mount minnepenn → /media/usb0
 ```
 
 Deretter: `sjekk` → `start`. Før kopi til PC: `integritet`.
-
----
-
-<p style="font-size: 17px; line-height: 1.55">
-En Raspberry Pi lytter <b>passivt</b> på RS-232-linja mellom en Telemecanique TSX PLS
-(1980-tall) og en OKI Microline 280 nåleskriver. Hver pakkelapp parses og lagres automatisk —
-dimensjon, treslag, sort, antall plank, kubikk. Ingen manuell registrering. Ingen datatap,
-selv når skriveren er av.
-</p>
-
-<img src="docs/no/img/steg-for-steg-passiv-rs232-tapp.png" width="100%" alt="Steg for steg: passiv RS-232-tapp, StarTech straight 2→3"/>
-
-<p style="font-size: 16px; line-height: 1.5">
-Tappen er <b>fysisk skrivebeskyttet</b>: kun TX+GND fra DIN-rail breakout (skrue 2/7)
-til loddefri hunn → StarTech <b>ICUSB232DB25</b> (straight: skrue 2 → pin 3 RX).
-Signal til <code>/dev/ttyUSB0</code>, ikke GPIO. Skriveren fortsetter som før.
-<b>Ingen kniv, ingen WAGO</b>.
-</p>
-
----
-
-<h2 style="font-size: 1.5em">Kobling A–G (anbefalt)</h2>
-
-<p style="font-size: 16px; line-height: 1.55">
-PLS og OKI har <b>DB25</b>. Sett <b>DB25-MG</b> (A: hunn+hann+skruer) i serie.
-Ta kun skrue <b>2</b> (TX) og <b>7</b> (GND) til lytte-hunn (C) → StarTech (D) → hub → Pi.
-Steg for steg: <a href="docs/no/wiring.md">docs/no/wiring.md</a> · Claude-handoff: <a href="docs/no/HANDOFF-CLAUDE.md">docs/no/HANDOFF-CLAUDE.md</a>.
-</p>
-
-<img src="docs/no/img/passiv-rs232-tapp.png" width="100%" alt="Passiv RS-232-tapp — bruksanvisning A–G"/>
 
 ---
 

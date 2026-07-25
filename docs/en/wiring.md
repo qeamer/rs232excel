@@ -1,9 +1,9 @@
-# Wiring — assembly guide
+# Wiring — parts A–G
 
-See Norwegian lettered guide (source of truth): [docs/no/wiring.md](../no/wiring.md)
+Source of truth (Norwegian lettered guide): [docs/no/wiring.md](../no/wiring.md) · image: [passiv-rs232-tapp.png](../no/img/passiv-rs232-tapp.png)
 
-Parts: **A** DB25-MG · **B** ribbon · **C** female screw breakout · **D** FTDI USB–DB25 null modem · **E** two DuPont · **F** hub+OTG · **G** Pi.
+**A** DB25-MG · **B** ribbon · **C** female screw breakout · **D** FTDI USB–DB25 male null modem · **E1/E2** two DuPont only · **F** hub+OTG · **G** Pi Zero.
 
-Steps: (1) PLC→A→B→OKI (2) E from A screws 2+7 (3) E into C screws 2+7 (4) D male into C (5) D USB→hub→G DATA; 5V→G PWR IN.
+Listen branch = only E1 (A screw 2 → C screw 2) and E2 (A screw 7 → C screw 7), then D into C. No extra loop wires.
 
-Null modem: try C screw 2 first, else 3. GND stays 7.
+Pi Zero ports left→right: **HDMI** · **DATA** (hub/OTG) · **PWR IN** (right, 5V only).

@@ -1,62 +1,46 @@
-# Kobling
+# Kobling — bruksanvisning
 
-<img src="img/passiv-rs232-tapp.png" width="100%" alt="Lytting: MG skrue 2+7 → hunn-breakout → FTDI null modem → Pi"/>
+<img src="img/passiv-rs232-tapp.png" width="100%" alt="Bruksanvisning A–G med steg 1–5"/>
 
-## Din plan — ja, slik
+<img src="img/bruksanvisning-tapp-foto.png" width="100%" alt="Foto-versjon A–G"/>
 
-```text
-PLS DB25 HANN
-      │
-      ▼ i inngrep
-DB25-MG (hunn + hann + skruer)
-      │
-      ├── HANN ── båndkabel M↔F (1:1) ──► OKI
-      │
-      └── skrue 2 (TX) + skrue 7 (GND)
-                │
-                ▼ DuPont / ledning
-DB25 HUNN terminal-adapter (solder free)
-      │  kun skrue 2 (eller 3) + skrue 7
-      ▼ i inngrep
-FTDI USB→DB25 HANN (null modem)
-      │
-      ▼ USB-A
-USB-hub → OTG → Pi DATA
-```
+## Deler (bokstaver)
 
-**Best:** ta TX/GND fra **MG-skrue 2 og 7** (samme signal som i båndkabelen til skriver).  
-Da slipper du å klippe/skjøte i båndkabelen. Båndet får stå urørt 1:1 til OKI.
+| | Gjenstand | Hva det er |
+|--|-----------|------------|
+| **A** | DB25-MG | Hunn + hann + skruer 1–25 (anlegg) |
+| **B** | Båndkabel DB25 M↔F | 1:1 skjøt A → OKI |
+| **C** | DB25 **hunn** terminal | Lytte-hunn med skruer (én hunn-kontakt) |
+| **D** | FTDI USB→DB25 **hann** | Null modem → hub |
+| **E** | 2× DuPont F–F | Kun to ledninger (TX + GND) |
+| **F** | USB-hub + OTG | Hub hann → OTG hunn → Pi DATA |
+| **G** | Pi Zero WH + 5V | PWR IN = strøm · DATA = midt |
 
-Å «lytte fra båndkabelen» er elektrisk det samme — men mer rotete (finne farge/leder). Bruk skruene.
+Ingen andre adaptere i lyttegreinen.
 
-## Lytte-hunnen + FTDI
+## Steg
 
-| Del | Rolle |
-|-----|--------|
-| DB25 **hunn** terminal breakout (solder free) | Tar imot FTDI-hannen; skruer for pin 2/3/7 |
-| FTDI USB→DB25 **hann** **null modem** | Plugges i hunnen → hub → Pi |
-| DuPont F–F | MG-skrue → lytte-hunn-skrue |
+1. **Anlegg:** PLS-hann → **A**-hunn. **A**-hann → **B** → OKI.  
+2. **Tapp:** **E1** på **A**-skrue **2**. **E2** på **A**-skrue **7**.  
+3. **Lytte-hunn:** **E1** → **C**-skrue **2**. **E2** → **C**-skrue **7**. (Ingen andre skruer på C.)  
+4. **FTDI:** **D** DB25-hann rett inn i **C** hunn.  
+5. **Pi:** 5V i **G** PWR IN. **F** OTG i **G** DATA. **D** USB-A i hub.
 
-### Null modem
+Null data? Flytt **E1** på **C** fra skrue 2 til skrue **3**.
 
-| | Fra MG | → | Lytte-hunn (mot FTDI) |
-|--|--------|---|------------------------|
-| **A først** | skrue **2** TX | → | skrue **2** |
-| | skrue **7** GND | → | skrue **7** |
-| **B hvis null data** | skrue **2** TX | → | skrue **3** |
-| | skrue **7** GND | → | skrue **7** |
+## Kabeltabell
 
-La alle andre skruer på lytte-hunnen stå **tomme** (ikke koble FTDI sin TX ut tilbake til anlegget).
+| Kabel | Fra | Til |
+|-------|-----|-----|
+| PLS-kabel | PLS · DB25 hann | **A** · hunn |
+| **B** | **A** · hann | OKI |
+| **E1** | **A** · skrue 2 | **C** · skrue 2 (eller 3) |
+| **E2** | **A** · skrue 7 | **C** · skrue 7 |
+| **D** DB25 | **D** · hann | **C** · hunn |
+| **D** USB | **D** · USB-A | **F** · hub |
+| **F** | hub hann | OTG → **G** DATA |
+| PSU | 5V | **G** PWR IN |
 
-## Pi
-
-| Port | |
-|------|--|
-| **PWR IN** (hjørne) | 5V / ≥2,5 A |
-| **DATA** (midt) | OTG → hub → FTDI (+ evt. minnepenn) |
-
-Ikke GPIO. Test: `python3 read_package.py --raw-capture --port /dev/ttyUSB0`
-
-<img src="img/tapp-deler-korrekt.png" width="100%" alt="Deler-referanse"/>
+Test: `python3 read_package.py --raw-capture --port /dev/ttyUSB0`
 
 *English: [docs/en/wiring.md](../en/wiring.md)*

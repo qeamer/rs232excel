@@ -89,9 +89,9 @@ Ingen kniv/WAGO når A brukes.
 | skrue **2** | TX | → | skrue **3** (RX) — prøv først* |
 | skrue **7** | GND | → | skrue **7** |
 
-\*Bruksanvisningsbildene viser ofte 2→2 som «prøv først» for null modem.  
-**Med StarTech (ikke null modem):** start med **A2 → C3**, **A7 → C7**.  
-Null data? Bytt bare datapinnen (C2 ↔ C3).
+**StarTech = straight (ikke null modem):** primærvei **A2 → C3 → pin 3 (RX)**, **A7 → C7**.  
+VARE2/C er 1:1 (skrue N = DB25-pin N) — derfor må TX inn på **C3**, ikke C2.  
+Ingen data? **Prøv C2 i stedet for C3** (fallback hvis adapteren krysser internt).
 
 La C-skruer utenom 2/3 og 7 stå **tomme** (ikke koble StarTech TX ut tilbake til anlegget).
 
@@ -168,7 +168,7 @@ Tester: `cd python/no && python3 -m unittest test_register.py`
 ## 8. Sjekkliste montering
 
 - [ ] A mellom PLS og OKI (via B)  
-- [ ] E1: A2 → C2 eller C3 (StarTech: start C3)  
+- [ ] E1: A2 → **C3** (StarTech pin 3 RX); fallback C2 hvis null data  
 - [ ] E2: A7 → C7  
 - [ ] D (StarTech DB25 hann) i C hunn  
 - [ ] D USB i hub → OTG → G DATA  

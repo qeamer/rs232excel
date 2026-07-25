@@ -35,14 +35,15 @@
 <p style="font-size: 17px; line-height: 1.55">
 En Raspberry Pi lytter <b>passivt</b> på RS-232-linja mellom en Telemecanique TSX PLS
 og en OKI Microline 280. Hver pakkelapp parses til CSV/Excel — ingen manuell registrering.
-<b>Ingen kniv, ingen WAGO.</b> StarTech straight: skrue <b>2 → pin 3 (RX)</b>.
+<b>Ingen kniv, ingen WAGO.</b> StarTech straight: skrue <b>2 → VARE2 C3 → pin 3 (RX)</b>
+(ingen data? prøv C2).
 </p>
 
 <img src="docs/no/img/steg-for-steg-passiv-rs232-tapp.png" width="100%" alt="Steg for steg: passiv RS-232-tapp, StarTech straight 2→3"/>
 
 <p style="font-size: 16px; line-height: 1.5">
 Tappen er <b>fysisk skrivebeskyttet</b>: kun TX+GND fra DIN-rail breakout (skrue 2/7)
-til loddefri hunn → StarTech <b>ICUSB232DB25</b> (straight: skrue 2 → pin 3 RX).
+til loddefri hunn <b>C3</b> → StarTech <b>ICUSB232DB25</b> pin 3 RX (straight; fallback C2).
 Signal til <code>/dev/ttyUSB0</code>, ikke GPIO. Skriveren fortsetter som før.
 Steg for steg: <a href="docs/no/wiring.md">docs/no/wiring.md</a> ·
 <a href="docs/no/HANDOFF-CLAUDE.md">HANDOFF-CLAUDE.md</a>.

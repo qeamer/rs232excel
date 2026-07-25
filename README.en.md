@@ -28,12 +28,13 @@
 
 <p style="font-size: 1.05em">
 A Raspberry Pi listens silently on the RS-232 line between a Telemecanique TSX PLC and an OKI Microline 280. Every timber package label is parsed to CSV/Excel — no manual entry.
-<strong>No knife, no WAGO.</strong> StarTech straight: screw <b>2 → pin 3 (RX)</b>.
+<strong>No knife, no WAGO.</strong> StarTech straight: screw <b>2 → VARE2 C3 → pin 3 (RX)</b>
+(no data? try C2).
 </p>
 
 <img src="docs/en/img/tap-mated.png" width="100%" alt="Step-by-step passive RS-232 tap, StarTech straight 2→3"/>
 
-The tap is **physically read-only**: only TX+GND from DIN-rail breakout screws 2/7 to solder-free female → StarTech **ICUSB232DB25** (straight: screw 2 → pin 3 RX). Signal to `/dev/ttyUSB0`, not GPIO. The printer keeps printing as before. Guide: [docs/en/wiring.md](docs/en/wiring.md) · [HANDOFF-CLAUDE.md](docs/no/HANDOFF-CLAUDE.md).
+The tap is **physically read-only**: only TX+GND from DIN-rail breakout screws 2/7 to solder-free female **C3**/C7 → StarTech **ICUSB232DB25** pin 3 RX (straight; fallback C2). Signal to `/dev/ttyUSB0`, not GPIO. The printer keeps printing as before. Guide: [docs/en/wiring.md](docs/en/wiring.md) · [HANDOFF-CLAUDE.md](docs/no/HANDOFF-CLAUDE.md).
 
 ---
 
